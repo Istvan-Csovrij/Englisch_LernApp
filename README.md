@@ -36,6 +36,14 @@ Optimiert für **Smartphones (iOS & Android)** sowie **Desktop-Browser**.
 
 ## 📱 Auf dem Smartphone öffnen
 
+### 📱 Schnellzugriff per QR-Code (Mit dem Handy scannen):
+Einfach die Smartphone-Kamera auf den QR-Code richten:
+
+![QR-Code zur App](qr_code.png)
+
+Direkter Link: **https://istvan-csovrij.github.io/Englisch_LernApp/**
+
+
 ### Live auf GitHub Pages:
 👉 **[https://istvan-csovrij.github.io/Englisch_LernApp/](https://istvan-csovrij.github.io/Englisch_LernApp/)**
 
