@@ -730,5 +730,72 @@ document.addEventListener('DOMContentLoaded', () => {
       navigator.serviceWorker.register('./sw.js')
         .then((reg) => console.log('Service Worker registered for offline use:', reg.scope))
         .catch((err) => console.log('Service Worker registration failed:', err));
+    
+  // --- PWA INSTALLATION MODAL & NATIVE PROMPT LOGIC ---
+  let deferredPrompt = null;
+  const btnInstallApp = document.getElementById('btnInstallApp');
+  const modalOverlay = document.getElementById('installModalOverlay');
+  const btnCloseModal = document.getElementById('btnCloseInstallModal');
+  const btnTriggerDirect = document.getElementById('btnTriggerDirectInstall');
+
+  // Listen for native Android/Chrome install prompt event
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    if (btnTriggerDirect) btnTriggerDirect.style.display = 'block';
+    console.log('[PWA] beforeinstallprompt saved');
+  });
+
+  if (btnInstallApp) {
+    btnInstallApp.addEventListener('click', () => {
+      if (deferredPrompt) {
+        // Trigger native prompt immediately
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then((choiceResult) => {
+          if (choiceResult.outcome === 'accepted') {
+            showToast('🎉 App wird auf deinem Handy installiert!');
+          }
+          deferredPrompt = null;
+        });
+      } else {
+        // Open the guide modal showing iPhone & Android steps
+        modalOverlay.classList.add('show');
+      }
     });
   }
+
+  if (btnCloseModal) {
+    btnCloseModal.addEventListener('click', () => {
+      modalOverlay.classList.remove('show');
+    });
+  }
+
+  if (modalOverlay) {
+    modalOverlay.addEventListener('click', (e) => {
+      if (e.target === modalOverlay) {
+        modalOverlay.classList.remove('show');
+      }
+    });
+  }
+
+  if (btnTriggerDirect) {
+    btnTriggerDirect.addEventListener('click', () => {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then((choiceResult) => {
+          if (choiceResult.outcome === 'accepted') {
+            showToast('🎉 App wird installiert!');
+            modalOverlay.classList.remove('show');
+          }
+          deferredPrompt = null;
+        });
+      }
+    });
+  }
+
+  window.addEventListener('appinstalled', () => {
+    showToast('🎉 App erfolgreich installiert!');
+    if (btnInstallApp) btnInstallApp.style.display = 'none';
+  });
+
+});

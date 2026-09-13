@@ -25,6 +25,9 @@
         </div>
       </div>
       <div class="stats-badges">
+        <button class="badge install-badge" id="btnInstallApp" title="App auf Handy herunterladen & installieren">
+          📲 <span>App herunterladen</span>
+        </button>
         <div class="badge xp" title="Gesamtpunkte (Erfahrungspunkte)">
           ⭐ <span id="xpCount">0</span> XP
         </div>
@@ -316,6 +319,48 @@
 
   <!-- Floating Toast Message -->
   <div class="toast-msg" id="toastMsg">Glückwunsch! +10 XP</div>
+
+  
+  <!-- Installation & Offline Guide Modal -->
+  <div class="install-modal-overlay" id="installModalOverlay">
+    <div class="install-modal-card">
+      <div class="modal-header">
+        <h3>📲 App auf deinem Handy installieren</h3>
+        <button class="modal-close-btn" id="btnCloseInstallModal">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <p class="modal-intro">
+          Die App wird direkt auf deinem Smartphone gespeichert und funktioniert danach <strong>komplett offline</strong> (auch ohne Internet)!
+        </p>
+
+        <!-- Android Guide -->
+        <div class="guide-box android-guide" id="androidGuide">
+          <h4>🤖 Für Android (Google Chrome):</h4>
+          <ol>
+            <li>Tippe oben rechts im Browser auf die <strong>3 Punkte (Menü)</strong>.</li>
+            <li>Wähle <strong>„App installieren“</strong> oder <strong>„Zum Startbildschirm hinzufügen“</strong>.</li>
+            <li>Tippe auf <strong>Installieren</strong> – fertig!</li>
+          </ol>
+          <button class="btn-direct-install" id="btnTriggerDirectInstall">👉 Jetzt direkt installieren</button>
+        </div>
+
+        <!-- iPhone Guide -->
+        <div class="guide-box ios-guide" id="iosGuide">
+          <h4>🍏 Für iPhone / iPad (Safari):</h4>
+          <ol>
+            <li>Tippe unten in der Safari-Leiste auf das <strong>Teilen-Symbol</strong> (Quadrat mit Pfeil nach oben <span class="share-icon-preview">⬆️</span>).</li>
+            <li>Scrolle etwas herunter und wähle <strong>„Zum Home-Bildschirm“</strong> (<span class="plus-icon-preview">➕</span>).</li>
+            <li>Tippe oben rechts auf <strong>Hinzufügen</strong>.</li>
+          </ol>
+        </div>
+
+        <div class="offline-ready-badge">
+          ✅ <strong>Offline-Garantie:</strong> Nach der Installation kannst du die App jederzeit im Zug, Flugzeug oder ohne WLAN nutzen!
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- Scripts -->
   <script src="data.js"></script>
