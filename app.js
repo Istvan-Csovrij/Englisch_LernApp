@@ -723,3 +723,12 @@ document.addEventListener('DOMContentLoaded', () => {
   renderCurrentSpeech();
   renderCurrentCloze();
 });
+
+  // Service Worker Registration for Offline Support
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then((reg) => console.log('Service Worker registered for offline use:', reg.scope))
+        .catch((err) => console.log('Service Worker registration failed:', err));
+    });
+  }
