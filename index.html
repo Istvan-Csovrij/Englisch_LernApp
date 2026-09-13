@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0b0f19">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>FIAE & Business English Master | Englisch-Lern-App</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- App Header -->
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="brand">
+        <div class="brand-icon">🇬🇧</div>
+        <div>
+          <div class="brand-title">English Master</div>
+          <div class="brand-subtitle">FIAE AP 1 • Job • Alltag</div>
+        </div>
+      </div>
+      <div class="stats-badges">
+        <div class="badge xp" title="Gesamtpunkte (Erfahrungspunkte)">
+          ⭐ <span id="xpCount">0</span> XP
+        </div>
+        <div class="badge cards" title="Gekonnte Vokabeln">
+          ✅ <span id="masteredCount">0</span> / <span id="totalVocabCount">16</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Category Pills Filter -->
+  <div class="category-bar-wrapper">
+    <div class="category-bar" id="categoryBar">
+      <button class="cat-btn active" data-category="all">🌐 Alle Themen</button>
+      <button class="cat-btn" data-category="fiae">💻 FIAE AP 1 & IT</button>
+      <button class="cat-btn" data-category="business">💼 Job & Business</button>
+      <button class="cat-btn" data-category="conversation">💬 Smalltalk & Alltag</button>
+      <button class="cat-btn" data-category="travel">✈️ Urlaub & Reise</button>
+    </div>
+  </div>
+
+  <!-- Desktop Tab Navigation -->
+  <nav class="desktop-nav">
+    <button class="nav-tab-btn active" data-view="cards">🗂️ Karteikarten & Bilder</button>
+    <button class="nav-tab-btn" data-view="speech">🎙️ Sprech- & Hörtrainer</button>
+    <button class="nav-tab-btn" data-view="cloze">✏️ Lückentext-Trainer</button>
+    <button class="nav-tab-btn" data-view="glossary">📚 Wörterbuch & Statistik</button>
+  </nav>
+
+  <!-- Main Content Container -->
+  <main class="main-content">
+
+    <!-- ================= 1. FLASHCARD VIEW ================= -->
+    <section id="cardsView" class="view-section active">
+      <div class="flashcard-wrapper">
+        <div class="flashcard" id="mainFlashcard">
+          
+          <!-- Front Face -->
+          <div class="card-face card-front">
+            <div class="card-top-row">
+              <span class="card-category-tag" id="cardCategoryTag">FIAE AP 1</span>
+              <span class="card-counter" id="cardIndexIndicator">1 / 16</span>
+            </div>
+
+            <div class="card-visual" id="cardVisualIcon">
+              <!-- SVG inserted dynamically -->
+            </div>
+
+            <h2 class="card-main-word" id="cardEnglish">Requirements Specification</h2>
+            <div class="card-phonetic" id="cardPhonetic">ri-kweier-ments spe-si-fi-key-shun</div>
+
+            <button class="card-audio-btn" id="cardSpeakBtn">
+              🔊 Aussprache anhören
+            </button>
+
+            <div class="card-flip-hint">
+              🔄 Tippe zum Umdrehen für die deutsche Übersetzung
+            </div>
+          </div>
+
+          <!-- Back Face -->
+          <div class="card-face card-back">
+            <div class="back-title-row">
+              <span class="card-category-tag" id="cardBackTag">Deutsch</span>
+              <h3 class="back-german-word" id="cardGerman">Anforderungsspezifikation</h3>
+            </div>
+
+            <p class="back-definition" id="cardDefinition">
+              Genaue Beschreibung aller funktionalen Anforderungen...
+            </p>
+
+            <div class="back-example-box">
+              <div class="example-en" id="cardExampleEn">
+                The client approved the functional requirements specification.
+              </div>
+              <div class="example-de" id="cardExampleDe">
+                Der Kunde hat die funktionale Anforderungsspezifikation genehmigt.
+              </div>
+            </div>
+
+            <div class="card-flip-hint">
+              🔄 Tippe zum Zurückdrehen
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Action Buttons (Gekonnt / Wiederholen) -->
+      <div class="card-actions-row">
+        <button class="action-btn btn-repeat" id="btnMarkRepeat">
+          ❌ Nochmal üben
+        </button>
+        <button class="action-btn btn-mastered" id="btnMarkMastered">
+          ✅ Schon gekonnt (+10 XP)
+        </button>
+      </div>
+
+      <!-- Navigation Controls -->
+      <div class="card-nav-controls">
+        <button class="nav-icon-btn" id="btnPrevCard">⬅ Vorherige</button>
+        <button class="nav-icon-btn" id="btnFlipCard">🔄 Umdrehen</button>
+        <button class="nav-icon-btn" id="btnNextCard">Nächste ➡</button>
+      </div>
+
+      <div class="progress-bar-container">
+        <div class="progress-bar-fill" id="cardProgressBar"></div>
+      </div>
+    </section>
+
+    <!-- ================= 2. SPEECH TRAINER VIEW ================= -->
+    <section id="speechView" class="view-section">
+      <div class="trainer-card">
+        <span class="trainer-step-badge" id="speechCatBadge">FIAE AP 1 • Schritt 1: Anhören</span>
+        <h3 class="trainer-target-text" id="speechTargetSentence">I resolved the merge conflict in the git repository.</h3>
+        <p class="trainer-translation" id="speechTranslation">Ich habe den Merge-Konflikt im Git-Repository gelöst.</p>
+        <div class="trainer-phonetic" id="speechPhonetic">ai ri-solvd thö mördsh kon-flikt in thö git ri-po-si-to-ri.</div>
+
+        <div class="trainer-audio-controls">
+          <button class="btn-play-voice" id="btnPlaySpeechAudio">
+            🔊 Anhören
+          </button>
+          <select class="speed-select" id="voiceSpeedSelect">
+            <option value="1.0">⚡ Normal (1.0x)</option>
+            <option value="0.75" selected>🐢 Langsam (0.75x)</option>
+          </select>
+        </div>
+
+        <div class="mic-section">
+          <button class="mic-btn" id="btnStartRecord" title="Klicken und Satz nachsprechen">
+            🎙️
+          </button>
+          <div class="mic-status-text" id="micStatusText">
+            Klicke auf das Mikrofon und sprich den Satz auf Englisch nach!
+          </div>
+
+          <div class="recognized-box" id="recognizedBox">
+            <em>Erkannte Sprache erscheint hier...</em>
+          </div>
+
+          <div class="score-feedback" id="speechFeedback"></div>
+        </div>
+
+        <div class="card-nav-controls" style="margin-top: 18px;">
+          <button class="nav-icon-btn" id="btnPrevSpeech">⬅ Vorheriger Satz</button>
+          <button class="nav-icon-btn" id="btnNextSpeech">Nächster Satz ➡</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 3. CLOZE TEST VIEW ================= -->
+    <section id="clozeView" class="view-section">
+      <div class="cloze-card">
+        <span class="trainer-step-badge" id="clozeCatBadge">IHK AP 1 Frage</span>
+        <p class="cloze-question" id="clozeQuestionTitle">Welches Fachwort gehört in die Lücke?</p>
+
+        <div class="cloze-sentence-box">
+          <span id="clozeBefore">When two programmers change the same line, Git raises a merge</span>
+          <span class="cloze-blank" id="clozeBlankDisplay">[ _____ ]</span>
+          <span id="clozeAfter">.</span>
+        </div>
+
+        <div class="cloze-options-grid" id="clozeOptionsGrid">
+          <!-- 4 Multiple choice buttons generated dynamically -->
+        </div>
+
+        <button class="nav-icon-btn" id="btnToggleHint" style="width: 100%; margin-bottom: 12px;">
+          💡 Tipp anzeigen
+        </button>
+
+        <div class="hint-box" id="clozeHintBox">
+          Tipp: Auf Deutsch "Merge-Konflikt".
+        </div>
+
+        <div class="explanation-box" id="clozeExplanationBox">
+          <h4>Erklärung & Übersetzung:</h4>
+          <p id="clozeExplanationText"></p>
+        </div>
+
+        <div class="card-nav-controls">
+          <button class="nav-icon-btn" id="btnPrevCloze">⬅ Vorherige</button>
+          <button class="nav-icon-btn" id="btnNextCloze">Nächste Frage ➡</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 4. GLOSSARY & STATS VIEW ================= -->
+    <section id="glossaryView" class="view-section">
+      <div class="stats-summary-grid">
+        <div class="stat-card">
+          <div class="stat-number" id="statsTotalMastered">0</div>
+          <div class="stat-label">Gemeistert</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" id="statsTotalXP">0</div>
+          <div class="stat-label">Punkte (XP)</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" id="statsPercentage">0%</div>
+          <div class="stat-label">Fortschritt</div>
+        </div>
+      </div>
+
+      <input type="text" class="search-input" id="glossarySearchInput" placeholder="🔍 Suche nach Fachbegriff oder deutscher Übersetzung...">
+
+      <div class="glossary-list" id="glossaryList">
+        <!-- Rendered dynamically -->
+      </div>
+
+      <button class="nav-icon-btn" id="btnResetProgress" style="width: 100%; margin-top: 24px; color: #fca5a5; border-color: rgba(239, 68, 68, 0.4);">
+        🗑️ Lernfortschritt zurücksetzen
+      </button>
+    </section>
+
+  </main>
+
+  <!-- Mobile Bottom Navigation Bar -->
+  <nav class="bottom-nav">
+    <button class="bottom-tab-btn active" data-view="cards">
+      <span class="tab-icon">🗂️</span>
+      <span>Karten</span>
+    </button>
+    <button class="bottom-tab-btn" data-view="speech">
+      <span class="tab-icon">🎙️</span>
+      <span>Sprechen</span>
+    </button>
+    <button class="bottom-tab-btn" data-view="cloze">
+      <span class="tab-icon">✏️</span>
+      <span>Lücken</span>
+    </button>
+    <button class="bottom-tab-btn" data-view="glossary">
+      <span class="tab-icon">📚</span>
+      <span>Glossar</span>
+    </button>
+  </nav>
+
+  <!-- Floating Toast Message -->
+  <div class="toast-msg" id="toastMsg">Glückwunsch! +10 XP</div>
+
+  <!-- Scripts -->
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
