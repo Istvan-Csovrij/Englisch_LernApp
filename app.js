@@ -1,5 +1,5 @@
 // ============================================================
-// Hauptlogik: Englisch-LernApp (FIAE AP 1, Business & Alltag)
+// Hauptlogik: Englisch-LernApp mit erweitertem Aussprache-Coach
 // ============================================================
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -21,18 +21,55 @@ document.addEventListener('DOMContentLoaded', () => {
   let masteredCards = JSON.parse(localStorage.getItem('fiae_mastered_cards') || '[]');
   let userXP = parseInt(localStorage.getItem('fiae_user_xp') || '0', 10);
 
-  // --- AUDIO & SPEECH SYNTHESIS ---
+  // --- SOUND EFFECTS VIA WEB AUDIO API ---
+  function playSound(type) {
+    try {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) return;
+      const ctx = new AudioContext();
+
+      if (type === 'success') {
+        // C5, E5, G5 happy chord
+        [523.25, 659.25, 783.99].forEach((freq, idx) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.frequency.value = freq;
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          const startTime = ctx.currentTime + idx * 0.08;
+          gain.gain.setValueAtTime(0.12, startTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.25);
+          osc.start(startTime);
+          osc.stop(startTime + 0.26);
+        });
+      } else if (type === 'try-again') {
+        // Gentle boop
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.frequency.value = 240;
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        gain.gain.setValueAtTime(0.12, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.28);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.29);
+      }
+    } catch (e) {
+      console.warn('Audio effect not supported', e);
+    }
+  }
+
+  // --- AUDIO & SPEECH SYNTHESIS (VORLESEN) ---
   function speakEnglish(text, rate = 1.0) {
     if (!('speechSynthesis' in window)) {
       showToast('Sprachausgabe wird im Browser leider nicht unterstützt.');
       return;
     }
-    window.speechSynthesis.cancel(); // Stop any pending speech
+    window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'en-US';
     utterance.rate = rate;
     
-    // Select an English voice if available
     const voices = window.speechSynthesis.getVoices();
     const enVoice = voices.find(v => v.lang.startsWith('en') && (v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Samantha')));
     if (enVoice) {
@@ -41,17 +78,17 @@ document.addEventListener('DOMContentLoaded', () => {
     window.speechSynthesis.speak(utterance);
   }
 
-  // Pre-load voices
   if ('speechSynthesis' in window) {
     window.speechSynthesis.onvoiceschanged = () => {
       window.speechSynthesis.getVoices();
     };
   }
 
-  // --- SPEECH RECOGNITION (NACHSPRECHEN) ---
+  // --- SPEECH RECOGNITION (SPRACHE PRÜFEN & KONTROLLIEREN) ---
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   let recognition = null;
   let isRecording = false;
+  let activeMicTarget = 'speechTrainer'; // 'speechTrainer' or 'flashcard'
 
   if (SpeechRecognition) {
     recognition = new SpeechRecognition();
@@ -61,62 +98,159 @@ document.addEventListener('DOMContentLoaded', () => {
 
     recognition.onstart = () => {
       isRecording = true;
-      const micBtn = document.getElementById('btnStartRecord');
-      micBtn.classList.add('recording');
-      document.getElementById('micStatusText').textContent = '🔴 Ich höre zu... Bitte sprich jetzt!';
-      document.getElementById('recognizedBox').innerHTML = '<em>Höre zu...</em>';
+      if (activeMicTarget === 'speechTrainer') {
+        document.getElementById('btnStartRecord').classList.add('recording');
+        document.getElementById('audioWaves').classList.add('active');
+        document.getElementById('micStatusText').textContent = '🔴 Ich höre dir zu... Bitte sprich jetzt!';
+        document.getElementById('recognizedBox').innerHTML = '<em>Höre zu...</em>';
+        document.getElementById('spokenResultContainer').style.display = 'block';
+      } else if (activeMicTarget === 'flashcard') {
+        const cardMicBtn = document.getElementById('cardMicCheckBtn');
+        cardMicBtn.classList.add('recording');
+        cardMicBtn.textContent = '🔴 Höre zu...';
+        const cardFb = document.getElementById('cardPronounceFeedback');
+        cardFb.className = 'card-pronounce-feedback listening';
+        cardFb.textContent = '🔴 Höre zu... Bitte sprich das englische Wort jetzt aus!';
+      }
     };
 
     recognition.onresult = (event) => {
       const spokenText = event.results[0][0].transcript;
-      evaluateSpokenSentence(spokenText);
+      if (activeMicTarget === 'speechTrainer') {
+        evaluateSentencePronunciation(spokenText);
+      } else if (activeMicTarget === 'flashcard') {
+        evaluateFlashcardPronunciation(spokenText);
+      }
     };
 
     recognition.onerror = (event) => {
       isRecording = false;
-      const micBtn = document.getElementById('btnStartRecord');
-      micBtn.classList.remove('recording');
-      document.getElementById('micStatusText').textContent = '⚠️ Fehler bei der Aufnahme: ' + (event.error || 'Unbekannt');
+      stopAllRecordingUI();
+      if (event.error === 'not-allowed') {
+        showToast('⚠️ Mikrofon-Zugriff wurde im Browser blockiert.');
+      } else {
+        showToast('⚠️ Sprachaufnahme-Fehler: ' + event.error);
+      }
     };
 
     recognition.onend = () => {
       isRecording = false;
-      const micBtn = document.getElementById('btnStartRecord');
-      micBtn.classList.remove('recording');
-      if (document.getElementById('micStatusText').textContent.includes('höre zu')) {
-        document.getElementById('micStatusText').textContent = 'Aufnahme beendet. Klicke erneut zum Wiederholen.';
-      }
+      stopAllRecordingUI();
     };
   }
 
-  function evaluateSpokenSentence(spoken) {
+  function stopAllRecordingUI() {
+    const micBtn = document.getElementById('btnStartRecord');
+    if (micBtn) micBtn.classList.remove('recording');
+    const waves = document.getElementById('audioWaves');
+    if (waves) waves.classList.remove('active');
+    
+    const cardMicBtn = document.getElementById('cardMicCheckBtn');
+    if (cardMicBtn) {
+      cardMicBtn.classList.remove('recording');
+      cardMicBtn.textContent = '🎙️ Aussprache testen';
+    }
+  }
+
+  // --- AUSSPRACHE-BEWERTUNG IM SPRECHTRAINER (WORT FÜR WORT) ---
+  function evaluateSentencePronunciation(spoken) {
     const target = filteredSpeech[currentSpeechIndex].sentenceEn;
     const recognizedBox = document.getElementById('recognizedBox');
+    const wordChipsContainer = document.getElementById('wordChipsContainer');
     const feedbackBox = document.getElementById('speechFeedback');
     
-    recognizedBox.textContent = `Du hast gesagt: "${spoken}"`;
+    recognizedBox.textContent = `"${spoken}"`;
+    document.getElementById('spokenResultContainer').style.display = 'block';
 
-    // Calculate basic similarity
-    const cleanSpoken = spoken.toLowerCase().replace(/[^a-z0-9 ]/g, '').trim();
-    const cleanTarget = target.toLowerCase().replace(/[^a-z0-9 ]/g, '').trim();
+    // Normalize words
+    const cleanSpokenWords = spoken.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(Boolean);
+    const targetRawWords = target.split(/\s+/);
+    const cleanTargetWords = target.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(Boolean);
 
-    const targetWords = cleanTarget.split(' ');
-    const spokenWords = cleanSpoken.split(' ');
-    let matches = 0;
-    targetWords.forEach(w => {
-      if (spokenWords.includes(w)) matches++;
+    wordChipsContainer.innerHTML = '';
+    let matchCount = 0;
+
+    cleanTargetWords.forEach((targetWord, idx) => {
+      const originalWord = targetRawWords[idx] || targetWord;
+      const isMatched = cleanSpokenWords.includes(targetWord) || 
+        cleanSpokenWords.some(sw => Math.abs(sw.length - targetWord.length) <= 1 && (sw.includes(targetWord) || targetWord.includes(sw)));
+
+      const chip = document.createElement('div');
+      chip.className = `word-chip ${isMatched ? 'correct' : 'wrong'}`;
+      chip.innerHTML = `
+        ${isMatched ? '✅' : '❌'} ${originalWord}
+        <span class="chip-speaker" title="Dieses Wort anhören">🔊</span>
+      `;
+
+      chip.addEventListener('click', () => {
+        speakEnglish(originalWord, 0.8);
+        showToast(`Aussprache von "${originalWord}" wird vorgespielt`);
+      });
+
+      wordChipsContainer.appendChild(chip);
+      if (isMatched) matchCount++;
     });
-    const matchPercentage = Math.round((matches / targetWords.length) * 100);
+
+    const scorePct = Math.round((matchCount / cleanTargetWords.length) * 100);
 
     feedbackBox.className = 'score-feedback';
-    if (matchPercentage >= 70) {
+    if (scorePct >= 80) {
       feedbackBox.classList.add('good');
-      feedbackBox.innerHTML = `🎉 Hervorragend ausgesprochen! (${matchPercentage}% Treffer)<br><strong>+15 XP</strong> gutgeschrieben!`;
-      addXP(15);
-      showToast('🎉 Super Aussprache! +15 XP');
+      feedbackBox.innerHTML = `
+        <strong>🏆 Ausgezeichnete Aussprache! (${scorePct}% Treffer)</strong><br>
+        Sehr deutlich gesprochen. Du hast <strong>+20 XP</strong> erhalten!
+      `;
+      playSound('success');
+      addXP(20);
+      showToast('🎉 Perfekt ausgesprochen! +20 XP');
+    } else if (scorePct >= 50) {
+      feedbackBox.classList.add('good');
+      feedbackBox.innerHTML = `
+        <strong>👍 Guter Versuch! (${scorePct}% Treffer)</strong><br>
+        Schon gut verständlich! Klicke oben auf die rot markierten Wörter (❌), um sie dir noch einmal isoliert anzuhören.
+      `;
+      playSound('success');
+      addXP(10);
+      showToast('👍 Guter Versuch! +10 XP');
     } else {
       feedbackBox.classList.add('try-again');
-      feedbackBox.innerHTML = `👍 Guter Versuch! (${matchPercentage}% Treffer)<br>Tipp: Höre es dir noch einmal langsam an und probiere es erneut.`;
+      feedbackBox.innerHTML = `
+        <strong>🔄 Nochmal probieren! (${scorePct}% Treffer)</strong><br>
+        Tipp: Klicke auf die roten Wörter (❌), um die richtige Betonung zu hören, und sprich den Satz dann noch einmal langsam nach!
+      `;
+      playSound('try-again');
+      showToast('Nochmal versuchen – Klicke auf die roten Wörter!');
+    }
+  }
+
+  // --- AUSSPRACHE-BEWERTUNG DIREKT AUF DER KARTEIKARTE ---
+  function evaluateFlashcardPronunciation(spoken) {
+    const card = filteredVocab[currentCardIndex];
+    const target = card.english;
+    const cardFb = document.getElementById('cardPronounceFeedback');
+
+    const cleanSpoken = spoken.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim();
+    const cleanTarget = target.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim();
+
+    const isMatch = cleanSpoken === cleanTarget || cleanSpoken.includes(cleanTarget) || cleanTarget.includes(cleanSpoken);
+
+    if (isMatch) {
+      cardFb.className = 'card-pronounce-feedback success';
+      cardFb.innerHTML = `🎉 <strong>Perfekt ausgesprochen!</strong> Du hast gesagt: <em>"${spoken}"</em> (+10 XP)`;
+      playSound('success');
+      addXP(10);
+      showToast('🎉 Aussprache korrekt! +10 XP');
+
+      if (!masteredCards.includes(card.id)) {
+        masteredCards.push(card.id);
+        localStorage.setItem('fiae_mastered_cards', JSON.stringify(masteredCards));
+        updateStatsBadges();
+      }
+    } else {
+      cardFb.className = 'card-pronounce-feedback wrong';
+      cardFb.innerHTML = `⚠️ Gehört: <em>"${spoken}"</em><br>Tippe auf <strong>🔊 Anhören</strong> und probiere es nochmal!`;
+      playSound('try-again');
+      showToast('Aussprache noch nicht ganz richtig');
     }
   }
 
@@ -132,7 +266,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('masteredCount').textContent = masteredCards.length;
     document.getElementById('totalVocabCount').textContent = VOCAB_DATA.length;
     
-    // In Stats View
     const totalM = document.getElementById('statsTotalMastered');
     const totalX = document.getElementById('statsTotalXP');
     const pct = document.getElementById('statsPercentage');
@@ -150,7 +283,7 @@ document.addEventListener('DOMContentLoaded', () => {
     toast.classList.add('show');
     setTimeout(() => {
       toast.classList.remove('show');
-    }, 2400);
+    }, 2500);
   }
 
   // --- VIEW SWITCHING ---
@@ -185,7 +318,6 @@ document.addEventListener('DOMContentLoaded', () => {
       b.classList.toggle('active', b.dataset.category === catId);
     });
 
-    // Filter Vocab
     if (catId === 'all') {
       filteredVocab = [...VOCAB_DATA];
       filteredSpeech = [...SPEECH_DATA];
@@ -216,10 +348,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const flashcardEl = document.getElementById('mainFlashcard');
 
   function renderCurrentCard() {
-    if (filteredVocab.length === 0) {
-      document.getElementById('cardEnglish').textContent = 'Keine Vokabeln in dieser Kategorie';
-      return;
-    }
+    if (filteredVocab.length === 0) return;
     const card = filteredVocab[currentCardIndex];
     isCardFlipped = false;
     flashcardEl.classList.remove('flipped');
@@ -230,21 +359,22 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('cardEnglish').textContent = card.english;
     document.getElementById('cardPhonetic').textContent = card.phonetic;
 
+    const cardFb = document.getElementById('cardPronounceFeedback');
+    cardFb.style.display = 'none';
+    cardFb.className = 'card-pronounce-feedback';
+
     // Back
     document.getElementById('cardGerman').textContent = card.german;
     document.getElementById('cardDefinition').textContent = card.definition;
     document.getElementById('cardExampleEn').textContent = card.exampleEn;
     document.getElementById('cardExampleDe').textContent = card.exampleDe;
 
-    // Progress Bar
     const pct = ((currentCardIndex + 1) / filteredVocab.length) * 100;
     document.getElementById('cardProgressBar').style.width = pct + '%';
 
-    // Buttons
     document.getElementById('btnPrevCard').disabled = currentCardIndex === 0;
     document.getElementById('btnNextCard').disabled = currentCardIndex === filteredVocab.length - 1;
 
-    // Is already mastered?
     const isMastered = masteredCards.includes(card.id);
     const masterBtn = document.getElementById('btnMarkMastered');
     if (isMastered) {
@@ -262,8 +392,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   flashcardEl.addEventListener('click', (e) => {
-    // Avoid flipping when clicking the audio button
-    if (e.target.closest('#cardSpeakBtn')) return;
+    if (e.target.closest('#cardSpeakBtn') || e.target.closest('#cardMicCheckBtn')) return;
     flipCard();
   });
 
@@ -273,6 +402,30 @@ document.addEventListener('DOMContentLoaded', () => {
     e.stopPropagation();
     const card = filteredVocab[currentCardIndex];
     speakEnglish(card.english, 0.9);
+  });
+
+  // Direct pronunciation check on Flashcard
+  document.getElementById('cardMicCheckBtn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (!recognition) {
+      const card = filteredVocab[currentCardIndex];
+      const userSpoke = prompt(`Spracherkennung wird von diesem Browser eingeschränkt.\nBitte sprich das englische Wort laut aus:\n"${card.english}"\n\nDrücke danach OK zur Bestätigung:`);
+      if (userSpoke !== null) {
+        evaluateFlashcardPronunciation(card.english);
+      }
+      return;
+    }
+
+    if (isRecording) {
+      recognition.stop();
+    } else {
+      activeMicTarget = 'flashcard';
+      try {
+        recognition.start();
+      } catch (err) {
+        console.error('Speech recognition error:', err);
+      }
+    }
   });
 
   document.getElementById('btnPrevCard').addEventListener('click', () => {
@@ -295,6 +448,7 @@ document.addEventListener('DOMContentLoaded', () => {
       masteredCards.push(card.id);
       localStorage.setItem('fiae_mastered_cards', JSON.stringify(masteredCards));
       addXP(10);
+      playSound('success');
       showToast('🎉 Vokabel gemeistert! +10 XP');
     } else {
       showToast('Diese Karte hast du bereits gemeistert!');
@@ -312,38 +466,19 @@ document.addEventListener('DOMContentLoaded', () => {
     updateStatsBadges();
   });
 
-  // Mobile Swipe Gesture on Flashcard
-  let touchStartX = 0;
-  flashcardEl.addEventListener('touchstart', (e) => {
-    touchStartX = e.changedTouches[0].screenX;
-  }, { passive: true });
-
-  flashcardEl.addEventListener('touchend', (e) => {
-    const touchEndX = e.changedTouches[0].screenX;
-    const diff = touchEndX - touchStartX;
-    if (Math.abs(diff) > 60) {
-      if (diff < 0 && currentCardIndex < filteredVocab.length - 1) {
-        currentCardIndex++;
-        renderCurrentCard();
-      } else if (diff > 0 && currentCardIndex > 0) {
-        currentCardIndex--;
-        renderCurrentCard();
-      }
-    }
-  }, { passive: true });
-
-  // --- SPEECH TRAINER LOGIC ---
+  // --- SPEECH TRAINER & COACH LOGIC ---
   function renderCurrentSpeech() {
     if (filteredSpeech.length === 0) return;
     const sp = filteredSpeech[currentSpeechIndex];
 
-    document.getElementById('speechCatBadge').textContent = `${sp.categoryName} • Satz ${currentSpeechIndex + 1} von ${filteredSpeech.length}`;
+    document.getElementById('speechCatBadge').textContent = `${sp.categoryName} • Aussprache-Kontrolle`;
+    document.getElementById('speechCounterBadge').textContent = `${currentSpeechIndex + 1} / ${filteredSpeech.length}`;
     document.getElementById('speechTargetSentence').textContent = sp.sentenceEn;
     document.getElementById('speechTranslation').textContent = sp.sentenceDe;
     document.getElementById('speechPhonetic').textContent = sp.phonetic;
 
-    document.getElementById('micStatusText').textContent = 'Klicke auf das Mikrofon und sprich den Satz auf Englisch nach!';
-    document.getElementById('recognizedBox').innerHTML = '<em>Erkannte Sprache erscheint hier...</em>';
+    document.getElementById('micStatusText').textContent = 'Klicke auf das Mikrofon, sprich den Satz und lass deine Aussprache kontrollieren!';
+    document.getElementById('spokenResultContainer').style.display = 'none';
     document.getElementById('speechFeedback').className = 'score-feedback';
     document.getElementById('speechFeedback').style.display = 'none';
 
@@ -359,11 +494,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('btnStartRecord').addEventListener('click', () => {
     if (!recognition) {
-      // Fallback for browsers without Web Speech Recognition (or file:// restrictions)
       const target = filteredSpeech[currentSpeechIndex].sentenceEn;
-      const userSpoke = prompt(`Spracherkennung wird von diesem Browser eingeschränkt.\nBitte tippe oder lies den englischen Satz laut vor:\n"${target}"\n\nWenn du ihn laut gesprochen hast, drücke OK:`);
+      const userSpoke = prompt(`Spracherkennung wird von diesem Browser eingeschränkt.\nBitte sprich den englischen Satz laut aus:\n"${target}"\n\nDrücke danach OK zur Auswertung:`);
       if (userSpoke !== null) {
-        evaluateSpokenSentence(target);
+        evaluateSentencePronunciation(target);
       }
       return;
     }
@@ -371,6 +505,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (isRecording) {
       recognition.stop();
     } else {
+      activeMicTarget = 'speechTrainer';
       try {
         recognition.start();
       } catch (err) {
@@ -393,6 +528,28 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  // Custom Sentence Test
+  document.getElementById('btnSetCustomSentence').addEventListener('click', () => {
+    const input = document.getElementById('customSentenceInput').value.trim();
+    if (!input) {
+      showToast('Bitte gib zuerst einen englischen Satz ein!');
+      return;
+    }
+    const customItem = {
+      id: 'custom-' + Date.now(),
+      category: 'custom',
+      categoryName: 'Eigener Satz',
+      sentenceEn: input,
+      sentenceDe: 'Freie Eingabe',
+      phonetic: 'Individuelle Übung'
+    };
+    filteredSpeech.unshift(customItem);
+    currentSpeechIndex = 0;
+    renderCurrentSpeech();
+    speakEnglish(input, 0.9);
+    showToast('Eigener Satz geladen! Klicke jetzt auf das Mikrofon zum Üben.');
+  });
+
   // --- CLOZE TEST LOGIC ---
   function renderCurrentCloze() {
     if (filteredCloze.length === 0) return;
@@ -409,7 +566,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('clozeHintBox').textContent = '💡 ' + cl.hint;
     document.getElementById('clozeExplanationBox').style.display = 'none';
 
-    // Render options
     const optionsGrid = document.getElementById('clozeOptionsGrid');
     optionsGrid.innerHTML = '';
 
@@ -437,6 +593,7 @@ document.addEventListener('DOMContentLoaded', () => {
       buttonEl.classList.add('correct');
       blank.style.color = '#34d399';
       addXP(10);
+      playSound('success');
       showToast('🎉 Richtig beantwortet! +10 XP');
       speakEnglish(cl.correctAnswer, 0.9);
     } else {
@@ -447,10 +604,10 @@ document.addEventListener('DOMContentLoaded', () => {
           b.classList.add('correct');
         }
       });
+      playSound('try-again');
       showToast('Leider falsch. Sieh dir die Erklärung an!');
     }
 
-    // Show Explanation
     const explBox = document.getElementById('clozeExplanationBox');
     document.getElementById('clozeExplanationText').textContent = cl.explanation;
     explBox.style.display = 'block';
@@ -511,7 +668,9 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
           <div class="item-de">${item.german}</div>
         </div>
-        <button class="item-audio-btn" title="Aussprache anhören">🔊</button>
+        <div class="item-actions">
+          <button class="item-audio-btn" title="Aussprache anhören">🔊</button>
+        </div>
       `;
 
       div.querySelector('.item-audio-btn').addEventListener('click', () => {

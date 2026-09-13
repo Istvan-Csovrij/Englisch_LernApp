@@ -1,5 +1,5 @@
 /* ============================================================
-   Modern Mobile-First Responsive Stylesheet
+   Modern Mobile-First Responsive Stylesheet with Pronunciation Coach
    Englisch-LernApp: Fachinformatiker AP 1, Business & Alltag
    ============================================================ */
 
@@ -14,8 +14,9 @@
   --primary-hover: #4f46e5;
   --primary-glow: rgba(99, 102, 241, 0.25);
   --accent: #06b6d4;
+  --accent-glow: rgba(6, 182, 212, 0.25);
   --success: #10b981;
-  --success-glow: rgba(16, 185, 129, 0.2);
+  --success-glow: rgba(16, 185, 129, 0.25);
   --danger: #ef4444;
   --warning: #f59e0b;
   --border: #334155;
@@ -213,7 +214,7 @@ body {
 /* Main Container */
 .main-content {
   flex: 1;
-  max-width: 720px;
+  max-width: 760px;
   width: 100%;
   margin: 0 auto;
   padding: 14px 16px;
@@ -234,16 +235,16 @@ body {
 }
 
 /* ============================================================
-   1. FLASHCARD COMPONENT (3D Flip)
+   1. FLASHCARD COMPONENT (3D Flip & Direct Pronunciation Test)
    ============================================================ */
 .flashcard-wrapper {
   perspective: 1200px;
-  margin: 10px 0 20px;
+  margin: 10px 0 16px;
 }
 
 .flashcard {
   width: 100%;
-  min-height: 380px;
+  min-height: 420px;
   position: relative;
   transform-style: preserve-3d;
   transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
@@ -263,7 +264,7 @@ body {
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
   border-radius: var(--radius-lg);
-  padding: 24px;
+  padding: 22px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -304,9 +305,9 @@ body {
 }
 
 .card-visual {
-  width: 76px;
-  height: 76px;
-  margin: 8px auto;
+  width: 72px;
+  height: 72px;
+  margin: 6px auto;
   border-radius: 20px;
   background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(6, 182, 212, 0.15));
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -317,12 +318,12 @@ body {
 }
 
 .card-visual svg {
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
 }
 
 .card-main-word {
-  font-size: 1.55rem;
+  font-size: 1.5rem;
   font-weight: 800;
   text-align: center;
   margin-top: 4px;
@@ -339,31 +340,95 @@ body {
   margin-top: 4px;
 }
 
-.card-audio-btn {
-  background: var(--primary);
-  color: #fff;
-  border: none;
-  border-radius: 30px;
-  padding: 10px 22px;
-  font-size: 0.95rem;
-  font-weight: 600;
+/* Card Button Row (Listen + Pronunciation Check) */
+.card-audio-controls-row {
+  display: flex;
+  gap: 10px;
   margin: 12px auto 0;
+  width: 100%;
+  max-width: 440px;
+}
+
+.card-audio-btn {
+  flex: 1;
+  background: var(--bg-surface);
+  color: #fff;
+  border: 1px solid var(--border-light);
+  border-radius: 30px;
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  gap: 6px;
   transition: all 0.2s ease;
-  box-shadow: 0 4px 14px var(--primary-glow);
 }
 
 .card-audio-btn:hover {
-  background: var(--primary-hover);
-  transform: translateY(-2px);
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.card-mic-btn {
+  flex: 1;
+  background: linear-gradient(135deg, var(--accent), #0284c7);
+  color: #fff;
+  border: none;
+  border-radius: 30px;
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px var(--accent-glow);
+}
+
+.card-mic-btn.recording {
+  background: var(--danger);
+  animation: pulseMic 1.2s infinite;
+}
+
+/* Pronunciation feedback on card */
+.card-pronounce-feedback {
+  margin-top: 10px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 0.82rem;
+  text-align: center;
+  font-weight: 600;
+  display: none;
+}
+
+.card-pronounce-feedback.success {
+  display: block;
+  background: rgba(16, 185, 129, 0.2);
+  color: #6ee7b7;
+  border: 1px solid rgba(16, 185, 129, 0.4);
+}
+
+.card-pronounce-feedback.wrong {
+  display: block;
+  background: rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
+.card-pronounce-feedback.listening {
+  display: block;
+  background: rgba(6, 182, 212, 0.2);
+  color: #67e8f9;
+  border: 1px dashed var(--accent);
 }
 
 .card-flip-hint {
   text-align: center;
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   color: var(--text-muted);
   margin-top: auto;
   opacity: 0.8;
@@ -372,12 +437,12 @@ body {
 /* Card Back specifics */
 .back-title-row {
   border-bottom: 1px solid var(--border-light);
-  padding-bottom: 12px;
-  margin-bottom: 12px;
+  padding-bottom: 10px;
+  margin-bottom: 10px;
 }
 
 .back-german-word {
-  font-size: 1.35rem;
+  font-size: 1.3rem;
   font-weight: 700;
   color: #38bdf8;
 }
@@ -402,7 +467,7 @@ body {
 }
 
 .example-en {
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   font-weight: 600;
   color: #fff;
   margin-bottom: 6px;
@@ -410,7 +475,7 @@ body {
 }
 
 .example-de {
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   color: var(--text-muted);
   line-height: 1.4;
 }
@@ -419,14 +484,14 @@ body {
 .card-actions-row {
   display: flex;
   gap: 10px;
-  margin-top: 14px;
+  margin-top: 12px;
 }
 
 .action-btn {
   flex: 1;
   padding: 12px;
   border-radius: var(--radius-md);
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   font-weight: 600;
   border: 1px solid var(--border-light);
   cursor: pointer;
@@ -459,18 +524,18 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 14px;
+  margin-top: 12px;
 }
 
 .nav-icon-btn {
   background: var(--bg-card);
   border: 1px solid var(--border-light);
   color: var(--text-main);
-  padding: 10px 18px;
+  padding: 10px 16px;
   border-radius: var(--radius-md);
   cursor: pointer;
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   transition: all 0.2s;
 }
 
@@ -488,7 +553,7 @@ body {
   height: 6px;
   background: var(--bg-surface);
   border-radius: 10px;
-  margin-top: 16px;
+  margin-top: 14px;
   overflow: hidden;
 }
 
@@ -500,7 +565,7 @@ body {
 }
 
 /* ============================================================
-   2. SPEECH & REPETITION TRAINER
+   2. SPEECH & PRONUNCIATION COACH (Detaillierte Analyse)
    ============================================================ */
 .trainer-card {
   background: var(--bg-card);
@@ -510,6 +575,13 @@ body {
   box-shadow: var(--shadow);
 }
 
+.trainer-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
 .trainer-step-badge {
   display: inline-block;
   font-size: 0.75rem;
@@ -517,7 +589,6 @@ body {
   color: var(--accent);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  margin-bottom: 8px;
 }
 
 .trainer-target-text {
@@ -549,7 +620,7 @@ body {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 20px;
+  margin-bottom: 18px;
 }
 
 .btn-play-voice {
@@ -558,7 +629,7 @@ body {
   border: none;
   padding: 10px 20px;
   border-radius: 30px;
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   font-weight: 600;
   cursor: pointer;
   display: flex;
@@ -577,13 +648,14 @@ body {
   cursor: pointer;
 }
 
+/* Pronunciation Mic & Live Analysis Section */
 .mic-section {
   background: rgba(0, 0, 0, 0.25);
   border: 1px dashed var(--border);
   border-radius: var(--radius-md);
-  padding: 24px 16px;
+  padding: 22px 16px;
   text-align: center;
-  margin-top: 16px;
+  margin-top: 14px;
 }
 
 .mic-btn {
@@ -621,27 +693,116 @@ body {
   margin-bottom: 8px;
 }
 
+/* Real-time audio waveform bar */
+.audio-waves {
+  display: none;
+  justify-content: center;
+  gap: 4px;
+  height: 24px;
+  margin: 10px auto;
+}
+
+.audio-waves.active {
+  display: flex;
+}
+
+.wave-bar {
+  width: 4px;
+  background: var(--accent);
+  border-radius: 4px;
+  animation: waveAnim 0.8s ease-in-out infinite alternate;
+}
+.wave-bar:nth-child(2) { animation-delay: 0.15s; }
+.wave-bar:nth-child(3) { animation-delay: 0.3s; }
+.wave-bar:nth-child(4) { animation-delay: 0.45s; }
+.wave-bar:nth-child(5) { animation-delay: 0.6s; }
+
+@keyframes waveAnim {
+  0% { height: 6px; }
+  100% { height: 24px; }
+}
+
+/* Spoken Result & Word-by-word Breakdown */
+.spoken-result-container {
+  margin-top: 14px;
+  text-align: left;
+}
+
+.spoken-transcript-title {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
 .recognized-box {
   background: var(--bg-card);
   border: 1px solid var(--border-light);
   padding: 12px;
   border-radius: 10px;
-  margin-top: 14px;
-  min-height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   font-size: 0.95rem;
   color: #e2e8f0;
+  margin-bottom: 12px;
+}
+
+/* Word Breakdown Chips */
+.word-analysis-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--accent);
+  margin: 10px 0 6px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.word-chips-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.word-chip {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.word-chip:hover {
+  transform: translateY(-2px);
+}
+
+.word-chip.correct {
+  background: rgba(16, 185, 129, 0.2);
+  color: #6ee7b7;
+  border: 1px solid rgba(16, 185, 129, 0.4);
+}
+
+.word-chip.wrong {
+  background: rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
+.word-chip .chip-speaker {
+  font-size: 12px;
+  opacity: 0.7;
 }
 
 .score-feedback {
-  margin-top: 14px;
-  padding: 12px;
+  margin-top: 12px;
+  padding: 14px;
   border-radius: 10px;
   font-size: 0.95rem;
   font-weight: 600;
   display: none;
+  text-align: left;
 }
 
 .score-feedback.good {
@@ -656,6 +817,52 @@ body {
   background: rgba(239, 68, 68, 0.15);
   color: #f87171;
   border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+/* Custom Speech Practice Box */
+.custom-practice-accordion {
+  margin-top: 24px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 16px;
+}
+
+.custom-practice-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.custom-input-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.custom-text-input {
+  flex: 1;
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  color: #fff;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+}
+
+.btn-custom-test {
+  background: var(--accent);
+  color: #0b0f19;
+  border: none;
+  font-weight: 700;
+  padding: 10px 16px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  white-space: nowrap;
 }
 
 /* ============================================================
@@ -867,7 +1074,12 @@ body {
   margin-left: 6px;
 }
 
-.item-audio-btn {
+.item-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.item-audio-btn, .item-mic-btn {
   background: var(--bg-surface);
   border: 1px solid var(--border-light);
   color: #fff;
@@ -884,6 +1096,11 @@ body {
 
 .item-audio-btn:hover {
   background: var(--primary);
+}
+
+.item-mic-btn:hover {
+  background: var(--accent);
+  color: #0b0f19;
 }
 
 /* ============================================================
@@ -906,7 +1123,7 @@ body {
 
 @media (min-width: 641px) {
   .bottom-nav {
-    display: none; /* Hide bottom nav on desktop, use top desktop-nav */
+    display: none;
   }
   body {
     padding-bottom: 20px;

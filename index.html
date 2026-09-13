@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#0b0f19">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>FIAE & Business English Master | Englisch-Lern-App</title>
+  <title>FIAE & Business English Master | Englisch-Lern-App mit Aussprache-Coach</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -18,7 +18,7 @@
         <div class="brand-icon">🇬🇧</div>
         <div>
           <div class="brand-title">English Master</div>
-          <div class="brand-subtitle">FIAE AP 1 • Job • Alltag</div>
+          <div class="brand-subtitle">FIAE AP 1 • Aussprache-Coach • Business</div>
         </div>
       </div>
       <div class="stats-badges">
@@ -46,7 +46,7 @@
   <!-- Desktop Tab Navigation -->
   <nav class="desktop-nav">
     <button class="nav-tab-btn active" data-view="cards">🗂️ Karteikarten & Bilder</button>
-    <button class="nav-tab-btn" data-view="speech">🎙️ Sprech- & Hörtrainer</button>
+    <button class="nav-tab-btn" data-view="speech">🎙️ Aussprache-Coach & Sprechen</button>
     <button class="nav-tab-btn" data-view="cloze">✏️ Lückentext-Trainer</button>
     <button class="nav-tab-btn" data-view="glossary">📚 Wörterbuch & Statistik</button>
   </nav>
@@ -73,12 +73,21 @@
             <h2 class="card-main-word" id="cardEnglish">Requirements Specification</h2>
             <div class="card-phonetic" id="cardPhonetic">ri-kweier-ments spe-si-fi-key-shun</div>
 
-            <button class="card-audio-btn" id="cardSpeakBtn">
-              🔊 Aussprache anhören
-            </button>
+            <!-- Front Action Row: Listen + Check My Pronunciation -->
+            <div class="card-audio-controls-row">
+              <button class="card-audio-btn" id="cardSpeakBtn" title="Aussprache anhören">
+                🔊 Anhören
+              </button>
+              <button class="card-mic-btn" id="cardMicCheckBtn" title="Sprich das Wort und lass deine Aussprache prüfen">
+                🎙️ Aussprache testen
+              </button>
+            </div>
+
+            <!-- Instant Feedback on the Card -->
+            <div class="card-pronounce-feedback" id="cardPronounceFeedback"></div>
 
             <div class="card-flip-hint">
-              🔄 Tippe zum Umdrehen für die deutsche Übersetzung
+              🔄 Tippe zum Umdrehen für deutsche Erklärung & Beispielsatz
             </div>
           </div>
 
@@ -132,17 +141,21 @@
       </div>
     </section>
 
-    <!-- ================= 2. SPEECH TRAINER VIEW ================= -->
+    <!-- ================= 2. SPEECH & PRONUNCIATION COACH VIEW ================= -->
     <section id="speechView" class="view-section">
       <div class="trainer-card">
-        <span class="trainer-step-badge" id="speechCatBadge">FIAE AP 1 • Schritt 1: Anhören</span>
+        <div class="trainer-header-row">
+          <span class="trainer-step-badge" id="speechCatBadge">FIAE AP 1 • Aussprache-Kontrolle</span>
+          <span class="card-counter" id="speechCounterBadge">1 / 8</span>
+        </div>
+
         <h3 class="trainer-target-text" id="speechTargetSentence">I resolved the merge conflict in the git repository.</h3>
         <p class="trainer-translation" id="speechTranslation">Ich habe den Merge-Konflikt im Git-Repository gelöst.</p>
         <div class="trainer-phonetic" id="speechPhonetic">ai ri-solvd thö mördsh kon-flikt in thö git ri-po-si-to-ri.</div>
 
         <div class="trainer-audio-controls">
           <button class="btn-play-voice" id="btnPlaySpeechAudio">
-            🔊 Anhören
+            🔊 Satz anhören
           </button>
           <select class="speed-select" id="voiceSpeedSelect">
             <option value="1.0">⚡ Normal (1.0x)</option>
@@ -150,16 +163,39 @@
           </select>
         </div>
 
+        <!-- Mic Section with Audio Waveform -->
         <div class="mic-section">
           <button class="mic-btn" id="btnStartRecord" title="Klicken und Satz nachsprechen">
             🎙️
           </button>
           <div class="mic-status-text" id="micStatusText">
-            Klicke auf das Mikrofon und sprich den Satz auf Englisch nach!
+            Klicke auf das Mikrofon, sprich den Satz und lass deine Aussprache kontrollieren!
           </div>
 
-          <div class="recognized-box" id="recognizedBox">
-            <em>Erkannte Sprache erscheint hier...</em>
+          <!-- Animated sound waves while listening -->
+          <div class="audio-waves" id="audioWaves">
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+          </div>
+
+          <!-- Spoken Transcript & Word Breakdown -->
+          <div class="spoken-result-container" id="spokenResultContainer" style="display: none;">
+            <div class="spoken-transcript-title">Erkannte Sprache:</div>
+            <div class="recognized-box" id="recognizedBox">
+              <em>Erkannte Sprache erscheint hier...</em>
+            </div>
+
+            <!-- Word-by-word highlight chips -->
+            <div class="word-analysis-title">
+              <span>Wort-für-Wort Aussprache-Bewertung:</span>
+              <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal;">(Klicke auf rote Wörter zum Anhören)</span>
+            </div>
+            <div class="word-chips-container" id="wordChipsContainer">
+              <!-- Chips injected dynamically -->
+            </div>
           </div>
 
           <div class="score-feedback" id="speechFeedback"></div>
@@ -169,6 +205,21 @@
           <button class="nav-icon-btn" id="btnPrevSpeech">⬅ Vorheriger Satz</button>
           <button class="nav-icon-btn" id="btnNextSpeech">Nächster Satz ➡</button>
         </div>
+
+        <!-- Custom Sentence Pronunciation Checker -->
+        <div class="custom-practice-accordion">
+          <div class="custom-practice-title">
+            <span>✨ Beliebigen eigenen Satz oder Begriff prüfen</span>
+          </div>
+          <p style="font-size: 0.8rem; color: var(--text-muted);">
+            Tippe einen englischen Begriff oder Satz ein, den du üben möchtest:
+          </p>
+          <div class="custom-input-row">
+            <input type="text" id="customSentenceInput" class="custom-text-input" placeholder="z. B. We need to deploy the application...">
+            <button id="btnSetCustomSentence" class="btn-custom-test">Laden & Üben</button>
+          </div>
+        </div>
+
       </div>
     </section>
 
@@ -246,7 +297,7 @@
     </button>
     <button class="bottom-tab-btn" data-view="speech">
       <span class="tab-icon">🎙️</span>
-      <span>Sprechen</span>
+      <span>Coach</span>
     </button>
     <button class="bottom-tab-btn" data-view="cloze">
       <span class="tab-icon">✏️</span>
