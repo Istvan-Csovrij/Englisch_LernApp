@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#0b0f19">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>FIAE & Business English Master | Englisch-Lern-App mit Aussprache-Coach</title>
+  <title>FIAE & Business English Master | Englisch-Lern-App</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -18,7 +18,7 @@
         <div class="brand-icon">🇬🇧</div>
         <div>
           <div class="brand-title">English Master</div>
-          <div class="brand-subtitle">FIAE AP 1 • Aussprache-Coach • Business</div>
+          <div class="brand-subtitle">FIAE AP 1 • Coach • Business</div>
         </div>
       </div>
       <div class="stats-badges">
@@ -32,7 +32,7 @@
     </div>
   </header>
 
-  <!-- Category Pills Filter -->
+  <!-- Category Pills Filter Bar (Horizontally Scrollable) -->
   <div class="category-bar-wrapper">
     <div class="category-bar" id="categoryBar">
       <button class="cat-btn active" data-category="all">🌐 Alle Themen</button>
@@ -87,7 +87,7 @@
             <div class="card-pronounce-feedback" id="cardPronounceFeedback"></div>
 
             <div class="card-flip-hint">
-              🔄 Tippe zum Umdrehen für deutsche Erklärung & Beispielsatz
+              🔄 Tippe zum Umdrehen für deutsche Übersetzung
             </div>
           </div>
 
@@ -122,18 +122,19 @@
       <!-- Action Buttons (Gekonnt / Wiederholen) -->
       <div class="card-actions-row">
         <button class="action-btn btn-repeat" id="btnMarkRepeat">
-          ❌ Nochmal üben
+          ❌ Nochmal
         </button>
         <button class="action-btn btn-mastered" id="btnMarkMastered">
-          ✅ Schon gekonnt (+10 XP)
+          ✅ Gekonnt (+10 XP)
         </button>
       </div>
 
-      <!-- Navigation Controls -->
+      <!-- FIXED NAVIGATION CONTROLS WITH SKIP (ÜBERSPRINGEN) -->
       <div class="card-nav-controls">
-        <button class="nav-icon-btn" id="btnPrevCard">⬅ Vorherige</button>
-        <button class="nav-icon-btn" id="btnFlipCard">🔄 Umdrehen</button>
-        <button class="nav-icon-btn" id="btnNextCard">Nächste ➡</button>
+        <button class="nav-icon-btn" id="btnPrevCard" title="Vorherige Karte">⬅ Zurück</button>
+        <button class="nav-icon-btn" id="btnFlipCard" title="Karte umdrehen">🔄 Drehen</button>
+        <button class="nav-icon-btn" id="btnNextCard" title="Nächste Karte">Weiter ➡</button>
+        <button class="nav-icon-btn btn-skip" id="btnSkipCard" title="Diese Karte überspringen">⏭️ Skip</button>
       </div>
 
       <div class="progress-bar-container">
@@ -145,7 +146,7 @@
     <section id="speechView" class="view-section">
       <div class="trainer-card">
         <div class="trainer-header-row">
-          <span class="trainer-step-badge" id="speechCatBadge">FIAE AP 1 • Aussprache-Kontrolle</span>
+          <span class="trainer-step-badge" id="speechCatBadge">FIAE AP 1 • Aussprache-Coach</span>
           <span class="card-counter" id="speechCounterBadge">1 / 8</span>
         </div>
 
@@ -155,7 +156,7 @@
 
         <div class="trainer-audio-controls">
           <button class="btn-play-voice" id="btnPlaySpeechAudio">
-            🔊 Satz anhören
+            🔊 Anhören
           </button>
           <select class="speed-select" id="voiceSpeedSelect">
             <option value="1.0">⚡ Normal (1.0x)</option>
@@ -169,7 +170,7 @@
             🎙️
           </button>
           <div class="mic-status-text" id="micStatusText">
-            Klicke auf das Mikrofon, sprich den Satz und lass deine Aussprache kontrollieren!
+            Klicke auf das Mikrofon und sprich nach – oder tippe unten auf <strong>⏭️ Überspringen</strong>!
           </div>
 
           <!-- Animated sound waves while listening -->
@@ -191,7 +192,7 @@
             <!-- Word-by-word highlight chips -->
             <div class="word-analysis-title">
               <span>Wort-für-Wort Aussprache-Bewertung:</span>
-              <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal;">(Klicke auf rote Wörter zum Anhören)</span>
+              <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: normal;">(Klicke auf ❌ Wörter zum Anhören)</span>
             </div>
             <div class="word-chips-container" id="wordChipsContainer">
               <!-- Chips injected dynamically -->
@@ -201,22 +202,21 @@
           <div class="score-feedback" id="speechFeedback"></div>
         </div>
 
-        <div class="card-nav-controls" style="margin-top: 18px;">
-          <button class="nav-icon-btn" id="btnPrevSpeech">⬅ Vorheriger Satz</button>
-          <button class="nav-icon-btn" id="btnNextSpeech">Nächster Satz ➡</button>
+        <!-- Speech Nav Row WITH SKIP -->
+        <div class="trainer-nav-row">
+          <button class="nav-icon-btn" id="btnPrevSpeech">⬅ Zurück</button>
+          <button class="nav-icon-btn btn-skip" id="btnSkipSpeech">⏭️ Überspringen</button>
+          <button class="nav-icon-btn" id="btnNextSpeech">Weiter ➡</button>
         </div>
 
         <!-- Custom Sentence Pronunciation Checker -->
         <div class="custom-practice-accordion">
           <div class="custom-practice-title">
-            <span>✨ Beliebigen eigenen Satz oder Begriff prüfen</span>
+            <span>✨ Eigenen englischen Satz prüfen:</span>
           </div>
-          <p style="font-size: 0.8rem; color: var(--text-muted);">
-            Tippe einen englischen Begriff oder Satz ein, den du üben möchtest:
-          </p>
           <div class="custom-input-row">
-            <input type="text" id="customSentenceInput" class="custom-text-input" placeholder="z. B. We need to deploy the application...">
-            <button id="btnSetCustomSentence" class="btn-custom-test">Laden & Üben</button>
+            <input type="text" id="customSentenceInput" class="custom-text-input" placeholder="z. B. We need to deploy the code...">
+            <button id="btnSetCustomSentence" class="btn-custom-test">Laden</button>
           </div>
         </div>
 
@@ -239,7 +239,7 @@
           <!-- 4 Multiple choice buttons generated dynamically -->
         </div>
 
-        <button class="nav-icon-btn" id="btnToggleHint" style="width: 100%; margin-bottom: 12px;">
+        <button class="nav-icon-btn" id="btnToggleHint" style="width: 100%; margin-bottom: 8px;">
           💡 Tipp anzeigen
         </button>
 
@@ -252,9 +252,11 @@
           <p id="clozeExplanationText"></p>
         </div>
 
-        <div class="card-nav-controls">
-          <button class="nav-icon-btn" id="btnPrevCloze">⬅ Vorherige</button>
-          <button class="nav-icon-btn" id="btnNextCloze">Nächste Frage ➡</button>
+        <!-- Cloze Nav Row WITH SKIP -->
+        <div class="cloze-nav-row">
+          <button class="nav-icon-btn" id="btnPrevCloze">⬅ Zurück</button>
+          <button class="nav-icon-btn btn-skip" id="btnSkipCloze">⏭️ Überspringen</button>
+          <button class="nav-icon-btn" id="btnNextCloze">Weiter ➡</button>
         </div>
       </div>
     </section>
@@ -282,7 +284,7 @@
         <!-- Rendered dynamically -->
       </div>
 
-      <button class="nav-icon-btn" id="btnResetProgress" style="width: 100%; margin-top: 24px; color: #fca5a5; border-color: rgba(239, 68, 68, 0.4);">
+      <button class="nav-icon-btn" id="btnResetProgress" style="width: 100%; margin-top: 18px; color: #fca5a5; border-color: rgba(239, 68, 68, 0.4);">
         🗑️ Lernfortschritt zurücksetzen
       </button>
     </section>
