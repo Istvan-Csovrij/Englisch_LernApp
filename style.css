@@ -1315,3 +1315,31 @@ body {
   text-align: center;
   margin-top: 14px;
 }
+
+/* Mobile touch optimization & z-index hit testing fix */
+button, .nav-icon-btn, .action-btn, .cat-btn, .card-audio-btn, .card-mic-btn {
+  touch-action: manipulation;
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.card-front {
+  z-index: 2;
+  pointer-events: auto;
+}
+
+.flashcard.flipped .card-front {
+  z-index: 1;
+  pointer-events: none;
+}
+
+.card-back {
+  z-index: 1;
+  pointer-events: none;
+}
+
+.flashcard.flipped .card-back {
+  z-index: 2;
+  pointer-events: auto;
+}

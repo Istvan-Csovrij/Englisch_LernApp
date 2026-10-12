@@ -718,19 +718,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // --- INITIAL RENDER ---
-  updateStatsBadges();
-  renderCurrentCard();
-  renderCurrentSpeech();
-  renderCurrentCloze();
-});
 
-  // Service Worker Registration for Offline Support
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js')
-        .then((reg) => console.log('Service Worker registered for offline use:', reg.scope))
-        .catch((err) => console.log('Service Worker registration failed:', err));
-    
   // --- PWA INSTALLATION MODAL & NATIVE PROMPT LOGIC ---
   let deferredPrompt = null;
   const btnInstallApp = document.getElementById('btnInstallApp');
@@ -743,13 +731,12 @@ document.addEventListener('DOMContentLoaded', () => {
     e.preventDefault();
     deferredPrompt = e;
     if (btnTriggerDirect) btnTriggerDirect.style.display = 'block';
-    console.log('[PWA] beforeinstallprompt saved');
+    console.log('[PWA] beforeinstallprompt captured');
   });
 
   if (btnInstallApp) {
     btnInstallApp.addEventListener('click', () => {
       if (deferredPrompt) {
-        // Trigger native prompt immediately
         deferredPrompt.prompt();
         deferredPrompt.userChoice.then((choiceResult) => {
           if (choiceResult.outcome === 'accepted') {
@@ -758,15 +745,14 @@ document.addEventListener('DOMContentLoaded', () => {
           deferredPrompt = null;
         });
       } else {
-        // Open the guide modal showing iPhone & Android steps
-        modalOverlay.classList.add('show');
+        if (modalOverlay) modalOverlay.classList.add('show');
       }
     });
   }
 
   if (btnCloseModal) {
     btnCloseModal.addEventListener('click', () => {
-      modalOverlay.classList.remove('show');
+      if (modalOverlay) modalOverlay.classList.remove('show');
     });
   }
 
@@ -785,7 +771,7 @@ document.addEventListener('DOMContentLoaded', () => {
         deferredPrompt.userChoice.then((choiceResult) => {
           if (choiceResult.outcome === 'accepted') {
             showToast('🎉 App wird installiert!');
-            modalOverlay.classList.remove('show');
+            if (modalOverlay) modalOverlay.classList.remove('show');
           }
           deferredPrompt = null;
         });
@@ -798,4 +784,18 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnInstallApp) btnInstallApp.style.display = 'none';
   });
 
+  // --- INITIAL RENDER ---
+  updateStatsBadges();
+  renderCurrentCard();
+  renderCurrentSpeech();
+  renderCurrentCloze();
 });
+
+// --- SERVICE WORKER REGISTRATION (OFFLINE SUPPORT) ---
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then((reg) => console.log('Service Worker registered for offline use:', reg.scope))
+      .catch((err) => console.log('Service Worker registration failed:', err));
+  });
+}

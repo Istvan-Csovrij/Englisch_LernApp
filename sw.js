@@ -1,5 +1,5 @@
 // Service Worker: Offline-Support für Englisch-LernApp
-const CACHE_NAME = 'english-master-cache-v2';
+const CACHE_NAME = 'english-master-cache-v3';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -12,24 +12,25 @@ const ASSETS_TO_CACHE = [
   './qr_code.png'
 ];
 
-// Install: Cache all essential files
+// Install: Cache all essential files & force immediate activation
 self.addEventListener('install', (event) => {
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[Service Worker] Caching offline assets...');
+      console.log('[Service Worker] Caching offline assets for v3...');
       return cache.addAll(ASSETS_TO_CACHE);
-    }).then(() => self.skipWaiting())
+    })
   );
 });
 
-// Activate: Clean old caches
+// Activate: Immediately purge all older caches
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) => {
       return Promise.all(
         keys.map((key) => {
           if (key !== CACHE_NAME) {
-            console.log('[Service Worker] Removing old cache:', key);
+            console.log('[Service Worker] Purging outdated cache:', key);
             return caches.delete(key);
           }
         })
@@ -38,28 +39,31 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fetch: Cache-First Strategy for 100% offline availability
+// Fetch: Network-First for core scripts/html with offline cache fallback
 self.addEventListener('fetch', (event) => {
+  if (event.request.method !== 'GET') return;
+
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
-      return fetch(event.request).then((networkResponse) => {
-        // Cache dynamic requests if valid
-        if (event.request.method === 'GET' && networkResponse && networkResponse.status === 200) {
-          const responseToCache = networkResponse.clone();
+    fetch(event.request)
+      .then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200) {
+          const responseClone = networkResponse.clone();
           caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseToCache);
+            cache.put(event.request, responseClone);
           });
         }
         return networkResponse;
-      }).catch(() => {
-        // Fallback to index.html if offline and navigating
-        if (event.request.mode === 'navigate') {
-          return caches.match('./index.html');
-        }
-      });
-    })
+      })
+      .catch(() => {
+        // If offline, serve from cache
+        return caches.match(event.request).then((cachedResponse) => {
+          if (cachedResponse) {
+            return cachedResponse;
+          }
+          if (event.request.mode === 'navigate') {
+            return caches.match('./index.html');
+          }
+        });
+      })
   );
 });
