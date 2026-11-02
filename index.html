@@ -1,379 +1,533 @@
-<!DOCTYPE html>
-<html lang="de">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="theme-color" content="#0b0f19">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>FIAE & Business English Master | Englisch-Lern-App</title>
-    <link rel="manifest" href="manifest.json">
-  <link rel="apple-touch-icon" href="icon-192.png">
-  <meta name="apple-mobile-web-app-title" content="English Master">
-  <link rel="stylesheet" href="style.css?v=20261012b">
-  <script>
-    // Force immediate Service Worker and Cache update on mobile
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then(function(registrations) {
-        for (var reg of registrations) {
-          reg.update();
-        }
-      });
-    }
-  </script>
-</head>
-<body>
-
-  <!-- App Header -->
-  <header class="app-header">
-    <div class="header-inner">
-      <div class="brand">
-        <div class="brand-icon">🇬🇧</div>
-        <div>
-          <div class="brand-title">English Master</div>
-          <div class="brand-subtitle">✨ Erstellt von Istvan • FIAE AP 1</div>
-        </div>
-      </div>
-      <div class="stats-badges">
-        <button class="badge install-badge" id="btnInstallApp" title="App auf Handy herunterladen & installieren">
-          📲 <span>App herunterladen</span>
-        </button>
-        <div class="badge xp" title="Gesamtpunkte (Erfahrungspunkte)">
-          ⭐ <span id="xpCount">0</span> XP
-        </div>
-        <div class="badge cards" title="Gekonnte Vokabeln">
-          ✅ <span id="masteredCount">0</span> / <span id="totalVocabCount">16</span>
-        </div>
-      </div>
-    </div>
-  </header>
-
-  <!-- Category Pills Filter Bar (Horizontally Scrollable) -->
-  <div class="category-bar-wrapper">
-    <div class="category-bar" id="categoryBar">
-      <button class="cat-btn active" data-category="all">🌐 Alle Themen</button>
-      <button class="cat-btn" data-category="fiae">💻 FIAE AP 1 & IT</button>
-      <button class="cat-btn" data-category="business">💼 Job & Business</button>
-      <button class="cat-btn" data-category="conversation">💬 Smalltalk & Alltag</button>
-      <button class="cat-btn" data-category="travel">✈️ Urlaub & Reise</button>
-    </div>
-  </div>
-
-  <!-- Desktop Tab Navigation -->
-  <nav class="desktop-nav">
-    <button class="nav-tab-btn active" data-view="cards">🗂️ Karteikarten & Bilder</button>
-    <button class="nav-tab-btn" data-view="speech">🎙️ Aussprache-Coach & Sprechen</button>
-    <button class="nav-tab-btn" data-view="cloze">✏️ Lückentext-Trainer</button>
-    <button class="nav-tab-btn" data-view="glossary">📚 Wörterbuch & Statistik</button>
-  </nav>
-
-  <!-- Main Content Container -->
-  <main class="main-content">
-
-    <!-- ================= 1. FLASHCARD VIEW ================= -->
-    <section id="cardsView" class="view-section active">
-      <div class="flashcard-wrapper">
-        <div class="flashcard" id="mainFlashcard">
-          
-          <!-- Front Face -->
-          <div class="card-face card-front">
-            <div class="card-top-row">
-              <span class="card-category-tag" id="cardCategoryTag">FIAE AP 1</span>
-              <span class="card-counter" id="cardIndexIndicator">1 / 16</span>
-            </div>
-
-            <div class="card-visual" id="cardVisualIcon">
-              <!-- SVG inserted dynamically -->
-            </div>
-
-            <h2 class="card-main-word" id="cardEnglish">Requirements Specification</h2>
-            <div class="card-phonetic" id="cardPhonetic">ri-kweier-ments spe-si-fi-key-shun</div>
-
-            <!-- Front Action Row: Listen + Check My Pronunciation -->
-            <div class="card-audio-controls-row">
-              <button class="card-audio-btn" id="cardSpeakBtn" title="Aussprache anhören">
-                🔊 Anhören
-              </button>
-              <button class="card-mic-btn" id="cardMicCheckBtn" title="Sprich das Wort und lass deine Aussprache prüfen">
-                🎙️ Aussprache testen
-              </button>
-            </div>
-
-            <!-- Instant Feedback on the Card -->
-            <div class="card-pronounce-feedback" id="cardPronounceFeedback"></div>
-
-            <div class="card-flip-hint">
-              🔄 Tippe zum Umdrehen für deutsche Übersetzung
-            </div>
-          </div>
-
-          <!-- Back Face -->
-          <div class="card-face card-back">
-            <div class="back-title-row">
-              <span class="card-category-tag" id="cardBackTag">Deutsch</span>
-              <h3 class="back-german-word" id="cardGerman">Anforderungsspezifikation</h3>
-            </div>
-
-            <p class="back-definition" id="cardDefinition">
-              Genaue Beschreibung aller funktionalen Anforderungen...
-            </p>
-
-            <div class="back-example-box">
-              <div class="example-en" id="cardExampleEn">
-                The client approved the functional requirements specification.
-              </div>
-              <div class="example-de" id="cardExampleDe">
-                Der Kunde hat die funktionale Anforderungsspezifikation genehmigt.
-              </div>
-            </div>
-
-            <div class="card-flip-hint">
-              🔄 Tippe zum Zurückdrehen
-            </div>
-          </div>
-
-        </div>
-      </div>
-
-      <!-- Action Buttons (Gekonnt / Wiederholen) -->
-      <div class="card-actions-row">
-        <button class="action-btn btn-repeat" id="btnMarkRepeat">
-          ❌ Nochmal
-        </button>
-        <button class="action-btn btn-mastered" id="btnMarkMastered">
-          ✅ Gekonnt (+10 XP)
-        </button>
-      </div>
-
-      <!-- FIXED NAVIGATION CONTROLS WITH SKIP (ÜBERSPRINGEN) -->
-      <div class="card-nav-controls">
-        <button class="nav-icon-btn" id="btnPrevCard" title="Vorherige Karte">⬅ Zurück</button>
-        <button class="nav-icon-btn" id="btnFlipCard" title="Karte umdrehen">🔄 Drehen</button>
-        <button class="nav-icon-btn" id="btnNextCard" title="Nächste Karte">Weiter ➡</button>
-        <button class="nav-icon-btn btn-skip" id="btnSkipCard" title="Diese Karte überspringen">⏭️ Skip</button>
-      </div>
-
-      <div class="progress-bar-container">
-        <div class="progress-bar-fill" id="cardProgressBar"></div>
-      </div>
-    </section>
-
-    <!-- ================= 2. SPEECH & PRONUNCIATION COACH VIEW ================= -->
-    <section id="speechView" class="view-section">
-      <div class="trainer-card">
-        <div class="trainer-header-row">
-          <span class="trainer-step-badge" id="speechCatBadge">FIAE AP 1 • Aussprache-Coach</span>
-          <span class="card-counter" id="speechCounterBadge">1 / 8</span>
-        </div>
-
-        <h3 class="trainer-target-text" id="speechTargetSentence">I resolved the merge conflict in the git repository.</h3>
-        <p class="trainer-translation" id="speechTranslation">Ich habe den Merge-Konflikt im Git-Repository gelöst.</p>
-        <div class="trainer-phonetic" id="speechPhonetic">ai ri-solvd thö mördsh kon-flikt in thö git ri-po-si-to-ri.</div>
-
-        <div class="trainer-audio-controls">
-          <button class="btn-play-voice" id="btnPlaySpeechAudio">
-            🔊 Anhören
-          </button>
-          <select class="speed-select" id="voiceSpeedSelect">
-            <option value="1.0">⚡ Normal (1.0x)</option>
-            <option value="0.75" selected>🐢 Langsam (0.75x)</option>
-          </select>
-        </div>
-
-        <!-- Mic Section with Audio Waveform -->
-        <div class="mic-section">
-          <button class="mic-btn" id="btnStartRecord" title="Klicken und Satz nachsprechen">
-            🎙️
-          </button>
-          <div class="mic-status-text" id="micStatusText">
-            Klicke auf das Mikrofon und sprich nach – oder tippe unten auf <strong>⏭️ Überspringen</strong>!
-          </div>
-
-          <!-- Animated sound waves while listening -->
-          <div class="audio-waves" id="audioWaves">
-            <div class="wave-bar"></div>
-            <div class="wave-bar"></div>
-            <div class="wave-bar"></div>
-            <div class="wave-bar"></div>
-            <div class="wave-bar"></div>
-          </div>
-
-          <!-- Spoken Transcript & Word Breakdown -->
-          <div class="spoken-result-container" id="spokenResultContainer" style="display: none;">
-            <div class="spoken-transcript-title">Erkannte Sprache:</div>
-            <div class="recognized-box" id="recognizedBox">
-              <em>Erkannte Sprache erscheint hier...</em>
-            </div>
-
-            <!-- Word-by-word highlight chips -->
-            <div class="word-analysis-title">
-              <span>Wort-für-Wort Aussprache-Bewertung:</span>
-              <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: normal;">(Klicke auf ❌ Wörter zum Anhören)</span>
-            </div>
-            <div class="word-chips-container" id="wordChipsContainer">
-              <!-- Chips injected dynamically -->
-            </div>
-          </div>
-
-          <div class="score-feedback" id="speechFeedback"></div>
-        </div>
-
-        <!-- Speech Nav Row WITH SKIP -->
-        <div class="trainer-nav-row">
-          <button class="nav-icon-btn" id="btnPrevSpeech">⬅ Zurück</button>
-          <button class="nav-icon-btn btn-skip" id="btnSkipSpeech">⏭️ Überspringen</button>
-          <button class="nav-icon-btn" id="btnNextSpeech">Weiter ➡</button>
-        </div>
-
-        <!-- Custom Sentence Pronunciation Checker -->
-        <div class="custom-practice-accordion">
-          <div class="custom-practice-title">
-            <span>✨ Eigenen englischen Satz prüfen:</span>
-          </div>
-          <div class="custom-input-row">
-            <input type="text" id="customSentenceInput" class="custom-text-input" placeholder="z. B. We need to deploy the code...">
-            <button id="btnSetCustomSentence" class="btn-custom-test">Laden</button>
-          </div>
-        </div>
-
-      </div>
-    </section>
-
-    <!-- ================= 3. CLOZE TEST VIEW ================= -->
-    <section id="clozeView" class="view-section">
-      <div class="cloze-card">
-        <span class="trainer-step-badge" id="clozeCatBadge">IHK AP 1 Frage</span>
-        <p class="cloze-question" id="clozeQuestionTitle">Welches Fachwort gehört in die Lücke?</p>
-
-        <div class="cloze-sentence-box">
-          <span id="clozeBefore">When two programmers change the same line, Git raises a merge</span>
-          <span class="cloze-blank" id="clozeBlankDisplay">[ _____ ]</span>
-          <span id="clozeAfter">.</span>
-        </div>
-
-        <div class="cloze-options-grid" id="clozeOptionsGrid">
-          <!-- 4 Multiple choice buttons generated dynamically -->
-        </div>
-
-        <button class="nav-icon-btn" id="btnToggleHint" style="width: 100%; margin-bottom: 8px;">
-          💡 Tipp anzeigen
-        </button>
-
-        <div class="hint-box" id="clozeHintBox">
-          Tipp: Auf Deutsch "Merge-Konflikt".
-        </div>
-
-        <div class="explanation-box" id="clozeExplanationBox">
-          <h4>Erklärung & Übersetzung:</h4>
-          <p id="clozeExplanationText"></p>
-        </div>
-
-        <!-- Cloze Nav Row WITH SKIP -->
-        <div class="cloze-nav-row">
-          <button class="nav-icon-btn" id="btnPrevCloze">⬅ Zurück</button>
-          <button class="nav-icon-btn btn-skip" id="btnSkipCloze">⏭️ Überspringen</button>
-          <button class="nav-icon-btn" id="btnNextCloze">Weiter ➡</button>
-        </div>
-      </div>
-    </section>
-
-    <!-- ================= 4. GLOSSARY & STATS VIEW ================= -->
-    <section id="glossaryView" class="view-section">
-      <div class="stats-summary-grid">
-        <div class="stat-card">
-          <div class="stat-number" id="statsTotalMastered">0</div>
-          <div class="stat-label">Gemeistert</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-number" id="statsTotalXP">0</div>
-          <div class="stat-label">Punkte (XP)</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-number" id="statsPercentage">0%</div>
-          <div class="stat-label">Fortschritt</div>
-        </div>
-      </div>
-
-      <input type="text" class="search-input" id="glossarySearchInput" placeholder="🔍 Suche nach Fachbegriff oder deutscher Übersetzung...">
-
-      <div class="glossary-list" id="glossaryList">
-        <!-- Rendered dynamically -->
-      </div>
-
-      <button class="nav-icon-btn" id="btnResetProgress" style="width: 100%; margin-top: 18px; color: #fca5a5; border-color: rgba(239, 68, 68, 0.4);">
-        🗑️ Lernfortschritt zurücksetzen
-      </button>
-    </section>
-
-  </main>
-
-  <!-- Mobile Bottom Navigation Bar -->
-  <nav class="bottom-nav">
-    <button class="bottom-tab-btn active" data-view="cards">
-      <span class="tab-icon">🗂️</span>
-      <span>Karten</span>
-    </button>
-    <button class="bottom-tab-btn" data-view="speech">
-      <span class="tab-icon">🎙️</span>
-      <span>Coach</span>
-    </button>
-    <button class="bottom-tab-btn" data-view="cloze">
-      <span class="tab-icon">✏️</span>
-      <span>Lücken</span>
-    </button>
-    <button class="bottom-tab-btn" data-view="glossary">
-      <span class="tab-icon">📚</span>
-      <span>Glossar</span>
-    </button>
-  </nav>
-
-  <!-- Floating Toast Message -->
-  <div class="toast-msg" id="toastMsg">Glückwunsch! +10 XP</div>
-
-  
-  <!-- Installation & Offline Guide Modal -->
-  <div class="install-modal-overlay" id="installModalOverlay">
-    <div class="install-modal-card">
-      <div class="modal-header">
-        <h3>📲 App auf deinem Handy installieren</h3>
-        <button class="modal-close-btn" id="btnCloseInstallModal">✕</button>
-      </div>
-
-      <div class="modal-body">
-        <p class="modal-intro">
-          Die App wird direkt auf deinem Smartphone gespeichert und funktioniert danach <strong>komplett offline</strong> (auch ohne Internet)!
-        </p>
-
-        <!-- Android Guide -->
-        <div class="guide-box android-guide" id="androidGuide">
-          <h4>🤖 Für Android (Google Chrome):</h4>
-          <ol>
-            <li>Tippe oben rechts im Browser auf die <strong>3 Punkte (Menü)</strong>.</li>
-            <li>Wähle <strong>„App installieren“</strong> oder <strong>„Zum Startbildschirm hinzufügen“</strong>.</li>
-            <li>Tippe auf <strong>Installieren</strong> – fertig!</li>
-          </ol>
-          <button class="btn-direct-install" id="btnTriggerDirectInstall">👉 Jetzt direkt installieren</button>
-        </div>
-
-        <!-- iPhone Guide -->
-        <div class="guide-box ios-guide" id="iosGuide">
-          <h4>🍏 Für iPhone / iPad (Safari):</h4>
-          <ol>
-            <li>Tippe unten in der Safari-Leiste auf das <strong>Teilen-Symbol</strong> (Quadrat mit Pfeil nach oben <span class="share-icon-preview">⬆️</span>).</li>
-            <li>Scrolle etwas herunter und wähle <strong>„Zum Home-Bildschirm“</strong> (<span class="plus-icon-preview">➕</span>).</li>
-            <li>Tippe oben rechts auf <strong>Hinzufügen</strong>.</li>
-          </ol>
-        </div>
-
-        <div class="offline-ready-badge">
-          ✅ <strong>Offline-Garantie:</strong> Nach der Installation kannst du die App jederzeit im Zug, Flugzeug oder ohne WLAN nutzen!
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Scripts -->
-  <script src="data.js?v=20261012b"></script>
-  <script src="app.js?v=20261012b"></script>
-</body>
-</html>
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0b0f19">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>FIAE & Business English Master | Englisch-Lern-App</title>
+    <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <meta name="apple-mobile-web-app-title" content="English Master">
+  <link rel="stylesheet" href="style.css?v=20261012b">
+  <script>
+    // Force immediate Service Worker and Cache update on mobile
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function(registrations) {
+        for (var reg of registrations) {
+          reg.update();
+        }
+      });
+    }
+  </script>
+</head>
+<body>
+
+  <!-- App Header -->
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="brand">
+        <div class="brand-icon">🇬🇧</div>
+        <div>
+          <div class="brand-title">English Master</div>
+          <div class="brand-subtitle">✨ Erstellt von Istvan • FIAE AP 1</div>
+        </div>
+      </div>
+      <div class="stats-badges">
+        <button class="badge install-badge" id="btnInstallApp" title="App auf Handy herunterladen & installieren">
+          📲 <span>App herunterladen</span>
+        </button>
+        <div class="badge xp" title="Gesamtpunkte (Erfahrungspunkte)">
+          ⭐ <span id="xpCount">0</span> XP
+        </div>
+        <div class="badge cards" title="Gekonnte Vokabeln">
+          ✅ <span id="masteredCount">0</span> / <span id="totalVocabCount">16</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Category Pills Filter Bar (Horizontally Scrollable) -->
+  <div class="category-bar-wrapper">
+    <div class="category-bar" id="categoryBar">
+      <button class="cat-btn active" data-category="all">🌐 Alle Themen</button>
+      <button class="cat-btn" data-category="fiae">💻 FIAE AP 1 & IT</button>
+      <button class="cat-btn" data-category="business">💼 Job & Business</button>
+      <button class="cat-btn" data-category="conversation">💬 Smalltalk & Alltag</button>
+      <button class="cat-btn" data-category="travel">✈️ Urlaub & Reise</button>
+    </div>
+  </div>
+
+  <!-- Desktop Tab Navigation -->
+  <nav class="desktop-nav">
+    <button class="nav-tab-btn active" data-view="cards">🗂️ Karteikarten & Bilder</button>
+    <button class="nav-tab-btn" data-view="speech">🎙️ Aussprache-Coach & Sprechen</button>
+    <button class="nav-tab-btn" data-view="cloze">✏️ Lückentext-Trainer</button>
+    <button class="nav-tab-btn" data-view="dialog">💬 Dialog & Satzkorrektur</button>
+    <button class="nav-tab-btn" data-view="stories">🎧 Hörtexte & Untertitel</button>
+    <button class="nav-tab-btn" data-view="glossary">📚 Wörterbuch & Statistik</button>
+  </nav>
+
+  <!-- Main Content Container -->
+  <main class="main-content">
+
+    <!-- ================= 1. FLASHCARD VIEW ================= -->
+    <section id="cardsView" class="view-section active">
+      <div class="flashcard-wrapper">
+        <div class="flashcard" id="mainFlashcard">
+          
+          <!-- Front Face -->
+          <div class="card-face card-front">
+            <div class="card-top-row">
+              <span class="card-category-tag" id="cardCategoryTag">FIAE AP 1</span>
+              <span class="card-counter" id="cardIndexIndicator">1 / 16</span>
+            </div>
+
+            <div class="card-visual" id="cardVisualIcon">
+              <!-- SVG inserted dynamically -->
+            </div>
+
+            <h2 class="card-main-word" id="cardEnglish">Requirements Specification</h2>
+            <div class="card-phonetic" id="cardPhonetic">ri-kweier-ments spe-si-fi-key-shun</div>
+
+            <!-- Front Action Row: Listen + Check My Pronunciation -->
+            <div class="card-audio-controls-row">
+              <button class="card-audio-btn" id="cardSpeakBtn" title="Aussprache anhören">
+                🔊 Anhören
+              </button>
+              <button class="card-mic-btn" id="cardMicCheckBtn" title="Sprich das Wort und lass deine Aussprache prüfen">
+                🎙️ Aussprache testen
+              </button>
+            </div>
+
+            <!-- Instant Feedback on the Card -->
+            <div class="card-pronounce-feedback" id="cardPronounceFeedback"></div>
+
+            <div class="card-flip-hint">
+              🔄 Tippe zum Umdrehen für deutsche Übersetzung
+            </div>
+          </div>
+
+          <!-- Back Face -->
+          <div class="card-face card-back">
+            <div class="back-title-row">
+              <span class="card-category-tag" id="cardBackTag">Deutsch</span>
+              <h3 class="back-german-word" id="cardGerman">Anforderungsspezifikation</h3>
+            </div>
+
+            <p class="back-definition" id="cardDefinition">
+              Genaue Beschreibung aller funktionalen Anforderungen...
+            </p>
+
+            <div class="back-example-box">
+              <div class="example-en" id="cardExampleEn">
+                The client approved the functional requirements specification.
+              </div>
+              <div class="example-de" id="cardExampleDe">
+                Der Kunde hat die funktionale Anforderungsspezifikation genehmigt.
+              </div>
+            </div>
+
+            <div class="card-flip-hint">
+              🔄 Tippe zum Zurückdrehen
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Action Buttons (Gekonnt / Wiederholen) -->
+      <div class="card-actions-row">
+        <button class="action-btn btn-repeat" id="btnMarkRepeat">
+          ❌ Nochmal
+        </button>
+        <button class="action-btn btn-mastered" id="btnMarkMastered">
+          ✅ Gekonnt (+10 XP)
+        </button>
+      </div>
+
+      <!-- FIXED NAVIGATION CONTROLS WITH SKIP (ÜBERSPRINGEN) -->
+      <div class="card-nav-controls">
+        <button class="nav-icon-btn" id="btnPrevCard" title="Vorherige Karte">⬅ Zurück</button>
+        <button class="nav-icon-btn" id="btnFlipCard" title="Karte umdrehen">🔄 Drehen</button>
+        <button class="nav-icon-btn" id="btnNextCard" title="Nächste Karte">Weiter ➡</button>
+        <button class="nav-icon-btn btn-skip" id="btnSkipCard" title="Diese Karte überspringen">⏭️ Skip</button>
+      </div>
+
+      <div class="progress-bar-container">
+        <div class="progress-bar-fill" id="cardProgressBar"></div>
+      </div>
+    </section>
+
+    <!-- ================= 2. SPEECH & PRONUNCIATION COACH VIEW ================= -->
+    <section id="speechView" class="view-section">
+      <div class="trainer-card">
+        <div class="trainer-header-row">
+          <span class="trainer-step-badge" id="speechCatBadge">FIAE AP 1 • Aussprache-Coach</span>
+          <span class="card-counter" id="speechCounterBadge">1 / 8</span>
+        </div>
+
+        <h3 class="trainer-target-text" id="speechTargetSentence">I resolved the merge conflict in the git repository.</h3>
+        <p class="trainer-translation" id="speechTranslation">Ich habe den Merge-Konflikt im Git-Repository gelöst.</p>
+        <div class="trainer-phonetic" id="speechPhonetic">ai ri-solvd thö mördsh kon-flikt in thö git ri-po-si-to-ri.</div>
+
+        <div class="trainer-audio-controls">
+          <button class="btn-play-voice" id="btnPlaySpeechAudio">
+            🔊 Anhören
+          </button>
+          <select class="speed-select" id="voiceSpeedSelect">
+            <option value="1.0">⚡ Normal (1.0x)</option>
+            <option value="0.75" selected>🐢 Langsam (0.75x)</option>
+          </select>
+        </div>
+
+        <!-- Mic Section with Audio Waveform -->
+        <div class="mic-section">
+          <button class="mic-btn" id="btnStartRecord" title="Klicken und Satz nachsprechen">
+            🎙️
+          </button>
+          <div class="mic-status-text" id="micStatusText">
+            Klicke auf das Mikrofon und sprich nach – oder tippe unten auf <strong>⏭️ Überspringen</strong>!
+          </div>
+
+          <!-- Animated sound waves while listening -->
+          <div class="audio-waves" id="audioWaves">
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+          </div>
+
+          <!-- Spoken Transcript & Word Breakdown -->
+          <div class="spoken-result-container" id="spokenResultContainer" style="display: none;">
+            <div class="spoken-transcript-title">Erkannte Sprache:</div>
+            <div class="recognized-box" id="recognizedBox">
+              <em>Erkannte Sprache erscheint hier...</em>
+            </div>
+
+            <!-- Word-by-word highlight chips -->
+            <div class="word-analysis-title">
+              <span>Wort-für-Wort Aussprache-Bewertung:</span>
+              <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: normal;">(Klicke auf ❌ Wörter zum Anhören)</span>
+            </div>
+            <div class="word-chips-container" id="wordChipsContainer">
+              <!-- Chips injected dynamically -->
+            </div>
+          </div>
+
+          <div class="score-feedback" id="speechFeedback"></div>
+        </div>
+
+        <!-- Speech Nav Row WITH SKIP -->
+        <div class="trainer-nav-row">
+          <button class="nav-icon-btn" id="btnPrevSpeech">⬅ Zurück</button>
+          <button class="nav-icon-btn btn-skip" id="btnSkipSpeech">⏭️ Überspringen</button>
+          <button class="nav-icon-btn" id="btnNextSpeech">Weiter ➡</button>
+        </div>
+
+        <!-- Custom Sentence Pronunciation Checker -->
+        <div class="custom-practice-accordion">
+          <div class="custom-practice-title">
+            <span>✨ Eigenen englischen Satz prüfen:</span>
+          </div>
+          <div class="custom-input-row">
+            <input type="text" id="customSentenceInput" class="custom-text-input" placeholder="z. B. We need to deploy the code...">
+            <button id="btnSetCustomSentence" class="btn-custom-test">Laden</button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ================= 3. CLOZE TEST VIEW ================= -->
+    <section id="clozeView" class="view-section">
+      <div class="cloze-card">
+        <span class="trainer-step-badge" id="clozeCatBadge">IHK AP 1 Frage</span>
+        <p class="cloze-question" id="clozeQuestionTitle">Welches Fachwort gehört in die Lücke?</p>
+
+        <div class="cloze-sentence-box">
+          <span id="clozeBefore">When two programmers change the same line, Git raises a merge</span>
+          <span class="cloze-blank" id="clozeBlankDisplay">[ _____ ]</span>
+          <span id="clozeAfter">.</span>
+        </div>
+
+        <div class="cloze-options-grid" id="clozeOptionsGrid">
+          <!-- 4 Multiple choice buttons generated dynamically -->
+        </div>
+
+        <button class="nav-icon-btn" id="btnToggleHint" style="width: 100%; margin-bottom: 8px;">
+          💡 Tipp anzeigen
+        </button>
+
+        <div class="hint-box" id="clozeHintBox">
+          Tipp: Auf Deutsch "Merge-Konflikt".
+        </div>
+
+        <div class="explanation-box" id="clozeExplanationBox">
+          <h4>Erklärung & Übersetzung:</h4>
+          <p id="clozeExplanationText"></p>
+        </div>
+
+        <!-- Cloze Nav Row WITH SKIP -->
+        <div class="cloze-nav-row">
+          <button class="nav-icon-btn" id="btnPrevCloze">⬅ Zurück</button>
+          <button class="nav-icon-btn btn-skip" id="btnSkipCloze">⏭️ Überspringen</button>
+          <button class="nav-icon-btn" id="btnNextCloze">Weiter ➡</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 4. GLOSSARY & STATS VIEW ================= -->
+    <section id="glossaryView" class="view-section">
+      <div class="stats-summary-grid">
+        <div class="stat-card">
+          <div class="stat-number" id="statsTotalMastered">0</div>
+          <div class="stat-label">Gemeistert</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" id="statsTotalXP">0</div>
+          <div class="stat-label">Punkte (XP)</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" id="statsPercentage">0%</div>
+          <div class="stat-label">Fortschritt</div>
+        </div>
+      </div>
+
+      <input type="text" class="search-input" id="glossarySearchInput" placeholder="🔍 Suche nach Fachbegriff oder deutscher Übersetzung...">
+
+      <div class="glossary-list" id="glossaryList">
+        <!-- Rendered dynamically -->
+      </div>
+
+      <button class="nav-icon-btn" id="btnResetProgress" style="width: 100%; margin-top: 18px; color: #fca5a5; border-color: rgba(239, 68, 68, 0.4);">
+        🗑️ Lernfortschritt zurücksetzen
+      </button>
+    </section>
+
+    <!-- ================= 5. DIALOG & SENTENCE COACH VIEW ================= -->
+    <section id="dialogView" class="view-section">
+      <div class="view-header-box">
+        <h2 class="view-title">💬 Dialog-Partner & Satz-Korrektur</h2>
+        <p class="view-subtitle">Unterhalte dich interaktiv auf Englisch! Jeder Satz wird analysiert und verständlich korrigiert.</p>
+      </div>
+
+      <!-- Mode Selector: Schreiben & Lesen vs. Sprechen & Hören -->
+      <div class="dialog-mode-selector">
+        <button class="dialog-mode-btn active" id="btnModeText" data-mode="text">
+          <span class="mode-icon">✍️</span>
+          <span class="mode-label">Schreiben & Lesen</span>
+        </button>
+        <button class="dialog-mode-btn" id="btnModeVoice" data-mode="voice">
+          <span class="mode-icon">🎙️</span>
+          <span class="mode-label">Sprechen & Hören</span>
+        </button>
+      </div>
+
+      <!-- Scenario Selector Pills -->
+      <div class="scenario-bar" id="scenarioBar">
+        <button class="scenario-btn active" data-scenario="standup">💻 Daily Standup</button>
+        <button class="scenario-btn" data-scenario="interview">👔 IT-Bewerbung</button>
+        <button class="scenario-btn" data-scenario="support">🛠️ Bug-Ticket</button>
+        <button class="scenario-btn" data-scenario="smalltalk">☕ Kaffeepause</button>
+        <button class="scenario-btn" data-scenario="travel">✈️ Hotel & Reise</button>
+        <button class="scenario-btn" data-scenario="free">🌐 Freier Chat</button>
+      </div>
+
+      <!-- Active Scenario Header Card -->
+      <div class="scenario-header-card" id="scenarioHeaderCard">
+        <div class="scenario-avatar" id="scenarioAvatar">💻</div>
+        <div class="scenario-meta">
+          <h3 class="scenario-partner-name" id="scenarioPartnerName">Sarah (Scrum Master)</h3>
+          <p class="scenario-partner-role" id="scenarioPartnerRole">Rolle: Daily Standup Moderation</p>
+        </div>
+        <button class="scenario-reset-btn" id="btnResetDialog" title="Dialog neu starten">🔄 Neu starten</button>
+      </div>
+
+      <!-- Chat History Log -->
+      <div class="dialog-chat-container" id="dialogChatContainer">
+        <div class="dialog-chat-log" id="dialogChatLog">
+          <!-- Messages & Correction Cards inserted dynamically -->
+        </div>
+      </div>
+
+      <!-- Quick Suggested Replies Chips -->
+      <div class="quick-replies-container" id="quickRepliesContainer">
+        <span class="quick-replies-label">💡 Vorschläge zum Antworten:</span>
+        <div class="quick-replies-chips" id="quickRepliesChips">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+
+      <!-- Chat Input Area -->
+      <div class="dialog-input-area">
+        <button class="dialog-mic-btn" id="btnDialogMic" title="Spracheingabe starten / stoppen">
+          🎙️
+        </button>
+        <input 
+          type="text" 
+          id="dialogTextInput" 
+          class="dialog-text-input" 
+          placeholder="Antworte auf Englisch... (z. B. 'Yesterday I worked on the database')"
+          autocomplete="off"
+        />
+        <button class="dialog-send-btn" id="btnDialogSend" title="Nachricht senden">
+          ➤
+        </button>
+      </div>
+      <div class="dialog-input-hint" id="dialogInputHint">
+        ✍️ Tippe deine Antwort ein oder tippe auf das 🎙️ Mikrofon, um direkt zu sprechen!
+      </div>
+    </section>
+
+    <!-- ================= 6. HÖRTEXTE & SYNCHRONE UNTERTITEL VIEW ================= -->
+    <section id="storiesView" class="view-section">
+      <div class="view-header-box">
+        <h2 class="view-title">🎧 Hörtexte & Synchrone Untertitel</h2>
+        <p class="view-subtitle">Höre englische IT- & Alltagsgeschichten – mit Satz-für-Satz Übersetzung zum Mitlesen.</p>
+      </div>
+
+      <!-- Story Selector Carousel / Tabs -->
+      <div class="story-selector-bar" id="storySelectorBar">
+        <!-- Rendered dynamically from STORY_DATA -->
+      </div>
+
+      <!-- Cinema Subtitle Display Box -->
+      <div class="subtitle-cinema-box" id="subtitleCinemaBox">
+        <div class="cinema-top-bar">
+          <span class="cinema-badge" id="cinemaStoryTag">💻 FIAE AP 1</span>
+          <span class="cinema-counter" id="cinemaCounter">Satz 1 / 10</span>
+        </div>
+
+        <div class="cinema-main-content">
+          <div class="cinema-sound-wave" id="cinemaSoundWave">
+            <span></span><span></span><span></span><span></span><span></span>
+          </div>
+          <!-- English Main Sentence -->
+          <div class="cinema-en-sentence" id="cinemaEnSentence">
+            Good morning! My name is Istvan, and I work as a junior software developer.
+          </div>
+
+          <!-- Synchronized German Subtitle -->
+          <div class="cinema-de-subtitle" id="cinemaDeSubtitle">
+            Guten Morgen! Mein Name ist Istvan und ich arbeite als Junior-Softwareentwickler.
+          </div>
+        </div>
+
+        <!-- Cinema Audio Control Toolbar -->
+        <div class="cinema-controls">
+          <button class="cinema-ctrl-btn" id="btnStoryPrev" title="Vorheriger Satz">
+            ⏮️
+          </button>
+          <button class="cinema-ctrl-btn cinema-play-btn" id="btnStoryPlay" title="Abspielen / Pause">
+            ▶️ Vorlesen
+          </button>
+          <button class="cinema-ctrl-btn" id="btnStoryRepeat" title="Diesen Satz wiederholen">
+            🔁
+          </button>
+          <button class="cinema-ctrl-btn" id="btnStoryNext" title="Nächster Satz">
+            ⏭️
+          </button>
+          <button class="cinema-toggle-btn active" id="btnToggleSubtitles" title="Untertitel ein-/ausblenden">
+            👁️ Untertitel
+          </button>
+          <button class="cinema-speed-btn" id="btnStorySpeed" title="Geschwindigkeit ändern">
+            ⚡ 1.0x
+          </button>
+        </div>
+      </div>
+
+      <!-- Full Story Sentence List (Click to play any sentence) -->
+      <div class="story-sentence-list-card">
+        <div class="sentence-list-header">
+          <h3>📜 Komplette Geschichte zum Mitlesen</h3>
+          <span class="sentence-list-hint">Tippe auf einen Satz, um ihn anzuhören</span>
+        </div>
+        <div class="story-sentences-container" id="storySentencesContainer">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Mobile Bottom Navigation Bar -->
+  <nav class="bottom-nav">
+    <button class="bottom-tab-btn active" data-view="cards">
+      <span class="tab-icon">🗂️</span>
+      <span>Karten</span>
+    </button>
+    <button class="bottom-tab-btn" data-view="speech">
+      <span class="tab-icon">🎙️</span>
+      <span>Coach</span>
+    </button>
+    <button class="bottom-tab-btn" data-view="cloze">
+      <span class="tab-icon">✏️</span>
+      <span>Lücken</span>
+    </button>
+    <button class="bottom-tab-btn" data-view="dialog">
+      <span class="tab-icon">💬</span>
+      <span>Dialog</span>
+    </button>
+    <button class="bottom-tab-btn" data-view="stories">
+      <span class="tab-icon">🎧</span>
+      <span>Hören</span>
+    </button>
+    <button class="bottom-tab-btn" data-view="glossary">
+      <span class="tab-icon">📚</span>
+      <span>Glossar</span>
+    </button>
+  </nav>
+
+  <!-- Floating Toast Message -->
+  <div class="toast-msg" id="toastMsg">Glückwunsch! +10 XP</div>
+
+  
+  <!-- Installation & Offline Guide Modal -->
+  <div class="install-modal-overlay" id="installModalOverlay">
+    <div class="install-modal-card">
+      <div class="modal-header">
+        <h3>📲 App auf deinem Handy installieren</h3>
+        <button class="modal-close-btn" id="btnCloseInstallModal">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <p class="modal-intro">
+          Die App wird direkt auf deinem Smartphone gespeichert und funktioniert danach <strong>komplett offline</strong> (auch ohne Internet)!
+        </p>
+
+        <!-- Android Guide -->
+        <div class="guide-box android-guide" id="androidGuide">
+          <h4>🤖 Für Android (Google Chrome):</h4>
+          <ol>
+            <li>Tippe oben rechts im Browser auf die <strong>3 Punkte (Menü)</strong>.</li>
+            <li>Wähle <strong>„App installieren“</strong> oder <strong>„Zum Startbildschirm hinzufügen“</strong>.</li>
+            <li>Tippe auf <strong>Installieren</strong> – fertig!</li>
+          </ol>
+          <button class="btn-direct-install" id="btnTriggerDirectInstall">👉 Jetzt direkt installieren</button>
+        </div>
+
+        <!-- iPhone Guide -->
+        <div class="guide-box ios-guide" id="iosGuide">
+          <h4>🍏 Für iPhone / iPad (Safari):</h4>
+          <ol>
+            <li>Tippe unten in der Safari-Leiste auf das <strong>Teilen-Symbol</strong> (Quadrat mit Pfeil nach oben <span class="share-icon-preview">⬆️</span>).</li>
+            <li>Scrolle etwas herunter und wähle <strong>„Zum Home-Bildschirm“</strong> (<span class="plus-icon-preview">➕</span>).</li>
+            <li>Tippe oben rechts auf <strong>Hinzufügen</strong>.</li>
+          </ol>
+        </div>
+
+        <div class="offline-ready-badge">
+          ✅ <strong>Offline-Garantie:</strong> Nach der Installation kannst du die App jederzeit im Zug, Flugzeug oder ohne WLAN nutzen!
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="data.js?v=20261102"></script>
+  <script src="app.js?v=20261102"></script>
+</body>
+</html>

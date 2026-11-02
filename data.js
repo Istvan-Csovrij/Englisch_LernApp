@@ -433,3 +433,247 @@ const CLOZE_DATA = [
     explanation: '"bill" (britisch) oder "check" (amerikanisch) ist die Restaurant-Rechnung.'
   }
 ];
+
+// ============================================================
+// 4. HÖR- & LESE-GESCHICHTEN MIT SYNCHRONEN UNTERTITELN
+// ============================================================
+const STORY_DATA = [
+  {
+    id: 'story-1',
+    category: 'fiae',
+    categoryName: 'FIAE AP 1',
+    title: 'A Day in the Life of a Software Developer',
+    titleDe: 'Ein Tag im Leben eines Fachinformatikers',
+    description: 'Begleite einen Entwickler durch sein morgendliches Daily Standup, Code Review und das Lösen eines Fehlers.',
+    icon: '💻',
+    sentences: [
+      {
+        en: 'Good morning! My name is Istvan, and I work as a junior software developer.',
+        de: 'Guten Morgen! Mein Name ist Istvan und ich arbeite als Junior-Softwareentwickler.'
+      },
+      {
+        en: 'Every morning at nine o\'clock, our development team gathers for the daily standup meeting.',
+        de: 'Jeden Morgen um neun Uhr versammelt sich unser Entwicklerteam zum täglichen Standup-Meeting.'
+      },
+      {
+        en: 'I report what I accomplished yesterday and mention that I am currently optimizing a relational database query.',
+        de: 'Ich berichte, was ich gestern geschafft habe, und erwähne, dass ich aktuell eine relationale Datenbankabfrage optimiere.'
+      },
+      {
+        en: 'Suddenly, an urgent bug ticket arrives from the quality assurance team.',
+        de: 'Plötzlich trifft ein dringendes Fehlerticket aus dem Qualitätssicherungsteam ein.'
+      },
+      {
+        en: 'The user login fails whenever someone enters special characters in the input field.',
+        de: 'Der Benutzer-Login schlägt fehl, wann immer jemand Sonderzeichen in das Eingabefeld eintippt.'
+      },
+      {
+        en: 'I open my development environment, write an automated unit test, and improve the exception handling.',
+        de: 'Ich öffne meine Entwicklungsumgebung, schreibe einen automatisierten Modultest und verbessere die Fehlerbehandlung.'
+      },
+      {
+        en: 'After testing the solution thoroughly, I create a pull request and ask my colleague for a code review.',
+        de: 'Nachdem ich die Lösung gründlich getestet habe, erstelle ich einen Pull Request und bitte meinen Kollegen um ein Code Review.'
+      },
+      {
+        en: 'By four o\'clock in the afternoon, all automated tests pass with green lights.',
+        de: 'Um vier Uhr nachmittags sind alle automatisierten Tests erfolgreich grün.'
+      },
+      {
+        en: 'The continuous deployment pipeline automatically deploys the tested build to the staging server.',
+        de: 'Die Continuous-Deployment-Pipeline spielt den getesteten Build automatisch auf den Testserver aus.'
+      },
+      {
+        en: 'It was a challenging but very rewarding day in application development!',
+        de: 'Es war ein anspruchsvoller, aber sehr erfüllender Tag in der Anwendungsentwicklung!'
+      }
+    ]
+  },
+  {
+    id: 'story-2',
+    category: 'business',
+    categoryName: 'Job & Business',
+    title: 'The Job Interview for Application Developers',
+    titleDe: 'Das IT-Bewerbungsgespräch',
+    description: 'Höre die typischen Fragen und professionellen Antworten bei einem Vorstellungsgespräch.',
+    icon: '👔',
+    sentences: [
+      {
+        en: 'Welcome to our office! Thank you for taking the time to speak with us today.',
+        de: 'Willkommen in unserem Büro! Vielen Dank, dass Sie sich heute die Zeit für ein Gespräch genommen haben.'
+      },
+      {
+        en: 'Could you please introduce yourself and tell us about your experience in programming?',
+        de: 'Könnten Sie sich bitte kurz vorstellen und uns von Ihren Erfahrungen im Programmieren erzählen?'
+      },
+      {
+        en: 'Certainly! I specialize in application development, object-oriented programming, and relational databases with SQL.',
+        de: 'Sehr gerne! Ich habe mich auf Anwendungsentwicklung, objektorientierte Programmierung und relationale Datenbanken mit SQL spezialisiert.'
+      },
+      {
+        en: 'What motivated you to apply for our technology team specifically?',
+        de: 'Was hat Sie dazu motiviert, sich speziell bei unserem Technologieteam zu bewerben?'
+      },
+      {
+        en: 'I am impressed by your modern tech stack and your agile development culture using Scrum.',
+        de: 'Ich bin beeindruckt von Ihrem modernen Tech-Stack und Ihrer agilen Entwicklungskultur mit Scrum.'
+      },
+      {
+        en: 'How do you handle situations when a project deadline is very tight?',
+        de: 'Wie gehen Sie mit Situationen um, in denen ein Projekttermin sehr knapp ist?'
+      },
+      {
+        en: 'I prioritize the essential requirements, communicate openly with the team, and focus on clean code.',
+        de: 'Ich priorisiere die wesentlichen Anforderungen, kommuniziere offen im Team und konzentriere mich auf sauberen Code.'
+      },
+      {
+        en: 'That sounds excellent! We are very pleased with your profile and will contact you by Friday.',
+        de: 'Das klingt hervorragend! Wir sind sehr angetan von Ihrem Profil und werden uns bis Freitag bei Ihnen melden.'
+      }
+    ]
+  },
+  {
+    id: 'story-3',
+    category: 'conversation',
+    categoryName: 'Smalltalk & Alltag',
+    title: 'Coffee Break & Weekend Plans with Colleagues',
+    titleDe: 'Kaffeepause & Wochenendpläne mit Kollegen',
+    description: 'Lockerer Plausch in der Büroküche über Hobbys, Musik und das Wochenende.',
+    icon: '☕',
+    sentences: [
+      {
+        en: 'Hey Istvan, are you taking a quick screen break? Would you like to grab a coffee together?',
+        de: 'Hey Istvan, machst du eine kurze Bildschirmpause? Möchtest du dir zusammen einen Kaffee holen?'
+      },
+      {
+        en: 'Yes, absolutely! My eyes need a rest after two hours of intensive coding.',
+        de: 'Ja, unbedingt! Meine Augen brauchen nach zwei Stunden intensivem Coden eine Pause.'
+      },
+      {
+        en: 'Do you have any interesting plans for the upcoming weekend?',
+        de: 'Hast du schon interessante Pläne für das kommende Wochenende?'
+      },
+      {
+        en: 'On Saturday, I will attend a tech conference, and on Sunday, I want to produce some electronic music.',
+        de: 'Am Samstag besuche ich eine Technik-Konferenz, und am Sonntag möchte ich elektronische Musik produzieren.'
+      },
+      {
+        en: 'That sounds like a wonderful balance between professional learning and creative relaxation!',
+        de: 'Das klingt nach einer wunderbaren Balance zwischen fachlichem Lernen und kreativer Entspannung!'
+      },
+      {
+        en: 'The weather forecast predicts warm sunshine for the entire Sunday afternoon.',
+        de: 'Der Wetterbericht sagt warmen Sonnenschein für den gesamten Sonntagnachmittag voraus.'
+      },
+      {
+        en: 'Awesome! Let\'s finish today\'s sprint backlog so we can enjoy a relaxing weekend.',
+        de: 'Großartig! Lass uns das heutige Sprint-Backlog abschließen, damit wir ein entspanntes Wochenende genießen können.'
+      }
+    ]
+  },
+  {
+    id: 'story-4',
+    category: 'travel',
+    categoryName: 'Urlaub & Reise',
+    title: 'Arriving in London: Airport, Hotel & Dinner',
+    titleDe: 'Ankunft in London: Flughafen, Hotel & Abendessen',
+    description: 'Wichtige Sätze beim Reisen: Vom Flugsteig über den Hotel-Check-in bis zum Restaurant.',
+    icon: '✈️',
+    sentences: [
+      {
+        en: 'Attention passengers, flight four hundred two has landed safely at London Heathrow Airport.',
+        de: 'Achtung Fluggäste, Flug vierhundert-zwei ist sicher auf dem Flughafen London Heathrow gelandet.'
+      },
+      {
+        en: 'Please have your passport and boarding pass ready for border control.',
+        de: 'Bitte halten Sie Ihren Reisepass und Ihre Bordkarte für die Grenzkontrolle bereit.'
+      },
+      {
+        en: 'Good afternoon, I have a hotel room reservation under the name Istvan Csovrij.',
+        de: 'Guten Tag, ich habe eine Hotelzimmer-Reservierung auf den Namen Istvan Csovrij.'
+      },
+      {
+        en: 'Welcome! Here is your magnetic key card for room three hundred five on the third floor.',
+        de: 'Herzlich willkommen! Hier ist Ihre Magnetkarte für Zimmer dreihundert-fünf im dritten Stock.'
+      },
+      {
+        en: 'Could you please recommend a traditional restaurant nearby where we can have dinner?',
+        de: 'Könnten Sie bitte ein traditionelles Restaurant in der Nähe empfehlen, wo wir zu Abend essen können?'
+      },
+      {
+        en: 'Certainly! There is an excellent authentic English restaurant just two blocks down the avenue.',
+        de: 'Sehr gerne! Es gibt ein hervorragendes, authentisches englisches Restaurant nur zwei Querstraßen weiter.'
+      },
+      {
+        en: 'Thank you very much for your kind hospitality and assistance!',
+        de: 'Vielen Dank für Ihre freundliche Gastfreundschaft und Hilfe!'
+      }
+    ]
+  }
+];
+
+// ============================================================
+// 5. DIALOG- & KONVERSATIONS-SZENARIEN (MIT SPRECHEN & KORREKTUR)
+// ============================================================
+const DIALOG_SCENARIOS = {
+  standup: {
+    id: 'standup',
+    title: 'Daily Scrum Standup',
+    icon: '💻',
+    partnerName: 'Sarah (Scrum Master)',
+    partnerRole: 'Scrum Master',
+    initialPrompt: 'Good morning Istvan! Welcome to today\'s daily standup. What did you work on yesterday, and do you have any blockers?',
+    initialPromptDe: 'Guten Morgen Istvan! Willkommen zum heutigen Daily Standup. Woran hast du gestern gearbeitet und gibt es Hindernisse (Blocker)?',
+    contextKeywords: ['yesterday', 'today', 'ticket', 'bug', 'database', 'worked', 'working', 'blocked', 'finish', 'sql', 'query', 'code']
+  },
+  interview: {
+    id: 'interview',
+    title: 'IT-Vorstellungsgespräch',
+    icon: '👔',
+    partnerName: 'Mr. Davis (Tech Lead)',
+    partnerRole: 'Interviewer',
+    initialPrompt: 'Hello Istvan, nice to meet you! Can you tell me why you want to work as an application developer in our company?',
+    initialPromptDe: 'Hallo Istvan, schön Sie kennenzulernen! Können Sie mir sagen, warum Sie als Anwendungsentwickler bei uns arbeiten möchten?',
+    contextKeywords: ['experience', 'programming', 'developer', 'company', 'learn', 'java', 'python', 'sql', 'team', 'skills', 'because', 'project']
+  },
+  support: {
+    id: 'support',
+    title: 'Bug-Report & Ticket Support',
+    icon: '🛠️',
+    partnerName: 'Alex (Product Manager)',
+    partnerRole: 'Product Manager',
+    initialPrompt: 'Hi Istvan! Our QA team found an issue: the database connection times out under heavy traffic. Could you investigate this ticket?',
+    initialPromptDe: 'Hi Istvan! Unser QS-Team hat ein Problem gefunden: Die Datenbankverbindung bricht bei hohem Datenverkehr ab. Könntest du dir das Ticket ansehen?',
+    contextKeywords: ['check', 'fix', 'database', 'issue', 'problem', 'look', 'connection', 'timeout', 'test', 'server', 'log', 'query']
+  },
+  smalltalk: {
+    id: 'smalltalk',
+    title: 'Kaffeepause & Smalltalk',
+    icon: '☕',
+    partnerName: 'Mark (Colleague)',
+    partnerRole: 'Kollege',
+    initialPrompt: 'Hey Istvan! Taking a quick break? How is your week going so far?',
+    initialPromptDe: 'Hey Istvan! Machst du eine kurze Pause? Wie läuft deine Woche bisher?',
+    contextKeywords: ['good', 'busy', 'fine', 'weekend', 'work', 'coffee', 'music', 'weather', 'tired', 'learning', 'project', 'nice']
+  },
+  travel: {
+    id: 'travel',
+    title: 'Hotel & Reisen',
+    icon: '✈️',
+    partnerName: 'Receptionist (London Hotel)',
+    partnerRole: 'Rezeptionist',
+    initialPrompt: 'Good evening, sir! Welcome to the Royal Grand Hotel. How may I assist you today?',
+    initialPromptDe: 'Guten Abend, mein Herr! Willkommen im Royal Grand Hotel. Wie kann ich Ihnen heute behilflich sein?',
+    contextKeywords: ['reservation', 'room', 'check', 'key', 'breakfast', 'name', 'stay', 'night', 'bill', 'book', 'luggage', 'restaurant']
+  },
+  free: {
+    id: 'free',
+    title: 'Freie Konversation',
+    icon: '🌐',
+    partnerName: 'AI English Coach',
+    partnerRole: 'Sprachtrainer',
+    initialPrompt: 'Hello Istvan! You can speak or write anything you want in English. I will reply and correct your sentences!',
+    initialPromptDe: 'Hallo Istvan! Du kannst mir auf Englisch schreiben oder sprechen, was du möchtest. Ich antworte dir und korrigiere deine Sätze!',
+    contextKeywords: []
+  }
+};
