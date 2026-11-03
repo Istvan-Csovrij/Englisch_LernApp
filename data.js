@@ -437,6 +437,9 @@ const CLOZE_DATA = [
 // ============================================================
 // 4. HÖR- & LESE-GESCHICHTEN MIT SYNCHRONEN UNTERTITELN
 // ============================================================
+// ============================================================
+// 4. HÖR- & LESE-GESCHICHTEN MIT SYNCHRONEN UNTERTITELN (10 STORIES)
+// ============================================================
 const STORY_DATA = [
   {
     id: 'story-1',
@@ -609,6 +612,224 @@ const STORY_DATA = [
         de: 'Vielen Dank für Ihre freundliche Gastfreundschaft und Hilfe!'
       }
     ]
+  },
+  {
+    id: 'story-5',
+    category: 'fiae',
+    categoryName: 'FIAE AP 1',
+    title: 'Troubleshooting a Critical Production Incident',
+    titleDe: 'Fehleranalyse eines kritischen Vorfalls in der Produktion',
+    description: 'Ein Live-Vorfall im Kundenportal: Logs analysieren, Nullpointer Exception beheben und Hotfix ausrollen.',
+    icon: '🚨',
+    sentences: [
+      {
+        en: 'At two o\'clock in the afternoon, our automated monitoring system triggered a high-priority alert for our customer portal.',
+        de: 'Um zwei Uhr nachmittags löste unser automatisches Überwachungssystem einen Alarm hoher Priorität für unser Kundenportal aus.'
+      },
+      {
+        en: 'Several users reported that they could not complete their orders because the checkout service was returning an internal server error.',
+        de: 'Mehrere Benutzer berichteten, dass sie ihre Bestellungen nicht abschließen konnten, da der Checkout-Dienst einen internen Serverfehler meldete.'
+      },
+      {
+        en: 'I immediately joined the emergency incident channel and inspected the application error logs in our centralized dashboard.',
+        de: 'Ich trat sofort dem Notfall-Kanal bei und untersuchte die Anwendungs-Fehlerprotokolle in unserem zentralen Dashboard.'
+      },
+      {
+        en: 'The stack trace revealed an unexpected null pointer exception when calculating discounts on empty shopping carts.',
+        de: 'Der Stacktrace zeigte eine unerwartete Nullpointer-Ausnahme bei der Rabattberechnung bei leeren Warenkörben.'
+      },
+      {
+        en: 'I reproduced the bug locally on my development machine and wrote a targeted regression test to verify the failure.',
+        de: 'Ich reproduzierte den Fehler lokal auf meinem Entwicklungsrechner und schrieb einen gezielten Regressionstest, um das Fehlverhalten zu belegen.'
+      },
+      {
+        en: 'Within twenty minutes, I implemented a defensive null check and verified that all automated unit tests passed.',
+        de: 'Innerhalb von zwanzig Minuten implementierte ich eine defensive Null-Prüfung und stellte sicher, dass alle Modultests erfolgreich waren.'
+      },
+      {
+        en: 'The lead architect approved my hotfix pull request, and the continuous integration pipeline deployed it straight to production.',
+        de: 'Die Chefarchitektin gab meinen Hotfix-Pull-Request frei, und die Continuous-Integration-Pipeline spielte ihn direkt auf die Produktivumgebung ein.'
+      },
+      {
+        en: 'The error rate dropped back to zero, and our retrospective meeting helped us strengthen our automated validation rules.',
+        de: 'Die Fehlerrate sank sofort wieder auf null, und unser Nachbesprechungs-Meeting half uns, unsere automatisierten Validierungsregeln zu stärken.'
+      }
+    ]
+  },
+  {
+    id: 'story-6',
+    category: 'fiae',
+    categoryName: 'FIAE AP 1',
+    title: 'Sprint Retrospective & Refactoring Legacy Code',
+    titleDe: 'Sprint-Retrospektive & Refactoring von Altcode',
+    description: 'Wie ein Entwicklerteam technische Schulden abbaut und monolithischen Code modularisiert.',
+    icon: '🛠️',
+    sentences: [
+      {
+        en: 'Every two weeks on Friday afternoon, our agile development team gathers for our sprint retrospective.',
+        de: 'Alle zwei Wochen am Freitagnachmittag versammelt sich unser agiles Entwicklerteam zur Sprint-Retrospektive.'
+      },
+      {
+        en: 'Our Scrum Master asks us what went smoothly, what hindered our velocity, and how we can work more effectively.',
+        de: 'Unsere Scrum Masterin fragt uns, was reibungslos lief, was unsere Geschwindigkeit bremste und wie wir effektiver arbeiten können.'
+      },
+      {
+        en: 'I highlighted that an old billing module contains tightly coupled legacy code with high technical debt.',
+        de: 'Ich betonte, dass ein altes Abrechnungsmodul eng gekoppelten Altcode mit hohen technischen Schulden enthält.'
+      },
+      {
+        en: 'We agreed to dedicate twenty percent of our upcoming sprint capacity specifically for refactoring and architectural cleanup.',
+        de: 'Wir einigten uns darauf, zwanzig Prozent unserer kommenden Sprint-Kapazität gezielt für Refactoring und architektonische Aufräumarbeiten zu reservieren.'
+      },
+      {
+        en: 'My colleague and I used pair programming to break down a huge method into cohesive, reusable domain classes.',
+        de: 'Mein Kollege und ich nutzten Pair Programming, um eine riesige Methode in zusammenhängende, wiederverwendbare Domänenklassen aufzuteilen.'
+      },
+      {
+        en: 'We applied the Single Responsibility Principle and established clear interfaces between all dependencies.',
+        de: 'Wir wandten das Single-Responsibility-Prinzip an und schufen klare Schnittstellen zwischen allen Abhängigkeiten.'
+      },
+      {
+        en: 'Now our codebase is significantly cleaner, easier to maintain, and future feature implementations will take half the time.',
+        de: 'Jetzt ist unsere Codebasis deutlich sauberer, leichter zu warten, und zukünftige Feature-Implementierungen werden nur noch halb so viel Zeit kosten.'
+      }
+    ]
+  },
+  {
+    id: 'story-7',
+    category: 'business',
+    categoryName: 'Job & Business',
+    title: 'Technical Interview: System Design & Databases',
+    titleDe: 'Technisches Fachgespräch: Systemarchitektur & Datenbanken',
+    description: 'Fachfragen im Vorstellungsgespräch: Relationale Datenbanken, Primärschlüssel, Normalisierung und Indizes.',
+    icon: '📊',
+    sentences: [
+      {
+        en: 'In the second round of my technical interview, the lead engineer questioned me about relational database architecture.',
+        de: 'In der zweiten Runde meines Fachgesprächs befragte mich die leitende Ingenieurin über relationale Datenbankarchitektur.'
+      },
+      {
+        en: 'She asked me to explain the exact difference between primary keys and foreign keys in a normalized schema.',
+        de: 'Sie bat mich, den genauen Unterschied zwischen Primärschlüsseln und Fremdschlüsseln in einem normalisierten Schema zu erklären.'
+      },
+      {
+        en: 'I explained that a primary key uniquely identifies a single row, whereas a foreign key establishes referential integrity across related tables.',
+        de: 'Ich erklärte, dass ein Primärschlüssel eine einzelne Zeile eindeutig identifiziert, während ein Fremdschlüssel referenzielle Integrität über verknüpfte Tabellen hinweg herstellt.'
+      },
+      {
+        en: 'Next, she asked how I would troubleshoot slow SQL queries that perform sequential table scans over millions of records.',
+        de: 'Als Nächstes fragte sie, wie ich langsame SQL-Abfragen analysieren würde, die sequenzielle Tabellenscans über Millionen von Datensätzen ausführen.'
+      },
+      {
+        en: 'I suggested analyzing the execution plan with EXPLAIN ANALYZE and creating composite B-tree indexes on heavily filtered columns.',
+        de: 'Ich schlug vor, den Ausführungsplan mit EXPLAIN ANALYZE zu analysieren und zusammengesetzte B-Tree-Indizes auf stark gefilterte Spalten zu legen.'
+      },
+      {
+        en: 'She nodded approvingly and emphasized that practical database optimization is essential for scalable backend systems.',
+        de: 'Sie nickte anerkennend und betonte, dass praktische Datenbankoptimierung für skalierbare Backend-Systeme unverzichtbar ist.'
+      },
+      {
+        en: 'My thorough preparation for the Fachinformatiker exam gave me the confidence to answer every question clearly.',
+        de: 'Meine gründliche Vorbereitung auf die Fachinformatiker-Prüfung gab mir die Sicherheit, jede Frage präzise zu beantworten.'
+      }
+    ]
+  },
+  {
+    id: 'story-8',
+    category: 'business',
+    categoryName: 'Job & Business',
+    title: 'Client Presentation: Software Prototype Demo',
+    titleDe: 'Kundenpräsentation: Live-Demo eines Software-Prototyps',
+    description: 'Vorstellung einer Anwendung vor Stakeholdern, Feedback aufnehmen und Scope Creep managen.',
+    icon: '🤝',
+    sentences: [
+      {
+        en: 'Today our engineering squad presented the first interactive prototype of the management portal to our client stakeholders.',
+        de: 'Heute präsentierte unser Entwicklerteam den ersten interaktiven Prototyp des Management-Portals vor den Kunden-Stakeholdern.'
+      },
+      {
+        en: 'I guided the client through the responsive interface, demonstrating how live data charts refresh dynamically using WebSockets.',
+        de: 'Ich führte den Kunden durch die responsive Oberfläche und demonstrierte, wie sich Live-Diagramme über WebSockets dynamisch aktualisieren.'
+      },
+      {
+        en: 'The client praised the clean UI design and inquired whether we could add an automated PDF reporting export.',
+        de: 'Der Kunde lobte das saubere UI-Design und erkundigte sich, ob wir einen automatisierten PDF-Berichtsexport einbauen könnten.'
+      },
+      {
+        en: 'Our Product Owner explained how we can prioritize this enhancement for the upcoming sprint without jeopardizing the milestone release.',
+        de: 'Unser Product Owner erklärte, wie wir diese Erweiterung im kommenden Sprint priorisieren können, ohne den Meilenstein-Release zu gefährden.'
+      },
+      {
+        en: 'Maintaining transparent communication with clients builds long-term trust and ensures requirements align with business objectives.',
+        de: 'Transparente Kommunikation mit Kunden schafft langfristiges Vertrauen und stellt sicher, dass Anforderungen mit Geschäftszielen übereinstimmen.'
+      },
+      {
+        en: 'It was deeply fulfilling to see our clean software architecture solve real-world problems for end users.',
+        de: 'Es war zutiefst erfüllend zu sehen, wie unsere saubere Softwarearchitektur reale Probleme von Endbenutzern löst.'
+      }
+    ]
+  },
+  {
+    id: 'story-9',
+    category: 'conversation',
+    categoryName: 'Smalltalk & Alltag',
+    title: 'Tech Talk: Electronic Music Production & Home Studios',
+    titleDe: 'Technik-Gespräch: Elektronische Musikproduktion & Heimstudio',
+    description: 'Spannender Plausch über Synthesizer, DAWs, Audio-Plugins und wie kreatives Musizieren das Programmieren fördert.',
+    icon: '🎛️',
+    sentences: [
+      {
+        en: 'During the afternoon coffee break, my colleague asked about my creative passion for producing electronic music.',
+        de: 'Während der Nachmittagskaffeepause erkundigte sich mein Kollege nach meiner kreativen Leidenschaft, elektronische Musik zu produzieren.'
+      },
+      {
+        en: 'I shared that I set up a home studio equipped with a digital audio workstation, virtual synthesizers, and audio interfaces.',
+        de: 'Ich erzählte, dass ich mir ein Heimstudio mit einer digitalen Audio-Workstation, virtuellen Synthesizern und Audio-Interfaces eingerichtet habe.'
+      },
+      {
+        en: 'He was surprised to discover that sound design using oscillators, envelopes, and modulation matrices mirrors algorithmic thinking.',
+        de: 'Er war überrascht zu erfahren, dass Sounddesign mit Oszillatoren, Hüllkurven und Modulationsmatrizen dem algorithmischen Denken stark ähnelt.'
+      },
+      {
+        en: 'When I mix frequencies and sequence percussion rhythms, my mind enters a relaxed state of creative flow.',
+        de: 'Wenn ich Frequenzen abmische und Percussion-Rhythmen sequenziere, kommt mein Geist in einen entspannten Zustand kreativen Flows.'
+      },
+      {
+        en: 'Balancing analytical coding with expressive music production keeps my mind sharp and sparks innovative problem-solving ideas.',
+        de: 'Der Ausgleich zwischen analytischem Programmieren und ausdrucksstarker Musikproduktion hält meinen Verstand fit und weckt innovative Ideen beim Problemlösen.'
+      }
+    ]
+  },
+  {
+    id: 'story-10',
+    category: 'travel',
+    categoryName: 'Urlaub & Reise',
+    title: 'London Underground, Tech Meetup & City Exploration',
+    titleDe: 'Londoner U-Bahn, Entwickler-Meetup & Stadterkundung',
+    description: 'U-Bahn fahren nach Shoreditch, Teilnahme an einem internationalen IT-Meetup und Networking auf Englisch.',
+    icon: '🚇',
+    sentences: [
+      {
+        en: 'On my second morning in the United Kingdom, I tapped my payment card at the station gate and boarded the London Underground.',
+        de: 'An meinem zweiten Vormittag im Vereinigten Königreich hielt ich meine Zahlungskarte an die Schranke und stieg in die Londoner U-Bahn.'
+      },
+      {
+        en: 'I traveled directly to Shoreditch, known worldwide as the vibrant technology hub nicknamed Silicon Roundabout.',
+        de: 'Ich fuhr direkt nach Shoreditch, das weltweit als pulsierender Technologie-Hotspot namens Silicon Roundabout bekannt ist.'
+      },
+      {
+        en: 'In the evening, I attended a developer meetup where engineers from around the globe discussed cloud-native microservices.',
+        de: 'Am Abend besuchte ich ein Entwickler-Meetup, bei dem Softwareingenieure aus aller Welt über cloud-native Microservices diskutierten.'
+      },
+      {
+        en: 'During the networking break, I chatted with local British programmers and shared insights into the German dual education system.',
+        de: 'Während der Netzwerk-Pause unterhielt ich mich mit britischen Programmierern und tauschte Einblicke in das deutsche duale Ausbildungssystem aus.'
+      },
+      {
+        en: 'Speaking fluent English in professional developer circles was a thrilling experience that broadened my global perspective.',
+        de: 'Fließend Englisch in professionellen Entwicklerkreisen zu sprechen war eine aufregende Erfahrung, die meinen globalen Horizont erweiterte.'
+      }
+    ]
   }
 ];
 
@@ -621,59 +842,69 @@ const DIALOG_SCENARIOS = {
     title: 'Daily Scrum Standup',
     icon: '💻',
     partnerName: 'Sarah (Scrum Master)',
-    partnerRole: 'Scrum Master',
-    initialPrompt: 'Good morning Istvan! Welcome to today\'s daily standup. What did you work on yesterday, and do you have any blockers?',
-    initialPromptDe: 'Guten Morgen Istvan! Willkommen zum heutigen Daily Standup. Woran hast du gestern gearbeitet und gibt es Hindernisse (Blocker)?',
-    contextKeywords: ['yesterday', 'today', 'ticket', 'bug', 'database', 'worked', 'working', 'blocked', 'finish', 'sql', 'query', 'code']
+    partnerRole: 'Scrum Master & Agile Coach',
+    initialPrompt: 'Good morning Istvan! Welcome to today\'s daily standup. What did you accomplish yesterday, what is your plan for today, and do you have any blockers?',
+    initialPromptDe: 'Guten Morgen Istvan! Willkommen zum heutigen Daily Standup. Was hast du gestern geschafft, was planst du für heute und hast du Hindernisse (Blocker)?',
+    contextKeywords: ['yesterday', 'today', 'ticket', 'bug', 'database', 'worked', 'working', 'blocked', 'finish', 'sql', 'query', 'code', 'test', 'api', 'pr', 'review']
   },
   interview: {
     id: 'interview',
     title: 'IT-Vorstellungsgespräch',
     icon: '👔',
     partnerName: 'Mr. Davis (Tech Lead)',
-    partnerRole: 'Interviewer',
-    initialPrompt: 'Hello Istvan, nice to meet you! Can you tell me why you want to work as an application developer in our company?',
-    initialPromptDe: 'Hallo Istvan, schön Sie kennenzulernen! Können Sie mir sagen, warum Sie als Anwendungsentwickler bei uns arbeiten möchten?',
-    contextKeywords: ['experience', 'programming', 'developer', 'company', 'learn', 'java', 'python', 'sql', 'team', 'skills', 'because', 'project']
+    partnerRole: 'Lead Architect & Interviewer',
+    initialPrompt: 'Hello Istvan, thank you for coming in today! Could you tell me a little bit about yourself and what projects you enjoyed most during your development training?',
+    initialPromptDe: 'Hallo Istvan, vielen Dank für Ihr Erscheinen heute! Können Sie mir ein wenig über sich erzählen und welche Projekte Ihnen während Ihrer Entwicklerausbildung am meisten Spaß gemacht haben?',
+    contextKeywords: ['experience', 'programming', 'developer', 'company', 'learn', 'java', 'python', 'sql', 'team', 'skills', 'because', 'project', 'architecture', 'clean code', 'database']
   },
   support: {
     id: 'support',
     title: 'Bug-Report & Ticket Support',
     icon: '🛠️',
     partnerName: 'Alex (Product Manager)',
-    partnerRole: 'Product Manager',
-    initialPrompt: 'Hi Istvan! Our QA team found an issue: the database connection times out under heavy traffic. Could you investigate this ticket?',
-    initialPromptDe: 'Hi Istvan! Unser QS-Team hat ein Problem gefunden: Die Datenbankverbindung bricht bei hohem Datenverkehr ab. Könntest du dir das Ticket ansehen?',
-    contextKeywords: ['check', 'fix', 'database', 'issue', 'problem', 'look', 'connection', 'timeout', 'test', 'server', 'log', 'query']
+    partnerRole: 'Senior Product Manager',
+    initialPrompt: 'Hi Istvan! Our QA team flagged an issue in production: the database connection pool times out during peak checkout hours. Could you investigate this ticket?',
+    initialPromptDe: 'Hi Istvan! Unser QS-Team hat ein Problem in der Produktion gemeldet: Der Datenbank-Verbindungspool bricht zu Spitzenzeiten ab. Könntest du dieses Ticket untersuchen?',
+    contextKeywords: ['check', 'fix', 'database', 'issue', 'problem', 'look', 'connection', 'timeout', 'test', 'server', 'log', 'query', 'reproduce', 'hotfix', 'pool']
+  },
+  architecture: {
+    id: 'architecture',
+    title: 'Software-Architektur & Clean Code',
+    icon: '📐',
+    partnerName: 'Elena (Senior Architect)',
+    partnerRole: 'Staff Software Architect',
+    initialPrompt: 'Hi Istvan! We are currently redesigning our backend service layer. What are your thoughts on applying the Single Responsibility Principle and RESTful API conventions here?',
+    initialPromptDe: 'Hi Istvan! Wir überarbeiten aktuell unsere Backend-Service-Schicht. Was hältst du davon, hier das Single-Responsibility-Prinzip und RESTful-API-Konventionen anzuwenden?',
+    contextKeywords: ['architecture', 'clean code', 'refactor', 'solid', 'pattern', 'api', 'rest', 'json', 'service', 'layer', 'class', 'interface', 'coupling', 'microservices']
   },
   smalltalk: {
     id: 'smalltalk',
     title: 'Kaffeepause & Smalltalk',
     icon: '☕',
     partnerName: 'Mark (Colleague)',
-    partnerRole: 'Kollege',
-    initialPrompt: 'Hey Istvan! Taking a quick break? How is your week going so far?',
-    initialPromptDe: 'Hey Istvan! Machst du eine kurze Pause? Wie läuft deine Woche bisher?',
-    contextKeywords: ['good', 'busy', 'fine', 'weekend', 'work', 'coffee', 'music', 'weather', 'tired', 'learning', 'project', 'nice']
+    partnerRole: 'Senior Developer & Teammate',
+    initialPrompt: 'Hey Istvan! Taking a quick screen break? How is your week treating you so far, and did you get any chance to work on your music projects?',
+    initialPromptDe: 'Hey Istvan! Machst du eine kurze Bildschirmpause? Wie läuft deine Woche bisher und hattest du Gelegenheit, an deinen Musikprojekten zu arbeiten?',
+    contextKeywords: ['good', 'busy', 'fine', 'weekend', 'work', 'coffee', 'music', 'weather', 'tired', 'learning', 'project', 'nice', 'studio', 'beat', 'relax']
   },
   travel: {
     id: 'travel',
-    title: 'Hotel & Reisen',
+    title: 'Hotel, London & Reisen',
     icon: '✈️',
-    partnerName: 'Receptionist (London Hotel)',
-    partnerRole: 'Rezeptionist',
-    initialPrompt: 'Good evening, sir! Welcome to the Royal Grand Hotel. How may I assist you today?',
-    initialPromptDe: 'Guten Abend, mein Herr! Willkommen im Royal Grand Hotel. Wie kann ich Ihnen heute behilflich sein?',
-    contextKeywords: ['reservation', 'room', 'check', 'key', 'breakfast', 'name', 'stay', 'night', 'bill', 'book', 'luggage', 'restaurant']
+    partnerName: 'James (Concierge)',
+    partnerRole: 'Royal Grand Hotel Concierge',
+    initialPrompt: 'Good day, sir! Welcome to Central London. How may I be of service to you regarding your stay, transportation, or restaurant reservations today?',
+    initialPromptDe: 'Guten Tag, mein Herr! Willkommen in Zentral-London. Wie kann ich Ihnen bezüglich Ihres Aufenthalts, des Nahverkehrs oder Restaurant-Reservierungen behilflich sein?',
+    contextKeywords: ['reservation', 'room', 'check', 'key', 'breakfast', 'name', 'stay', 'night', 'bill', 'book', 'luggage', 'restaurant', 'london', 'subway', 'tube', 'ticket']
   },
   free: {
     id: 'free',
     title: 'Freie Konversation',
     icon: '🌐',
     partnerName: 'AI English Coach',
-    partnerRole: 'Sprachtrainer',
-    initialPrompt: 'Hello Istvan! You can speak or write anything you want in English. I will reply and correct your sentences!',
-    initialPromptDe: 'Hallo Istvan! Du kannst mir auf Englisch schreiben oder sprechen, was du möchtest. Ich antworte dir und korrigiere deine Sätze!',
+    partnerRole: 'Persönlicher Sprachtrainer',
+    initialPrompt: 'Hello Istvan! I am your interactive English conversational partner. You can talk to me about programming, daily life, exams, or anything you like. What is on your mind today?',
+    initialPromptDe: 'Hallo Istvan! Ich bin dein interaktiver englischer Gesprächspartner. Du kannst mit mir über Programmierung, Alltag, Prüfungen oder beliebige Themen sprechen. Woran denkst du gerade?',
     contextKeywords: []
   }
 };

@@ -865,13 +865,20 @@ document.addEventListener('DOMContentLoaded', () => {
   let dialogHistories = {};
   let dialogInitialized = false;
 
-  // --- DER GRAMMATIK- & SATZ-DOKTOR (CLIENT-SEITIGE ANALYSE) ---
+  // --- DER GRAMMATIK- & SATZ-DOKTOR (CLIENT-SEITIGE ANALYSE & PRAISE) ---
   const SentenceDoctor = {
-    // Erkennt deutsche Sätze / Wörter
     germanWords: [
       'ich', 'habe', 'arbeitete', 'gestern', 'mein', 'meine', 'warum', 'dass', 'nicht',
       'bitte', 'ja', 'nein', 'gut', 'danke', 'wir', 'sie', 'heute', 'morgen', 'frage',
-      'problem', 'fehler', 'gemacht', 'gearbeitet', 'datenbank', 'entwicklung', 'entwickler'
+      'problem', 'fehler', 'gemacht', 'gearbeitet', 'datenbank', 'entwicklung', 'entwickler',
+      'funktion', 'klasse', 'abfrage', 'hilfe', 'kannst', 'wochenende', 'urlaub', 'zimmer'
+    ],
+
+    techVocabList: [
+      'optimize', 'optimization', 'refactor', 'refactoring', 'throughput', 'asynchronous',
+      'bottleneck', 'redundant', 'inheritance', 'polymorphism', 'encapsulation', 'scalability',
+      'concurrency', 'transaction', 'normalization', 'microservice', 'microservices',
+      'monolith', 'deployment', 'pipeline', 'middleware', 'idempotent', 'resilient'
     ],
 
     analyze(text) {
@@ -883,73 +890,85 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // 1. Prüfen auf deutsche Eingabe
       const germanCount = words.filter(w => this.germanWords.includes(w)).length;
-      if (germanCount >= 2 || (words.length <= 3 && germanCount >= 1)) {
+      if (germanCount >= 2 || (words.length <= 4 && germanCount >= 1)) {
         return {
           hasError: true,
           isGerman: true,
           originalText: clean,
           correctedText: this.translateGermanInput(clean),
-          explanation: '⚠️ Du hast auf Deutsch geschrieben! Versuche deinen Gedanken auf Englisch zu formulieren. Sieh dir oben den englischen Satz an.'
+          explanation: '⚠️ Du hast auf Deutsch geschrieben! Versuche deinen Gedanken auf Englisch zu formulieren. Sieh dir oben die englische Übersetzung an.'
         };
       }
 
-      // 2. Regel-Prüfungen auf häufige Grammatik- & Sprachfehler
+      // 2. Prüfen auf bekannte Grammatikfehler & False Friends
       let corrected = clean;
       let hasError = false;
       let explanation = '';
 
-      // Regel A: "become" vs "get / receive" (Klassischer False Friend)
-      const becomeMatch = lower.match(/\b(i|we|they|he|she|you)\s+(become|became)\s+(a|an|the|some|my)?\s*(coffee|tea|job|ticket|email|message|problem|question|task|bug|update)\b/i);
+      // Regel A: "become" vs "get / receive" (False Friend: become = werden, nicht bekommen)
+      const becomeMatch = lower.match(/\b(i|we|they|he|she|you)\s+(become|became)\s+(a|an|the|some|my)?\s*(coffee|tea|job|ticket|email|message|problem|question|task|bug|update|offer)\b/i);
       if (becomeMatch) {
         hasError = true;
         const past = becomeMatch[2].toLowerCase() === 'became';
         const replacementVerb = past ? 'got' : 'get';
         corrected = corrected.replace(new RegExp(becomeMatch[2], 'i'), replacementVerb);
-        explanation = '⚠️ <strong>False Friend:</strong> <em>"become"</em> heißt auf Deutsch <strong>"werden"</strong>, NICHT "bekommen"! Verwende im Englischen <strong>"get"</strong> oder <strong>"receive"</strong> (z. B. <em>"I get a ticket"</em>).';
+        explanation = '⚠️ <strong>False Friend:</strong> <em>"become"</em> heißt auf Deutsch <strong>"werden"</strong>, NICHT "bekommen"! Verwende im Englischen <strong>"get"</strong> oder <strong>"receive"</strong> (z. B. <em>"I got a ticket"</em>).';
       }
 
-      // Regel B: "make" vs "do/run/conduct"
-      if (!hasError && /\b(make|making|made)\s+(a\s+)?(test|code review|sports|homework|query)\b/i.test(lower)) {
+      // Regel B: "actually" vs "currently" (False Friend: actually = eigentlich/tatsächlich, nicht aktuell)
+      if (!hasError && /\b(i\s+am\s+actually\s+working|actually\s+i\s+am|i\s+actually\s+work)\b/i.test(lower)) {
         hasError = true;
-        corrected = corrected.replace(/\bmake\s+(a\s+)?test\b/i, 'run a test')
-                             .replace(/\bmade\s+(a\s+)?test\b/i, 'ran a test')
+        corrected = corrected.replace(/\bactually\b/i, 'currently');
+        explanation = '⚠️ <strong>False Friend:</strong> <em>"actually"</em> bedeutet <strong>"eigentlich / in Wirklichkeit"</strong>. Wenn du <em>"aktuell / im Moment"</em> meinst, verwende <strong>"currently"</strong> oder <strong>"at the moment"</strong>.';
+      }
+
+      // Regel C: "control" vs "check / test / verify" (False Friend: control = steuern/beherrschen)
+      if (!hasError && /\b(control|controlled)\s+(the\s+)?(code|query|database|logs|server|test|error)\b/i.test(lower)) {
+        hasError = true;
+        corrected = corrected.replace(/\bcontrol\b/i, 'check').replace(/\bcontrolled\b/i, 'checked');
+        explanation = '⚠️ <strong>False Friend:</strong> <em>"control"</em> bedeutet <strong>"steuern / kontrollieren im Sinne von beherrschen"</strong>. Wenn du etwas überprüfen oder kontrollieren willst, sagt man <strong>"check"</strong>, <strong>"verify"</strong> oder <strong>"inspect"</strong>.';
+      }
+
+      // Regel D: "make" vs "run / do / conduct"
+      if (!hasError && /\b(make|making|made)\s+(a\s+)?(test|tests|code review|sports|homework|query|interview|decision)\b/i.test(lower)) {
+        hasError = true;
+        corrected = corrected.replace(/\bmake\s+(a\s+)?tests?\b/i, 'run tests')
+                             .replace(/\bmade\s+(a\s+)?tests?\b/i, 'ran tests')
                              .replace(/\bmake\s+(a\s+)?code review\b/i, 'conduct a code review')
                              .replace(/\bmake\s+homework\b/i, 'do homework')
                              .replace(/\bmake\s+sports\b/i, 'do sports');
         explanation = '💡 Im Englischen sagt man <strong>"run a test"</strong>, <strong>"conduct a code review"</strong> oder <strong>"do homework"</strong>, nicht "make".';
       }
 
-      // Regel C: "since" vs "for" (Dauer vs Zeitpunkt)
+      // Regel E: "since" vs "for" (Dauer vs Zeitpunkt)
       if (!hasError && /\bsince\s+(\d+|one|two|three|four|five|several|many|a\s+few)\s+(minutes|hours|days|weeks|months|years)\b/i.test(lower)) {
         hasError = true;
         corrected = corrected.replace(/\bsince\s+/i, 'for ');
-        explanation = '💡 <strong>Since vs. For:</strong> Zeitspannen (Dauer wie <em>"for 3 years"</em>) stehen immer mit <strong>"for"</strong>. <strong>"since"</strong> nutzt man nur für feste Startzeitpunkte (z. B. <em>"since yesterday"</em>).';
+        explanation = '💡 <strong>Since vs. For:</strong> Zeitspannen (Dauer wie <em>"for 3 years"</em>) stehen immer mit <strong>"for"</strong>. <strong>"since"</strong> nutzt man nur für feste Startzeitpunkte (z. B. <em>"since Monday"</em>, <em>"since 2024"</em>).';
       }
 
-      // Regel D: "for yesterday" / "for last week"
+      // Regel F: "for yesterday" / "for last week"
       if (!hasError && /\bfor\s+(yesterday|last\s+week|last\s+month|last\s+year)\b/i.test(lower)) {
         hasError = true;
         corrected = corrected.replace(/\bfor\s+/i, 'since ');
         explanation = '💡 Bei festen Zeitpunkten in der Vergangenheit nutzen wir <strong>"since"</strong> (z. B. <em>"since yesterday"</em>), niemals "for".';
       }
 
-      // Regel E: Relativpronomen "who" vs "which/that" für Dinge
-      if (!hasError && /\b(the|a)\s+(computer|code|bug|database|server|program|ticket|script|query)\s+who\b/i.test(lower)) {
+      // Regel G: Doppelte Vergangenheit: "didn't knew" -> "didn't know"
+      if (!hasError && /\b(didn't|did\s+not)\s+(knew|saw|worked|went|fixed|found)\b/i.test(lower)) {
         hasError = true;
-        corrected = corrected.replace(/\bwho\b/i, 'which');
-        explanation = '💡 <strong>"who"</strong> bezieht sich im Englischen ausschließlich auf Menschen/Personen. Für Dinge (Server, Code, Datenbank) verwendet man <strong>"which"</strong> oder <strong>"that"</strong>.';
+        corrected = corrected.replace(/\bdid\s*n'?t\s+knew\b/i, "didn't know")
+                             .replace(/\bdid\s*n'?t\s+saw\b/i, "didn't see")
+                             .replace(/\bdid\s*n'?t\s+worked\b/i, "didn't work")
+                             .replace(/\bdid\s*n'?t\s+went\b/i, "didn't go")
+                             .replace(/\bdid\s*n'?t\s+fixed\b/i, "didn't fix")
+                             .replace(/\bdid\s*n'?t\s+found\b/i, "didn't find");
+        explanation = '💡 <strong>Doppelte Vergangenheitsform:</strong> Nach <em>"didn\'t"</em> steht immer der einfache Infinitiv (z. B. <em>"I didn\'t know"</em>, nicht "didn\'t knew").';
       }
 
-      // Regel F: Relativpronomen "which" für Personen
-      if (!hasError && /\b(the|a)\s+(person|colleague|developer|user|manager|boss|programmer)\s+which\b/i.test(lower)) {
-        hasError = true;
-        corrected = corrected.replace(/\bwhich\b/i, 'who');
-        explanation = '💡 Bei Personen verwendet man als Relativpronomen <strong>"who"</strong> (z. B. <em>"the developer who fixed the bug"</em>), nicht "which".';
-      }
-
-      // Regel G: "He / She / It - das 's' muss mit!" (3. Person Einzahl Gegenwart)
+      // Regel H: "He / She / It - das 's' muss mit!"
       if (!hasError) {
-        const sMatch = lower.match(/\b(he|she|it|the\s+server|the\s+system|the\s+app|the\s+query)\s+(work|fail|run|need|want|have|think|test|happen)\b/i);
+        const sMatch = lower.match(/\b(he|she|it|the\s+server|the\s+system|the\s+app|the\s+query|the\s+service)\s+(work|fail|run|need|want|have|think|test|happen)\b/i);
         if (sMatch) {
           hasError = true;
           const verb = sMatch[2].toLowerCase();
@@ -959,28 +978,21 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
 
-      // Regel H: "I am agree" -> "I agree"
+      // Regel I: "I am agree" -> "I agree"
       if (!hasError && /\b(i\s+am\s+agree|i\s+was\s+agree)\b/i.test(lower)) {
         hasError = true;
         corrected = corrected.replace(/\bi\s+am\s+agree\b/i, 'I agree').replace(/\bi\s+was\s+agree\b/i, 'I agreed');
         explanation = '💡 Im Englischen ist <strong>"agree"</strong> bereits ein Vollverb. Man sagt <strong>"I agree"</strong> (Ich stimme zu), niemals "I am agree".';
       }
 
-      // Regel I: "I am work" / "I am code" -> "I am working"
-      if (!hasError && /\bi\s+am\s+(work|code|write|program|test)\b/i.test(lower)) {
-        hasError = true;
-        corrected = corrected.replace(/\bi\s+am\s+(work|code|write|program|test)\b/i, (match, v) => `I am ${v}ing`);
-        explanation = '💡 In der Verlaufsform (Present Continuous) folgt nach <em>"am"</em> immer die Verbform mit <strong>-ing</strong> (z. B. <em>"I am working"</em>).';
-      }
-
-      // Regel J: Fehlender Artikel bei Berufsbezeichnung: "I am developer" -> "I am a developer"
-      if (!hasError && /\bi\s+am\s+(junior\s+|senior\s+|software\s+|web\s+)?(developer|programmer|engineer|student)\b/i.test(lower)) {
+      // Regel J: "I am developer" (Fehlender unbestimmter Artikel)
+      if (!hasError && /\bi\s+am\s+(junior\s+|senior\s+|software\s+|web\s+|backend\s+|frontend\s+)?(developer|programmer|engineer|student|architect)\b/i.test(lower)) {
         hasError = true;
         corrected = corrected.replace(/\bi\s+am\s+/i, 'I am a ');
         explanation = '💡 Bei Berufsbezeichnungen im Englischen muss immer ein unbestimmter Artikel <strong>"a"</strong> oder <strong>"an"</strong> stehen (z. B. <em>"I am a software developer"</em>).';
       }
 
-      // Regel K: Unzählbare Substantive: "informations", "softwares", "feedbacks"
+      // Regel K: Unzählbare Nomen: "informations", "softwares", "feedbacks"
       if (!hasError && /\b(informations|softwares|hardwares|feedbacks)\b/i.test(lower)) {
         hasError = true;
         corrected = corrected.replace(/\binformations\b/i, 'information')
@@ -997,35 +1009,28 @@ document.addEventListener('DOMContentLoaded', () => {
         explanation = '💡 Nach Modalverben wie <em>must, can, should</em> folgt der reine Infinitiv <strong>ohne "to"</strong> (z. B. <em>"I must optimize the database"</em>).';
       }
 
-      // Regel M: "look forward to see" -> "look forward to seeing"
-      if (!hasError && /\blook\s+forward\s+to\s+see\b/i.test(lower)) {
+      // Regel M: "interested for" -> "interested in"
+      if (!hasError && /\binterested\s+for\b/i.test(lower)) {
         hasError = true;
-        corrected = corrected.replace(/\blook\s+forward\s+to\s+see\b/i, 'look forward to seeing');
-        explanation = '💡 Nach der Wendung <strong>"look forward to"</strong> folgt immer die -ing Form (Gerund): <em>"looking forward to seeing you"</em>.';
+        corrected = corrected.replace(/\binterested\s+for\b/i, 'interested in');
+        explanation = '💡 Im Englischen heißt es <strong>"interested in"</strong> (z. B. <em>"I am interested in clean architecture"</em>), nicht "interested for".';
       }
 
-      // Regel N: "explain me" -> "explain to me"
-      if (!hasError && /\bexplain\s+me\b/i.test(lower)) {
+      // Regel N: "depend of" -> "depend on"
+      if (!hasError && /\bdepend\s+of\b/i.test(lower)) {
         hasError = true;
-        corrected = corrected.replace(/\bexplain\s+me\b/i, 'explain to me');
-        explanation = '💡 Im Englischen erfordert "explain" die Präposition "to": <strong>"explain to me"</strong>.';
+        corrected = corrected.replace(/\bdepend\s+of\b/i, 'depend on');
+        explanation = '💡 Das Verb <em>depend</em> verlangt immer die Präposition <strong>"on"</strong>: <strong>"it depends on the requirements"</strong>.';
       }
 
-      // Regel O: "discuss about" -> "discuss"
-      if (!hasError && /\bdiscuss\s+about\b/i.test(lower)) {
+      // Regel O: Wortstellung S-V-O: "Yesterday worked I" -> "Yesterday I worked"
+      if (!hasError && /\b(yesterday|today|now)\s+(worked|did|went|saw|finished|started|built)\s+i\b/i.test(lower)) {
         hasError = true;
-        corrected = corrected.replace(/\bdiscuss\s+about\b/i, 'discuss');
-        explanation = '💡 Nach <strong>"discuss"</strong> folgt direkt das Gesprächsthema ohne "about" (z. B. <em>"let\'s discuss the pull request"</em>).';
+        corrected = corrected.replace(/\b(yesterday|today|now)\s+(worked|did|went|saw|finished|started|built)\s+i\b/i, '$1 I $2');
+        explanation = '💡 <strong>Wortstellung S-V-O:</strong> Im Englischen bleibt das Subjekt vor dem Verb (<em>"Yesterday I worked"</em>, nicht "Yesterday worked I").';
       }
 
-      // Regel P: Deutsche Wortstellung: "Yesterday worked I" -> "Yesterday I worked"
-      if (!hasError && /\b(yesterday|today|now)\s+(worked|did|went|saw|finished|started)\s+i\b/i.test(lower)) {
-        hasError = true;
-        corrected = corrected.replace(/\b(yesterday|today|now)\s+(worked|did|went|saw|finished|started)\s+i\b/i, '$1 I $2');
-        explanation = '💡 <strong>Wortstellung S-V-O:</strong> Im Englischen bleibt das Subjekt immer vor dem Verb (<em>"Yesterday I worked"</em>, nicht "Yesterday worked I").';
-      }
-
-      // Regel Q: Kleingeschriebenes "i" als Pronomen
+      // Regel P: Kleingeschriebenes "i" als Pronomen
       if (/\b(i)\b/.test(corrected)) {
         corrected = corrected.replace(/\bi\b/g, 'I');
       }
@@ -1038,198 +1043,527 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
 
+      // Fachvokabular-Erkennung für besonderes Lob
+      const foundTechVocab = words.filter(w => this.techVocabList.includes(w));
+      let techPraise = '';
+      if (!hasError && foundTechVocab.length > 0) {
+        techPraise = `<br>🌟 <strong>Starkes Fachvokabular:</strong> Du hast Fachbegriffe wie <em>"${foundTechVocab.join(', ')}"</em> verwendet – das klingt wie professionelles Englisch erfahrener Softwareentwickler!`;
+      }
+
       return {
         hasError,
         isGerman: false,
         originalText: clean,
         correctedText: corrected,
-        explanation: hasError ? explanation : '🌟 Großartig formuliert! Dein Satz ist grammatikalisch korrekt, flüssig und klingt wie natürliches Englisch.'
+        explanation: hasError ? explanation : ('🌟 Großartig formuliert! Dein Satz ist grammatikalisch einwandfrei und klingt nach natürlichem, flüssigem Englisch.' + techPraise)
       };
     },
 
     translateGermanInput(german) {
       const g = german.toLowerCase();
-      if (g.includes('datenbank') || g.includes('sql')) {
-        return 'I worked on optimizing the SQL database queries.';
+      if (g.includes('datenbank') || g.includes('sql') || g.includes('abfrage')) {
+        return 'I worked on optimizing our SQL database queries.';
+      }
+      if (g.includes('fehler') || g.includes('bug') || g.includes('ticket')) {
+        return 'I investigated the bug ticket and wrote an automated test to reproduce the issue.';
       }
       if (g.includes('gestern') && g.includes('gearbeitet')) {
-        return 'Yesterday I worked on the application features and fixed a bug.';
+        return 'Yesterday I implemented new features and refactored our backend services.';
       }
-      if (g.includes('bewerbung') || g.includes('warum')) {
-        return 'I want to apply because I am passionate about modern software development.';
+      if (g.includes('architektur') || g.includes('clean code')) {
+        return 'I think we should apply clean code principles and split the monolithic class.';
       }
-      if (g.includes('wochenende') || g.includes('pause') || g.includes('kaffee')) {
-        return 'I am taking a quick coffee break and look forward to the weekend.';
+      if (g.includes('bewerbung') || g.includes('vorstellung') || g.includes('warum')) {
+        return 'I would love to work with your agile team because I am passionate about modern software development.';
+      }
+      if (g.includes('wochenende') || g.includes('pause') || g.includes('musik')) {
+        return 'I am taking a quick coffee break and look forward to producing electronic music this weekend.';
       }
       if (g.includes('zimmer') || g.includes('reservierung') || g.includes('hotel')) {
-        return 'Good evening, I have a hotel room reservation under the name Istvan.';
+        return 'Good evening, I have a hotel room reservation under the name Istvan Csovrij.';
       }
-      return 'I would like to practice English conversation with you.';
+      return 'I would like to discuss our software project and practice professional English.';
     }
   };
 
-  // --- ANTWORT-GENERATOR FÜR DEN GESPRÄCHSPARTNER ---
+  // --- DIE DYNAMISCHE DIALOG-ENGINE (MULTI-TURN & ABWECHSLUNGSREICH) ---
+  const DialogEngine = {
+    state: {
+      turnCount: 0,
+      currentScenario: 'standup',
+      usedResponseKeys: new Set()
+    },
+
+    reset(scenarioId) {
+      this.state.turnCount = 0;
+      this.state.currentScenario = scenarioId;
+      this.state.usedResponseKeys.clear();
+    },
+
+    // Antwort-Katalog mit Dutzenden dynamischen Antwort-Zweigen
+    scenarios: {
+      standup: {
+        database: [
+          {
+            id: 'su_db_1',
+            en: 'Great progress on the database optimization, Istvan! Query tuning has a huge impact on system performance. Did you analyze the execution plan with EXPLAIN, or did you add composite indexes?',
+            de: 'Großartiger Fortschritt bei der Datenbankoptimierung, Istvan! Abfrageoptimierung hat großen Einfluss auf die Performance. Hast du den Ausführungsplan mit EXPLAIN analysiert oder zusammengesetzte Indizes angelegt?',
+            suggestions: [
+              'I analyzed the execution plan and added an index on the user ID column.',
+              'I refactored a slow SQL join that was causing a full table scan.',
+              'The query execution time dropped from 800ms down to 15ms.'
+            ]
+          },
+          {
+            id: 'su_db_2',
+            en: 'Excellent! Database latency was one of our main concerns during peak hours. Are your query improvements already verified with automated unit tests?',
+            de: 'Hervorragend! Die Datenbank-Latenz war eine unserer Hauptsorgen in Spitzenzeiten. Sind deine Abfrage-Optimierungen schon durch automatisierte Modultests abgesichert?',
+            suggestions: [
+              'Yes, all unit and integration tests are passing green.',
+              'I wrote test cases covering large result sets and empty tables.',
+              'I will push the pull request right after our daily standup.'
+            ]
+          },
+          {
+            id: 'su_db_3',
+            en: 'That sounds very solid. Once your pull request is merged, we can monitor the database connection pool in our staging environment. Do you need any assistance with the migration script?',
+            de: 'Das klingt sehr solide. Sobald dein Pull Request gemergt ist, können wir den Verbindungspool auf der Testumgebung beobachten. Brauchst du Hilfe beim Migrationsskript?',
+            suggestions: [
+              'No assistance needed, the Flyway migration script is tested.',
+              'Could someone take a quick look at the rollback script with me?',
+              'Everything is on track for deployment this afternoon.'
+            ]
+          }
+        ],
+        testing: [
+          {
+            id: 'su_test_1',
+            en: 'Writing automated tests upfront is great development practice! What is your current test coverage, and did you encounter any tricky edge cases?',
+            de: 'Automatisierte Tests vorab zu schreiben ist eine vorbildliche Praxis! Wie ist deine Testabdeckung und bist du auf knifflige Randfälle gestoßen?',
+            suggestions: [
+              'I covered edge cases for null values and invalid user inputs.',
+              'Our unit test suite now has over eighty percent coverage.',
+              'I used mock objects to simulate the external payment API.'
+            ]
+          },
+          {
+            id: 'su_test_2',
+            en: 'Good automated test suites give the entire team confidence before releasing to production. Are these tests running smoothly in our CI/CD pipeline?',
+            de: 'Gute automatisierte Testsuiten geben dem ganzen Team Sicherheit vor dem Release. Laufen diese Tests reibungslos in unserer CI/CD-Pipeline?',
+            suggestions: [
+              'Yes, the continuous integration pipeline completed in under three minutes.',
+              'I had to fix a flaky test, but now everything passes reliably.',
+              'I will tag the ticket as ready for quality assurance testing.'
+            ]
+          }
+        ],
+        bug_fix: [
+          {
+            id: 'su_bug_1',
+            en: 'Thanks for taking care of that bug ticket, Istvan! What was the root cause of the issue, and could you reproduce it easily in your local setup?',
+            de: 'Danke, dass du das Fehlerticket übernommen hast, Istvan! Was war die Ursache des Problems und konntest du es lokal leicht nachstellen?',
+            suggestions: [
+              'The root cause was an unhandled null pointer exception in the auth controller.',
+              'I reproduced the error using a special character in the username.',
+              'I wrote a regression test first, so this bug will never happen again.'
+            ]
+          },
+          {
+            id: 'su_bug_2',
+            en: 'Great job identifying the root cause quickly! Is your fix already deployed to the staging environment, or are you waiting for a code review first?',
+            de: 'Klasse, dass du die Ursache so schnell gefunden hast! Ist der Fix schon auf dem Testserver oder wartest du noch auf ein Code Review?',
+            suggestions: [
+              'I opened a pull request and asked a senior colleague for review.',
+              'It is already tested on staging and verified by our QA team.',
+              'I will merge it into the main branch right after standup.'
+            ]
+          }
+        ],
+        blocker: [
+          {
+            id: 'su_block_1',
+            en: 'I understand. Let\'s remove that blocker as quickly as possible! Would it help if we set up a fifteen-minute pair programming session after the meeting?',
+            de: 'Verstehe. Lass uns dieses Hindernis so schnell wie möglich aus dem Weg räumen! Würde es helfen, wenn wir nach dem Meeting eine 15-minütige Pair-Programming-Session machen?',
+            suggestions: [
+              'Yes please, a quick pair programming session would be very helpful.',
+              'I only need permission access to the staging database server.',
+              'Thanks! I will ping you on Slack right after the standup.'
+            ]
+          }
+        ],
+        general_progress: [
+          {
+            id: 'su_gen_1',
+            en: 'Sounds like you made great headway yesterday, Istvan! What is your primary milestone for today, and do you foresee any architectural challenges?',
+            de: 'Klingt, als hättest du gestern tolle Fortschritte gemacht, Istvan! Was ist dein Hauptziel für heute und siehst du architektonische Herausforderungen?',
+            suggestions: [
+              'Today my focus is on finishing the REST API endpoints.',
+              'I plan to refactor the service layer and improve modularity.',
+              'No blockers today, I expect to finish the user story before four.'
+            ]
+          },
+          {
+            id: 'su_gen_2',
+            en: 'That aligns perfectly with our sprint velocity! Keep up the momentum. Is there any dependency on other teams that we need to coordinate?',
+            de: 'Das passt perfekt zu unserer Sprint-Geschwindigkeit! Mach weiter so. Gibt es Abhängigkeiten zu anderen Teams, die wir abstimmen müssen?',
+            suggestions: [
+              'No external dependencies, everything is within our team scope.',
+              'The frontend team is waiting for my API payload specification.',
+              'Everything is on track for our sprint demo on Friday.'
+            ]
+          },
+          {
+            id: 'su_gen_3',
+            en: 'Awesome! We are in great shape for the upcoming sprint review. Thanks for the clear update, Istvan!',
+            de: 'Großartig! Wir stehen für das kommende Sprint-Review bestens da. Danke für das klare Update, Istvan!',
+            suggestions: [
+              'Thank you Sarah, let\'s deliver a successful sprint!',
+              'I will document the new endpoints in Swagger/OpenAPI today.',
+              'Have a great and productive day, everyone!'
+            ]
+          }
+        ]
+      },
+
+      interview: {
+        experience: [
+          {
+            id: 'int_exp_1',
+            en: 'That sounds very comprehensive! Which programming languages and databases have you worked with the most during your training as an application developer?',
+            de: 'Das klingt sehr fundiert! Mit welchen Programmiersprachen und Datenbanken hast du während deiner Fachinformatiker-Ausbildung am meisten gearbeitet?',
+            suggestions: [
+              'I have hands-on experience with Java, Python, and SQL databases.',
+              'I specialize in object-oriented programming, REST APIs, and clean code.',
+              'I have built database-driven applications using relational schemas.'
+            ]
+          },
+          {
+            id: 'int_exp_2',
+            en: 'Impressive! Could you give me an example of a challenging programming problem you solved recently, and how you approached the solution?',
+            de: 'Beeindruckend! Könntest du mir ein Beispiel für ein kniffliges Programmierproblem nennen, das du kürzlich gelöst hast, und wie du vorgegangen bist?',
+            suggestions: [
+              'I resolved a database bottleneck by optimizing query joins and indexes.',
+              'I refactored tightly coupled legacy code into modular, testable classes.',
+              'I tracked down a complex concurrency race condition using log analysis.'
+            ]
+          }
+        ],
+        teamwork: [
+          {
+            id: 'int_team_1',
+            en: 'Collaboration and code quality are essential for our engineering team. How do you approach receiving constructive feedback during peer code reviews?',
+            de: 'Zusammenarbeit und Codequalität sind für unser Team unverzichtbar. Wie gehst du mit konstruktivem Feedback in Code Reviews um?',
+            suggestions: [
+              'I appreciate constructive feedback because it improves our codebase.',
+              'I treat code reviews as a valuable learning opportunity from peers.',
+              'I discuss architectural trade-offs openly and respectfully with teammates.'
+            ]
+          },
+          {
+            id: 'int_team_2',
+            en: 'That demonstrates great professional maturity. How do you handle situations when project requirements change abruptly or deadlines are tight?',
+            de: 'Das beweist große berufliche Reife. Wie gehst du mit Situationen um, in denen sich Anforderungen plötzlich ändern oder Deadlines knapp sind?',
+            suggestions: [
+              'I prioritize core functionality first and communicate transparently with stakeholders.',
+              'I stay calm, break down tasks into small increments, and focus on clean solutions.',
+              'Agile Scrum methodologies help adapt smoothly to changing customer needs.'
+            ]
+          }
+        ],
+        motivation: [
+          {
+            id: 'int_mot_1',
+            en: 'What made you choose application development as your profession, and where do you see your technical focus in the next few years?',
+            de: 'Was hat dich dazu bewogen, Anwendungsentwicklung zu deinem Beruf zu machen, und wo siehst du deinen Schwerpunkt in den nächsten Jahren?',
+            suggestions: [
+              'I love solving complex problems with logic and writing software that helps people.',
+              'I want to specialize in scalable backend architectures and cloud technologies.',
+              'Continuous learning is what excites me most about software engineering.'
+            ]
+          },
+          {
+            id: 'int_mot_2',
+            en: 'Your enthusiasm and clear technical understanding are exactly what we look for in our developers. Do you have any questions for us regarding our technology stack or development culture?',
+            de: 'Deine Begeisterung und dein klares technisches Verständnis sind genau das, was wir suchen. Hast du Fragen zu unserem Tech-Stack oder unserer Entwicklungskultur?',
+            suggestions: [
+              'What CI/CD tools and cloud platforms does your team currently utilize?',
+              'How does your engineering team support continuous professional training?',
+              'What are the most exciting technical milestones planned for the next sprint?'
+            ]
+          }
+        ]
+      },
+
+      support: {
+        database_incident: [
+          {
+            id: 'sup_db_1',
+            en: 'Thanks for taking the lead on this ticket, Istvan! The database timeouts are impacting checkout during peak hours. Could you inspect the connection pool metrics in Grafana first?',
+            de: 'Danke, dass du die Führung bei diesem Ticket übernimmst, Istvan! Die Datenbank-Timeouts beeinträchtigen den Checkout. Könntest du zuerst die Verbindungspool-Metriken in Grafana prüfen?',
+            suggestions: [
+              'I am checking the database connection pool metrics right now.',
+              'The pool seems maxed out at 50 connections with high query wait times.',
+              'I will run EXPLAIN on the checkout query to see why it locks rows.'
+            ]
+          },
+          {
+            id: 'sup_db_2',
+            en: 'That confirms our suspicion! An unindexed table scan was holding connection locks for too long. Can you prepare a hotfix with a composite index on the orders table?',
+            de: 'Das bestätigt unseren Verdacht! Ein Tabellenscan ohne Index hielt die Verbindungen zu lange blockiert. Kannst du einen Hotfix mit einem Index auf der Orders-Tabelle vorbereiten?',
+            suggestions: [
+              'I prepared the migration script and tested it locally without errors.',
+              'The query execution dropped from 2 seconds to under 10 milliseconds.',
+              'I opened an urgent hotfix PR and tagged the lead architect for review.'
+            ]
+          },
+          {
+            id: 'sup_db_3',
+            en: 'Outstanding turnaround time! The deployment pipeline finished, and production response times are back to normal. Let\'s document our findings in a quick post-mortem summary.',
+            de: 'Hervorragende Reaktionszeit! Die Pipeline ist durch und die Produktionszeiten sind wieder normal. Lass uns die Erkenntnisse kurz im Post-Mortem dokumentieren.',
+            suggestions: [
+              'I will write the post-mortem summary highlighting the root cause.',
+              'We should add an automated alert if connection pool usage exceeds 80%.',
+              'Thank you Alex, glad we resolved the customer impact so smoothly!'
+            ]
+          }
+        ]
+      },
+
+      architecture: {
+        clean_code: [
+          {
+            id: 'arch_clean_1',
+            en: 'Welcome Istvan! We want to refactor our monolithic service layer. How would you apply the Single Responsibility Principle to break up our 2,000-line OrderManager class?',
+            de: 'Willkommen Istvan! Wir wollen unsere monolithische Service-Schicht umbauen. Wie würdest du das Single-Responsibility-Prinzip anwenden, um die 2.000 Zeilen lange OrderManager-Klasse aufzuteilen?',
+            suggestions: [
+              'I would split it into dedicated classes: OrderValidation, OrderPricing, and OrderRepository.',
+              'We should extract interfaces so each service component has a single reason to change.',
+              'Pairing this with comprehensive unit tests ensures we don\'t break existing business logic.'
+            ]
+          },
+          {
+            id: 'arch_clean_2',
+            en: 'Spot on! Separating validation, pricing calculation, and data persistence decouples our business logic. What are your thoughts on using Dependency Injection to wire these components together?',
+            de: 'Volltreffer! Die Trennung von Validierung, Preiskalkulation und Persistenz entkoppelt unsere Geschäftslogik. Was hältst du vom Einsatz von Dependency Injection zur Verknüpfung?',
+            suggestions: [
+              'Dependency Injection is crucial because it allows us to mock dependencies easily in unit tests.',
+              'It keeps our classes loosely coupled and adheres to the Inversion of Control principle.',
+              'I have used Constructor Injection in Java and it makes code very maintainable.'
+            ]
+          },
+          {
+            id: 'arch_clean_3',
+            en: 'Your architectural intuition is top notch, Istvan! When building RESTful APIs, how do you ensure clear response structures and proper HTTP status code handling?',
+            de: 'Deine architektonische Intuition ist erstklassig, Istvan! Wie stellst du beim Entwurf von REST-APIs klare Antwortstrukturen und saubere HTTP-Statuscodes sicher?',
+            suggestions: [
+              'I use standard HTTP codes: 200 for OK, 201 for Created, 400 for Bad Request, and 404 for Not Found.',
+              'I design standardized JSON response envelopes containing data, error messages, and pagination metadata.',
+              'I document all endpoints with OpenAPI/Swagger so frontend developers can integrate easily.'
+            ]
+          }
+        ]
+      },
+
+      smalltalk: {
+        music_hobby: [
+          {
+            id: 'st_music_1',
+            en: 'Producing electronic music sounds like such a fascinating hobby, Istvan! What digital audio workstation do you use, and do you enjoy sound design or composing melodies more?',
+            de: 'Elektronische Musik zu produzieren klingt nach einem faszinierenden Hobby, Istvan! Welche DAW nutzt du und macht dir Sounddesign oder das Melodienkomponieren mehr Spaß?',
+            suggestions: [
+              'I use a DAW and software synthesizers to sculpt unique basslines and melodies.',
+              'I enjoy designing custom synth patches with oscillators, filters, and audio effects.',
+              'Making beats and arranging tracks is a great creative outlet after a day of coding.'
+            ]
+          },
+          {
+            id: 'st_music_2',
+            en: 'That is really cool. There is actually a strong psychological connection between music production and programming – both require structured logic and creative problem solving!',
+            de: 'Das ist echt cool. Es gibt eine starke Verbindung zwischen Musikproduktion und Programmieren – beides erfordert logische Struktur und kreative Problemlösung!',
+            suggestions: [
+              'Yes, layering sounds in a DAW feels very similar to structuring clean software classes.',
+              'Adjusting frequencies and mastering tracks requires the same attention to detail as debugging.',
+              'It really helps me clear my mind and recharge my mental focus for the next sprint.'
+            ]
+          }
+        ],
+        coffee_break: [
+          {
+            id: 'st_coffee_1',
+            en: 'Taking regular coffee and screen breaks is so important in software development! How is your week going so far with the new project tasks?',
+            de: 'Regelmäßige Kaffee- und Bildschirmpausen sind in der Softwareentwicklung so wichtig! Wie läuft deine Woche bisher mit den neuen Projektaufgaben?',
+            suggestions: [
+              'My week is going really well, making steady progress on my sprint backlog.',
+              'Taking a short walk away from the monitors definitely clears my head.',
+              'A good cup of coffee always boosts my problem-solving energy!'
+            ]
+          },
+          {
+            id: 'st_coffee_2',
+            en: 'The weather forecast for the weekend looks absolutely sunny and pleasant too! Do you have any plans to get outside or attend any tech meetups?',
+            de: 'Der Wetterbericht fürs Wochenende sieht auch absolut sonnig und angenehm aus! Hast du Pläne rauszugehen oder ein Technik-Meetup zu besuchen?',
+            suggestions: [
+              'I want to enjoy some outdoor sunshine and produce new music on Sunday.',
+              'I might check out an online developer talk about modern cloud architecture.',
+              'Relaxing with good music and good food is definitely on my weekend agenda!'
+            ]
+          }
+        ]
+      },
+
+      travel: {
+        london_hotel: [
+          {
+            id: 'trv_lon_1',
+            en: 'Good day Mr. Csovrij! I see your reservation for three nights in our executive suite. May I assist you with your luggage or provide a map of Central London?',
+            de: 'Guten Tag Herr Csovrij! Ich sehe Ihre Reservierung für drei Nächte in unserer Executive Suite. Darf ich Ihnen mit dem Gepäck helfen oder einen Stadtplan geben?',
+            suggestions: [
+              'Thank you! Here is my passport and booking confirmation.',
+              'Could you tell me what time complimentary breakfast is served in the morning?',
+              'What is the easiest way to take the Underground to Shoreditch from here?'
+            ]
+          },
+          {
+            id: 'trv_lon_2',
+            en: 'Certainly! Breakfast is served in our restaurant from 7:00 to 10:30 AM. To get to Shoreditch, simply take the Central Line to Bank and change for the Northern Line to Old Street.',
+            de: 'Sehr gerne! Frühstück wird im Restaurant von 7:00 bis 10:30 Uhr serviert. Nach Shoreditch nehmen Sie einfach die Central Line bis Bank und steigen in die Northern Line nach Old Street um.',
+            suggestions: [
+              'That is very clear and convenient, thank you for the directions!',
+              'Can I pay on the Underground with my contactless credit card or phone?',
+              'Could you also recommend an authentic British restaurant for dinner tonight?'
+            ]
+          },
+          {
+            id: 'trv_lon_3',
+            en: 'Yes, contactless payment or Apple Pay is accepted at all station barriers! For dinner, I highly recommend "The George", an authentic historic restaurant just two blocks down the avenue.',
+            de: 'Ja, kontaktloses Bezahlen oder Apple Pay funktioniert an allen Schranken! Fürs Abendessen empfehle ich "The George", ein authentisches historisches Restaurant nur zwei Straßen weiter.',
+            suggestions: [
+              'That sounds wonderful, I will definitely check out The George tonight.',
+              'Thank you very much for your outstanding British hospitality!',
+              'Have a wonderful evening, I will head up to my room now.'
+            ]
+          }
+        ]
+      },
+
+      free: {
+        general: [
+          {
+            id: 'fr_1',
+            en: 'That is very interesting, Istvan! Tell me more about that. How do you apply this in your daily programming work or personal routine?',
+            de: 'Das ist sehr interessant, Istvan! Erzähl mir mehr darüber. Wie wendest du das in deiner täglichen Programmierarbeit oder deinem Alltag an?',
+            suggestions: [
+              'In my daily routine, I balance intensive coding with continuous learning.',
+              'I focus on writing readable code with clean architecture and automated tests.',
+              'I find that discussing technical concepts in English builds immense confidence.'
+            ]
+          },
+          {
+            id: 'fr_2',
+            en: 'You express your thoughts very clearly in English! What area of software engineering do you find most fascinating right now?',
+            de: 'Du drückst deine Gedanken auf Englisch sehr klar aus! Welches Gebiet der Softwaretechnik findest du im Moment am faszinierendsten?',
+            suggestions: [
+              'I am fascinated by scalable backend microservices and efficient database design.',
+              'I love how agile Scrum frameworks enable collaborative and iterative development.',
+              'I enjoy exploring how algorithmic patterns improve application performance.'
+            ]
+          },
+          {
+            id: 'fr_3',
+            en: 'That is a great perspective. Continuous practice and curiosity are the best ingredients for becoming an outstanding software engineer. What goal are you working towards next?',
+            de: 'Das ist eine tolle Perspektive. Kontinuierliche Übung und Neugier sind die besten Zutaten für einen herausragenden Softwareentwickler. An welchem Ziel arbeitest du als Nächstes?',
+            suggestions: [
+              'My next milestone is acing my Fachinformatiker AP 1 certification exam.',
+              'I want to expand my English IT vocabulary to collaborate in international teams.',
+              'I plan to build a full-stack web application showcasing clean code principles.'
+            ]
+          }
+        ]
+      }
+    },
+
+    // Hauptfunktion: Erkennt Thema, Turn-Zähler und wählt abwechslungsreiche Antworten
+    generateResponse(userInput, scenarioId) {
+      this.state.turnCount++;
+      const lower = userInput.toLowerCase();
+      const scenario = this.scenarios[scenarioId] || this.scenarios.standup;
+
+      // 1. Thema anhand von Schlüsselwörtern ermitteln
+      let topicList = [];
+
+      if (lower.includes('database') || lower.includes('query') || lower.includes('sql') || lower.includes('index') || lower.includes('table') || lower.includes('timeout')) {
+        topicList.push('database', 'database_incident');
+      }
+      if (lower.includes('test') || lower.includes('tests') || lower.includes('unit test') || lower.includes('coverage') || lower.includes('qa')) {
+        topicList.push('testing');
+      }
+      if (lower.includes('bug') || lower.includes('ticket') || lower.includes('fix') || lower.includes('issue') || lower.includes('error') || lower.includes('exception')) {
+        topicList.push('bug_fix', 'database_incident');
+      }
+      if (lower.includes('clean code') || lower.includes('solid') || lower.includes('architecture') || lower.includes('refactor') || lower.includes('class') || lower.includes('api')) {
+        topicList.push('clean_code');
+      }
+      if (lower.includes('music') || lower.includes('synth') || lower.includes('beat') || lower.includes('studio') || lower.includes('daw') || lower.includes('hobby')) {
+        topicList.push('music_hobby');
+      }
+      if (lower.includes('coffee') || lower.includes('break') || lower.includes('weather') || lower.includes('weekend') || lower.includes('tired')) {
+        topicList.push('coffee_break');
+      }
+      if (lower.includes('hotel') || lower.includes('room') || lower.includes('london') || lower.includes('passport') || lower.includes('reservation') || lower.includes('tube')) {
+        topicList.push('london_hotel');
+      }
+      if (lower.includes('experience') || lower.includes('developer') || lower.includes('career') || lower.includes('fiae') || lower.includes('programming')) {
+        topicList.push('experience', 'clean_code');
+      }
+      if (lower.includes('team') || lower.includes('scrum') || lower.includes('feedback') || lower.includes('colleague') || lower.includes('review')) {
+        topicList.push('teamwork');
+      }
+      if (lower.includes('blocker') || lower.includes('blocked') || lower.includes('stuck') || lower.includes('help')) {
+        topicList.push('blocker');
+      }
+
+      // 2. Kandidaten aus dem Szenario sammeln
+      let candidates = [];
+      for (const t of topicList) {
+        if (scenario[t] && Array.isArray(scenario[t])) {
+          candidates.push(...scenario[t]);
+        }
+      }
+
+      // Falls keine spezifischen Themen zutreffen, Fallbacks nutzen
+      if (candidates.length === 0) {
+        const fallbackKeys = Object.keys(scenario);
+        for (const k of fallbackKeys) {
+          if (Array.isArray(scenario[k])) {
+            candidates.push(...scenario[k]);
+          }
+        }
+      }
+
+      // 3. Ausfiltern bereits benutzter Antworten (Anti-Wiederholungs-Garantie!)
+      let unusedCandidates = candidates.filter(c => !this.state.usedResponseKeys.has(c.id));
+
+      // Falls alle bereits verbraucht wurden, Pool für dieses Thema leeren und frisch wählen
+      if (unusedCandidates.length === 0) {
+        candidates.forEach(c => this.state.usedResponseKeys.delete(c.id));
+        unusedCandidates = candidates;
+      }
+
+      // Nach Turn-Zähler auswählen für progressive Gesprächsführung
+      let chosen = unusedCandidates[(this.state.turnCount - 1) % unusedCandidates.length] || unusedCandidates[0];
+
+      // Antwort-ID als verwendet markieren
+      if (chosen && chosen.id) {
+        this.state.usedResponseKeys.add(chosen.id);
+      }
+
+      return chosen;
+    }
+  };
+
+  // Rückwärtskompatible Wrapper-Funktion
   function generatePartnerResponse(userInput, scenarioId) {
-    const lower = userInput.toLowerCase();
-
-    if (scenarioId === 'standup') {
-      if (lower.includes('database') || lower.includes('query') || lower.includes('sql')) {
-        return {
-          en: 'Great progress on the database optimization! Efficient queries are essential for our application throughput. Are the changes already covered by unit tests?',
-          de: 'Großartiger Fortschritt bei der Datenbankoptimierung! Effiziente Abfragen sind unverzichtbar für unseren Durchsatz. Sind die Änderungen schon durch Modultests abgedeckt?',
-          suggestions: [
-            'Yes, I wrote automated unit tests for all queries.',
-            'I am currently writing the test cases today.',
-            'I will create a pull request before lunch.'
-          ]
-        };
-      }
-      if (lower.includes('bug') || lower.includes('ticket') || lower.includes('fix') || lower.includes('issue')) {
-        return {
-          en: 'Thank you for handling that bug ticket, Istvan! Is the fix already deployed to the staging environment, or do you need a code review first?',
-          de: 'Danke, dass du das Ticket übernommen hast, Istvan! Ist der Fix schon auf der Testumgebung oder brauchst du zuerst ein Code Review?',
-          suggestions: [
-            'I need a quick code review from a colleague.',
-            'The bug is fixed and verified in staging.',
-            'I will merge the pull request right after our standup.'
-          ]
-        };
-      }
-      return {
-        en: 'Thank you for the update, Istvan! What are your main goals for today\'s sprint, and is anything blocking your progress?',
-        de: 'Danke für das Update, Istvan! Was sind deine Hauptziele für den heutigen Sprint und blockiert dich etwas?',
-        suggestions: [
-          'Today I will work on the API endpoints. No blockers!',
-          'I want to finish the user authentication module.',
-          'Everything is on track with my sprint tasks.'
-        ]
-      };
-    }
-
-    if (scenarioId === 'interview') {
-      if (lower.includes('experience') || lower.includes('programming') || lower.includes('code') || lower.includes('developer')) {
-        return {
-          en: 'That sounds very impressive! Which programming languages and databases have you worked with the most during your training?',
-          de: 'Das klingt sehr beeindruckend! Mit welchen Programmiersprachen und Datenbanken hast du während deiner Ausbildung am meisten gearbeitet?',
-          suggestions: [
-            'I have solid experience with Java, Python, and SQL databases.',
-            'I specialize in application development and clean code.',
-            'I enjoy building REST APIs and relational database models.'
-          ]
-        };
-      }
-      if (lower.includes('team') || lower.includes('scrum') || lower.includes('agile')) {
-        return {
-          en: 'Teamwork is at the heart of our culture. How do you approach constructive feedback during peer code reviews?',
-          de: 'Teamarbeit steht bei uns im Mittelpunkt. Wie gehst du mit konstruktivem Feedback in Code Reviews um?',
-          suggestions: [
-            'I appreciate feedback because it improves our code quality.',
-            'I view code reviews as a great learning opportunity.',
-            'I discuss technical solutions openly with my colleagues.'
-          ]
-        };
-      }
-      return {
-        en: 'Thank you for sharing that! What motivated you to specialize in application development specifically?',
-        de: 'Vielen Dank fürs Erzählen! Was hat dich motiviert, dich speziell auf Anwendungsentwicklung zu spezialisieren?',
-        suggestions: [
-          'I love solving complex problems with logic and software.',
-          'Creating digital applications that help users inspires me.',
-          'Technology evolves rapidly, and I love learning new tools.'
-        ]
-      };
-    }
-
-    if (scenarioId === 'support') {
-      if (lower.includes('log') || lower.includes('check') || lower.includes('fix') || lower.includes('investigate')) {
-        return {
-          en: 'Awesome, thank you! Please check the server error logs first to inspect if there is an unhandled database connection timeout.',
-          de: 'Super, danke! Bitte überprüfe zuerst die Server-Logs, um zu sehen, ob ein Datenbank-Verbindungsabbruch vorliegt.',
-          suggestions: [
-            'I will inspect the error logs and reproduce the timeout.',
-            'The issue seems to be an unindexed database query.',
-            'I will increase the connection pool size and test it.'
-          ]
-        };
-      }
-      return {
-        en: 'The customer reported that this error occurs mostly during peak traffic. Let me know as soon as you find the root cause in the logs.',
-        de: 'Der Kunde berichtete, dass dieser Fehler vor allem zu Stoßzeiten auftritt. Gib mir Bescheid, sobald du die Ursache findest.',
-        suggestions: [
-          'I am already analyzing the backend server metrics.',
-          'I found the slow database query and will optimize it.',
-          'I will deploy a hotfix to the staging server shortly.'
-        ]
-      };
-    }
-
-    if (scenarioId === 'smalltalk') {
-      if (lower.includes('weekend') || lower.includes('music') || lower.includes('hobby')) {
-        return {
-          en: 'Producing electronic music sounds fantastic! What kind of software or synthesizers do you like using in your studio?',
-          de: 'Elektronische Musik zu produzieren klingt fantastisch! Welche Software oder Synthesizer nutzt du am liebsten in deinem Studio?',
-          suggestions: [
-            'I use digital audio workstations and virtual synthesizers.',
-            'I love experimenting with electronic beats and melodies.',
-            'Making music is a wonderful way to relax after coding.'
-          ]
-        };
-      }
-      if (lower.includes('coffee') || lower.includes('break') || lower.includes('tired')) {
-        return {
-          en: 'Here is your coffee! Taking regular screen breaks really boosts coding focus and creativity.',
-          de: 'Hier ist dein Kaffee! Regelmäßige Pausen steigern die Konzentration und Kreativität beim Programmieren enorm.',
-          suggestions: [
-            'Thanks! A short coffee break definitely clears the mind.',
-            'Yes, stepping away from the monitor prevents fatigue.',
-            'Now I feel refreshed and ready for the next sprint task!'
-          ]
-        };
-      }
-      return {
-        en: 'It is always nice chatting with you, Istvan! What are you most excited about for the upcoming days?',
-        de: 'Es ist immer schön mit dir zu plaudern, Istvan! Worauf freust du dich in den kommenden Tagen am meisten?',
-        suggestions: [
-          'I look forward to mastering new English IT vocabulary!',
-          'I want to make good progress on my development project.',
-          'I am excited to enjoy some relaxing free time this weekend.'
-        ]
-      };
-    }
-
-    if (scenarioId === 'travel') {
-      if (lower.includes('reservation') || lower.includes('room') || lower.includes('istvan') || lower.includes('name')) {
-        return {
-          en: 'I found your booking, Mr. Csovrij! You are booked for three nights in our executive room. May I see your ID card, please?',
-          de: 'Ich habe Ihre Buchung gefunden, Herr Csovrij! Sie haben drei Nächte in unserem Executive-Zimmer gebucht. Darf ich bitte Ihren Ausweis sehen?',
-          suggestions: [
-            'Here is my passport and reservation confirmation.',
-            'Does the room reservation include complimentary breakfast?',
-            'What time is the check-out on Sunday morning?'
-          ]
-        };
-      }
-      return {
-        en: 'Here is your magnetic key card for room 305 on the third floor. Elevators are on your left. Can I help you with your luggage?',
-        de: 'Hier ist Ihre Zimmerkarte für Raum 305 im dritten Stock. Die Aufzüge sind links. Kann ich Ihnen mit dem Gepäck helfen?',
-        suggestions: [
-          'No thank you, I can manage my luggage myself.',
-          'Could you recommend a good traditional restaurant nearby?',
-          'What is the Wi-Fi password for the room?'
-        ]
-      };
-    }
-
-    // Freier Chat
-    return {
-      en: 'That is very interesting, Istvan! Could you tell me more about that in English? How does that relate to your work or daily routine?',
-      de: 'Das ist sehr interessant, Istvan! Kannst du mir auf Englisch mehr darüber erzählen? Wie hängt das mit deiner Arbeit oder deinem Alltag zusammen?',
-      suggestions: [
-        'In my daily routine, I balance programming and continuous learning.',
-        'It helps me prepare effectively for my IT certification exam.',
-        'I enjoy discussing these topics in professional English.'
-      ]
-    };
+    return DialogEngine.generateResponse(userInput, scenarioId);
   }
 
   // --- INITIALISIERUNG DES DIALOG-VIEWS ---
@@ -1323,6 +1657,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function switchDialogScenario(scenarioId) {
     currentScenarioId = scenarioId;
+    DialogEngine.reset(scenarioId);
     const scenario = DIALOG_SCENARIOS[scenarioId] || DIALOG_SCENARIOS.standup;
 
     const avatarEl = document.getElementById('scenarioAvatar');

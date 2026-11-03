@@ -1,5 +1,5 @@
 // Service Worker: Offline-Support für Englisch-LernApp
-const CACHE_NAME = 'english-master-cache-v5';
+const CACHE_NAME = 'english-master-cache-v6';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -17,7 +17,7 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[Service Worker] Caching offline assets for v5...');
+      console.log('[Service Worker] Caching offline assets for v6...');
       return cache.addAll(ASSETS_TO_CACHE);
     })
   );
