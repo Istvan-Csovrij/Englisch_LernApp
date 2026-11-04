@@ -258,6 +258,152 @@ const VOCAB_DATA = [
     exampleDe: 'Das Essen war köstlich! Könnten wir bitte die Rechnung bekommen?',
     svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>`
   }
+,
+  // --- WEITERE FIAE AP 1 & IT-FACHBEGRIFFE ---
+  {
+    id: 'fiae-9',
+    category: 'fiae',
+    categoryName: 'FIAE AP 1 & IT',
+    english: 'Clean Architecture',
+    phonetic: 'klihn ar-ki-tek-tscher',
+    german: 'Saubere Software-Architektur (Schichtenmodell)',
+    definition: 'Architekturmuster zur Trennung von Geschäftslogik, Frameworks und Benutzeroberfläche in unabhängige Schichten.',
+    exampleEn: 'Clean architecture decouples core business logic from external database frameworks.',
+    exampleDe: 'Saubere Architektur entkoppelt die Kern-Geschäftslogik von externen Datenbank-Frameworks.',
+    svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>`
+  },
+  {
+    id: 'fiae-10',
+    category: 'fiae',
+    categoryName: 'FIAE AP 1 & IT',
+    english: 'Dependency Injection',
+    phonetic: 'di-pen-den-si in-dschek-shun',
+    german: 'Abhängigkeitsinjektion (lose Kopplung)',
+    definition: 'Entwurfsmuster, bei dem Abhängigkeiten von außen an eine Klasse übergeben werden, anstatt sie intern selbst zu erzeugen.',
+    exampleEn: 'Dependency injection makes unit testing much easier because mock services can be injected.',
+    exampleDe: 'Dependency Injection erleichtert Modultests enorm, da Mock-Dienste übergeben werden können.',
+    svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>`
+  },
+  {
+    id: 'fiae-11',
+    category: 'fiae',
+    categoryName: 'FIAE AP 1 & IT',
+    english: 'API Endpoint',
+    phonetic: 'ey-pi-ai end-point',
+    german: 'Schnittstellen-Endpunkt (REST-URL)',
+    definition: 'Spezifische URL einer Webschnittstelle, über die ein Client Daten anfordern oder verändern kann (z. B. per GET oder POST).',
+    exampleEn: 'The frontend sends an HTTP GET request to the user profile API endpoint.',
+    exampleDe: 'Das Frontend sendet eine HTTP-GET-Anfrage an den Schnittstellen-Endpunkt des Benutzerprofils.',
+    svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>`
+  },
+  {
+    id: 'fiae-12',
+    category: 'fiae',
+    categoryName: 'FIAE AP 1 & IT',
+    english: 'Pull Request & Code Review',
+    phonetic: 'pul ri-kwest & kohd ri-wju',
+    german: 'Pull-Request & Code-Überprüfung',
+    definition: 'Vorschlag von Codeänderungen an ein Repository, der vor dem Zusammenführen (Merge) von Kollegen geprüft wird.',
+    exampleEn: 'Every pull request requires approval from at least one senior developer before merging.',
+    exampleDe: 'Jeder Pull-Request erfordert vor dem Mergen die Freigabe von mindestens einem Senior-Entwickler.',
+    svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7"/><line x1="6" y1="9" x2="6" y2="21"/></svg>`
+  },
+  {
+    id: 'fiae-13',
+    category: 'fiae',
+    categoryName: 'FIAE AP 1 & IT',
+    english: 'Data Encapsulation',
+    phonetic: 'dey-tuh en-k\xe4p-su-ley-shun',
+    german: 'Datenkapselung (Information Hiding)',
+    definition: 'OOP-Prinzip: Verbergen interner Datenzustände hinter privaten Attributen und kontrollierter Zugriff über Getter/Setter.',
+    exampleEn: 'Encapsulation prevents unauthorized direct modification of private object fields.',
+    exampleDe: 'Datenkapselung verhindert die unbefugte direkte Änderung privater Objekt-Attribute.',
+    svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`
+  },
+  {
+    id: 'fiae-14',
+    category: 'fiae',
+    categoryName: 'FIAE AP 1 & IT',
+    english: 'Polymorphism',
+    phonetic: 'po-li-mor-fi-s\xf6m',
+    german: 'Vielgestaltigkeit (Objektorientierung)',
+    definition: 'Fähigkeit verschiedener Klassen, auf denselben Methodenaufruf jeweils mit eigenem spezifischem Verhalten zu reagieren.',
+    exampleEn: 'Polymorphism allows our payment processor to handle credit cards and PayPal through one interface.',
+    exampleDe: 'Polymorphie ermöglicht es unserem Bezahldienst, Kreditkarten und PayPal über eine einheitliche Schnittstelle zu verarbeiten.',
+    svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>`
+  },
+  {
+    id: 'fiae-15',
+    category: 'fiae',
+    categoryName: 'FIAE AP 1 & IT',
+    english: 'Primary Key & Database Index',
+    phonetic: 'prai-m\xe4-ri kih & dey-tuh-beys in-deks',
+    german: 'Primärschlüssel & Datenbankindex',
+    definition: 'Ein Primärschlüssel identifiziert jeden Datensatz eindeutig. Ein Index beschleunigt Suchabfragen drastisch.',
+    exampleEn: 'Adding a B-tree index on the email column reduced query execution time from 2 seconds to 4 milliseconds.',
+    exampleDe: 'Das Hinzufügen eines B-Tree-Index auf der E-Mail-Spalte reduzierte die Abfragezeit von 2 Sekunden auf 4 Millisekunden.',
+    svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-1.5 1.5L14 9l-1.5-1.5-4.5 4.5 2 2-2 2-2-2L3 17l4 4 3-3-2-2 2-2 2 2 4.5-4.5L15 10l3.5-3.5"/></svg>`
+  },
+  {
+    id: 'fiae-16',
+    category: 'fiae',
+    categoryName: 'FIAE AP 1 & IT',
+    english: 'Refactoring & Technical Debt',
+    phonetic: 'ri-f\xe4k-to-ring & tek-ni-kl det',
+    german: 'Refactoring & Technische Schulden',
+    definition: 'Verbessern der internen Codequalität und Lesbarkeit, ohne das äußere funktionale Verhalten der Software zu verändern.',
+    exampleEn: 'We scheduled sprint tasks to refactor legacy spaghetti code and reduce technical debt.',
+    exampleDe: 'Wir haben Sprint-Aufgaben eingeplant, um unübersichtlichen Altcode zu refaktorisieren und technische Schulden abzubauen.',
+    svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>`
+  },
+  {
+    id: 'fiae-17',
+    category: 'fiae',
+    categoryName: 'FIAE AP 1 & IT',
+    english: 'Single Responsibility Principle',
+    phonetic: 'sing-gl ri-spon-si-bi-li-ti prin-si-pl',
+    german: 'Prinzip der eindeutigen Verantwortlichkeit (SOLID)',
+    definition: 'Eine Klasse oder ein Modul sollte genau eine einzige wohldefinierte Aufgabe haben und nur einen einzigen Grund zur Änderung besitzen.',
+    exampleEn: 'According to the Single Responsibility Principle, a class should do only one thing well.',
+    exampleDe: 'Nach dem Single-Responsibility-Prinzip sollte eine Klasse nur genau eine Aufgabe gut erledigen.',
+    svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>`
+  },
+  {
+    id: 'fiae-18',
+    category: 'fiae',
+    categoryName: 'FIAE AP 1 & IT',
+    english: 'Asynchronous Function (Async/Await)',
+    phonetic: 'ey-sin-kro-n\xf6s fank-shun',
+    german: 'Asynchrone Funktion (nicht-blockierend)',
+    definition: 'Funktion, die im Hintergrund ausgeführt wird, ohne den Haupt-Thread oder die Benutzeroberfläche zu blockieren.',
+    exampleEn: 'Using async and await prevents the user interface from freezing while fetching data from the server.',
+    exampleDe: 'Die Nutzung von async und await verhindert das Einfrieren der Benutzeroberfläche während des Datenabrufs vom Server.',
+    svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`
+  },
+  {
+    id: 'fiae-19',
+    category: 'fiae',
+    categoryName: 'FIAE AP 1 & IT',
+    english: 'Scalability & Load Balancing',
+    phonetic: 'skey-la-bi-li-ti & lohd b\xe4-len-sing',
+    german: 'Skalierbarkeit & Lastverteilung',
+    definition: 'Fähigkeit eines IT-Systems, mit steigender Benutzer- und Datenlast durch Hinzufügen von Ressourcen stabil weiterzuarbeiten.',
+    exampleEn: 'The load balancer distributes incoming user requests evenly across multiple application servers.',
+    exampleDe: 'Der Load Balancer verteilt eingehende Benutzeranfragen gleichmäßig auf mehrere Anwendungsserver.',
+    svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 16v1a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v1"/><path d="M18 8h4a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-4"/></svg>`
+  },
+  {
+    id: 'fiae-20',
+    category: 'fiae',
+    categoryName: 'FIAE AP 1 & IT',
+    english: 'Deadlock & Concurrency',
+    phonetic: 'ded-lok & kon-k\xf6-ren-si',
+    german: 'Verklemmung & Nebenläufigkeit',
+    definition: 'Zustand, bei dem zwei Threads wechselseitig auf Ressourcen warten, die der jeweils andere gesperrt hält.',
+    exampleEn: 'Proper lock ordering is critical to prevent database deadlocks in concurrent applications.',
+    exampleDe: 'Eine saubere Reihenfolge beim Sperren ist entscheidend, um Datenbank-Deadlocks bei nebenläufigen Zugriffen zu vermeiden.',
+    svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>`
+  }
 ];
 
 const SPEECH_DATA = [
@@ -837,6 +983,16 @@ const STORY_DATA = [
 // 5. DIALOG- & KONVERSATIONS-SZENARIEN (MIT SPRECHEN & KORREKTUR)
 // ============================================================
 const DIALOG_SCENARIOS = {
+  quiz: {
+    id: 'quiz',
+    title: '🎯 Vokabel-Prüfer & Quiz',
+    icon: '🎯',
+    partnerName: 'Prof. Miller (Vokabel-Coach)',
+    partnerRole: 'Interaktiver Vokabel- & Fachbegriff-Prüfer',
+    initialPrompt: 'Hallo Istvan! 🎯 In diesem Modus teste ich deinen Wortschatz. Ich nenne dir englische Fachbegriffe und du schreibst oder sprichst mir die deutsche Bedeutung! Los geht\'s mit deinem ersten Begriff:',
+    initialPromptDe: 'Hallo Istvan! 🎯 In diesem Modus teste ich deinen Wortschatz. Ich nenne dir englische Fachbegriffe und du schreibst oder sprichst mir die deutsche Bedeutung! Los geht\'s mit deinem ersten Begriff:',
+    contextKeywords: ['bereit', 'ready', 'ja', 'start', 'los', 'yes', 'abfragen', 'quiz', 'vokabeln', 'wörter', 'deutsch']
+  },
   standup: {
     id: 'standup',
     title: 'Daily Scrum Standup',

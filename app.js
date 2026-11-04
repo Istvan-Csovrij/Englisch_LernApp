@@ -1086,6 +1086,113 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
+
+  // --- DER INTERAKTIVE VOKABEL-PRÜFER (QUIZ-ENGINE) ---
+  const VocabQuizEngine = {
+    state: {
+      active: false,
+      currentIndex: 0,
+      currentVocab: null,
+      score: 0,
+      totalAsked: 0,
+      deck: []
+    },
+
+    start() {
+      this.state.active = true;
+      this.state.score = 0;
+      this.state.totalAsked = 0;
+      // Deck mit allen Vokabeln mischen
+      this.state.deck = [...VOCAB_DATA].sort(() => Math.random() - 0.5);
+      this.state.currentIndex = 0;
+      return this.askNext();
+    },
+
+    askNext() {
+      if (this.state.currentIndex >= this.state.deck.length) {
+        this.state.deck = [...VOCAB_DATA].sort(() => Math.random() - 0.5);
+        this.state.currentIndex = 0;
+      }
+      const item = this.state.deck[this.state.currentIndex];
+      this.state.currentVocab = item;
+      this.state.currentIndex++;
+      this.state.totalAsked++;
+
+      const cleanGermanHint = item.german.split('/')[0].replace(/\(.*?\)/g, '').trim();
+
+      const suggestions = [
+        cleanGermanHint,
+        '💡 Lösung anzeigen',
+        '⏭️ Nächstes Wort'
+      ];
+
+      return {
+        en: `Question ${this.state.totalAsked}: What is the German meaning of "${item.english}"?`,
+        de: `Frage ${this.state.totalAsked}: Wie lautet die deutsche Bedeutung von:\n👉 **"${item.english}"**?\n*(Kategorie: ${item.categoryName})*`,
+        audioText: item.english,
+        suggestions: suggestions,
+        vocabItem: item
+      };
+    },
+
+    evaluateAnswer(userAnswer) {
+      if (!this.state.currentVocab) {
+        return this.start();
+      }
+
+      const item = this.state.currentVocab;
+      const cleanUser = userAnswer.toLowerCase().trim().replace(/[^a-zäöüß0-9\s]/g, '');
+
+      // Falls der Nutzer nach der Lösung fragt oder überspringen möchte
+      if (cleanUser.includes('lösung') || cleanUser.includes('solution') || cleanUser.includes('skip') || cleanUser.includes('weiß nicht') || cleanUser.includes('nächstes') || cleanUser.includes('weiter')) {
+        const nextQ = this.askNext();
+        return {
+          isCorrect: false,
+          isSkip: true,
+          en: `"${item.english}" translates to "${item.german}". Definition: ${item.definition}`,
+          de: `💡 **Lösung:**\n👉 **"${item.english}"** = **"${item.german}"**\n*Erklärung:* ${item.definition}\n\n━━━━━━━━━━━━━━━━━━━━\n${nextQ.de}`,
+          audioText: `${item.english}. Nächstes Wort: ${nextQ.vocabItem.english}`,
+          suggestions: nextQ.suggestions
+        };
+      }
+
+      // Kern-Schlüsselwörter aus der deutschen Übersetzung und Definition extrahieren
+      const germanKeywords = (item.german + ' ' + (item.definition || '')).toLowerCase().replace(/[^a-zäöüß0-9\s]/g, '').split(/\s+/).filter(w => w.length >= 4);
+      const userWords = cleanUser.split(/\s+/).filter(w => w.length >= 4);
+
+      // Treffer prüfen
+      const hasMatch = userWords.some(uw => germanKeywords.some(gk => gk.includes(uw) || uw.includes(gk))) ||
+                       cleanUser.includes(item.german.toLowerCase().split('/')[0].trim().toLowerCase().slice(0, 5));
+
+      let feedbackEn = '';
+      let feedbackDe = '';
+
+      if (hasMatch) {
+        this.state.score++;
+        userXP += 15;
+        localStorage.setItem('fiae_user_xp', userXP);
+        playSound('success');
+
+        feedbackEn = `Correct! 🎉 "${item.english}" means "${item.german}".`;
+        feedbackDe = `Hervorragend, Istvan! 🎉 Das ist absolut richtig!\n👉 **"${item.english}"** = **"${item.german}"**\n💡 *Erklärung:* ${item.definition}\n*(+15 XP • Punktestand: ${this.state.score} von ${this.state.totalAsked} richtig)*`;
+      } else {
+        playSound('try-again');
+        feedbackEn = `Close! "${item.english}" translates to "${item.german}".`;
+        feedbackDe = `Fast! 💡 **"${item.english}"** bedeutet auf Deutsch:\n👉 **"${item.german}"**\n*Erklärung:* ${item.definition}\n*(Punktestand: ${this.state.score} von ${this.state.totalAsked} richtig)*`;
+      }
+
+      const nextQ = this.askNext();
+      return {
+        isCorrect: hasMatch,
+        isSkip: false,
+        en: `${feedbackEn}\n\n${nextQ.en}`,
+        de: `${feedbackDe}\n\n━━━━━━━━━━━━━━━━━━━━\n${nextQ.de}`,
+        audioText: `${feedbackEn} Next word: ${nextQ.vocabItem.english}`,
+        suggestions: nextQ.suggestions
+      };
+    }
+  };
+
   // --- DIE DYNAMISCHE DIALOG-ENGINE (MULTI-TURN & ABWECHSLUNGSREICH) ---
   const DialogEngine = {
     state: {
@@ -1680,6 +1787,27 @@ document.addEventListener('DOMContentLoaded', () => {
     const scenario = DIALOG_SCENARIOS[scenarioId] || DIALOG_SCENARIOS.standup;
     dialogHistories[scenarioId] = [];
 
+    if (scenarioId === 'quiz') {
+      const firstQ = VocabQuizEngine.start();
+      const initialPartnerMsg = {
+        type: 'partner',
+        sender: scenario.partnerName,
+        textEn: `Hello Istvan! Let's test your vocabulary. ${firstQ.en}`,
+        textDe: `Hallo Istvan! 🎯 In diesem Modus teste ich deinen Wortschatz. Ich nenne dir englische IT- & Fachbegriffe und du nennst mir die deutsche Bedeutung!
+
+👉 Wie lautet die deutsche Bedeutung von:
+**"${firstQ.vocabItem.english}"**?
+*(Kategorie: ${firstQ.vocabItem.categoryName})*`,
+        suggestions: firstQ.suggestions
+      };
+      dialogHistories[scenarioId].push(initialPartnerMsg);
+      renderChatLog(scenarioId);
+      if (currentDialogMode === 'voice') {
+        speakEnglish(firstQ.vocabItem.english);
+      }
+      return;
+    }
+
     // Initiale Begrüßungsnachricht des Partners
     const initialPartnerMsg = {
       type: 'partner',
@@ -1785,46 +1913,29 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
         chatLog.appendChild(msgDiv);
 
-        // Falls eine Satzkorrektur vorhanden ist, Doctor Card rendern
-        if (item.analysis) {
+        // Falls ein ECHTER Fehler vorliegt, Doctor Card rendern
+        // WICHTIG: Wenn der Satz fehlerfrei ist, KEINE nervige "Großartig... bla bla"-Box anzeigen!
+        if (item.analysis && item.analysis.hasError) {
           const docCard = document.createElement('div');
-          docCard.className = `sentence-doctor-card ${item.analysis.hasError ? 'has-error' : 'is-perfect'}`;
-          
-          if (item.analysis.hasError) {
-            docCard.innerHTML = `
-              <div class="doctor-header">
-                <span class="doctor-badge error">🩺 Satz-Korrektur & Grammatik-Tipp</span>
-              </div>
-              <div class="doctor-detail-row">
-                <span class="doctor-label">🔴 Dein Satz:</span>
-                <span class="doctor-original-text">${item.analysis.originalText}</span>
-              </div>
-              <div class="doctor-corrected-box">
-                <span class="doctor-corrected-text">🟢 ${item.analysis.correctedText}</span>
-                <button class="chat-audio-btn" data-speak="${encodeURIComponent(item.analysis.correctedText)}">
-                  🔊 Anhören
-                </button>
-              </div>
-              <div class="doctor-explanation-box">
-                ${item.analysis.explanation}
-              </div>
-            `;
-          } else {
-            docCard.innerHTML = `
-              <div class="doctor-header">
-                <span class="doctor-badge perfect">🌟 Hervorragend formuliert!</span>
-              </div>
-              <div class="doctor-corrected-box">
-                <span class="doctor-corrected-text">🟢 ${item.analysis.correctedText}</span>
-                <button class="chat-audio-btn" data-speak="${encodeURIComponent(item.analysis.correctedText)}">
-                  🔊 Anhören
-                </button>
-              </div>
-              <div class="doctor-explanation-box" style="border-left-color: var(--success); color: #a7f3d0; background: rgba(16, 185, 129, 0.1);">
-                ${item.analysis.explanation}
-              </div>
-            `;
-          }
+          docCard.className = 'sentence-doctor-card has-error';
+          docCard.innerHTML = `
+            <div class="doctor-header">
+              <span class="doctor-badge error">🩺 Satz-Korrektur & Grammatik-Tipp</span>
+            </div>
+            <div class="doctor-detail-row">
+              <span class="doctor-label">🔴 Dein Satz:</span>
+              <span class="doctor-original-text">${item.analysis.originalText}</span>
+            </div>
+            <div class="doctor-corrected-box">
+              <span class="doctor-corrected-text">🟢 ${item.analysis.correctedText}</span>
+              <button class="chat-audio-btn" data-speak="${encodeURIComponent(item.analysis.correctedText)}">
+                🔊 Anhören
+              </button>
+            </div>
+            <div class="doctor-explanation-box">
+              ${item.analysis.explanation}
+            </div>
+          `;
 
           const listenBtn = docCard.querySelector('.chat-audio-btn');
           if (listenBtn) {
@@ -1882,12 +1993,53 @@ document.addEventListener('DOMContentLoaded', () => {
 
     input.value = '';
     const scenarioId = currentScenarioId;
-    const scenario = DIALOG_SCENARIOS[scenarioId] || DIALOG_SCENARIOS.standup;
 
-    // 1. Satz analysieren (Grammatik & Satzkorrektur)
+    // 1. Absicht erkennen, Vokabeln abzufragen (Quiz-Intent in JEDEM Szenario!)
+    const isQuizIntent = /(abfrag|frage.*mich|teste.*mich|quiz|vokabeln.*abfrag|wörter.*abfrag|teste.*mein.*englisch|wörter.*fragen|vokabeltest)/i.test(text);
+    if (isQuizIntent && currentScenarioId !== 'quiz') {
+      const quizBtn = document.querySelector('.scenario-btn[data-scenario="quiz"]');
+      if (quizBtn) {
+        document.querySelectorAll('.scenario-btn').forEach(b => b.classList.remove('active'));
+        quizBtn.classList.add('active');
+      }
+      switchDialogScenario('quiz');
+      return;
+    }
+
+    // 2. Falls wir im Quiz-Modus sind: Antwort durch VocabQuizEngine prüfen!
+    if (currentScenarioId === 'quiz') {
+      if (!dialogHistories['quiz']) dialogHistories['quiz'] = [];
+      dialogHistories['quiz'].push({
+        type: 'user',
+        text: text,
+        analysis: null // Keine Grammatikkorrektur im Quiz, da der Nutzer auf Deutsch antwortet!
+      });
+
+      const quizResult = VocabQuizEngine.evaluateAnswer(text);
+      dialogHistories['quiz'].push({
+        type: 'partner',
+        sender: 'Prof. Miller (Vokabel-Coach)',
+        textEn: quizResult.en,
+        textDe: quizResult.de,
+        suggestions: quizResult.suggestions
+      });
+
+      updateStatsBadges();
+      renderChatLog('quiz');
+
+      if (currentDialogMode === 'voice') {
+        setTimeout(() => {
+          speakEnglish(quizResult.audioText || quizResult.en);
+        }, 300);
+      }
+      return;
+    }
+
+    // 3. Normales Szenario: Satz analysieren (Grammatik & Satzkorrektur)
+    const scenario = DIALOG_SCENARIOS[scenarioId] || DIALOG_SCENARIOS.standup;
     const analysis = SentenceDoctor.analyze(text);
 
-    // 2. User-Nachricht speichern
+    // User-Nachricht speichern
     if (!dialogHistories[scenarioId]) dialogHistories[scenarioId] = [];
     dialogHistories[scenarioId].push({
       type: 'user',
@@ -1895,7 +2047,7 @@ document.addEventListener('DOMContentLoaded', () => {
       analysis: analysis
     });
 
-    // 3. Antwort des Partners generieren
+    // Antwort des Partners generieren
     const partnerReply = generatePartnerResponse(text, scenarioId);
     dialogHistories[scenarioId].push({
       type: 'partner',
@@ -1905,16 +2057,16 @@ document.addEventListener('DOMContentLoaded', () => {
       suggestions: partnerReply.suggestions
     });
 
-    // 4. XP vergeben & Sound abspielen
+    // XP vergeben & Sound abspielen
     userXP += 10;
     localStorage.setItem('fiae_user_xp', userXP);
     updateStatsBadges();
     playSound(analysis && !analysis.hasError ? 'success' : 'try-again');
 
-    // 5. Chat neu rendern
+    // Chat neu rendern
     renderChatLog(scenarioId);
 
-    // 6. Falls Sprachmodus aktiv ist, Antwort vorlesen
+    // Falls Sprachmodus aktiv ist, Antwort vorlesen
     if (currentDialogMode === 'voice') {
       setTimeout(() => {
         speakEnglish(partnerReply.en);
