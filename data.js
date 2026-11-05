@@ -8,7 +8,8 @@ const CATEGORIES = {
   fiae: { id: 'fiae', name: 'FIAE AP 1 & IT', icon: '💻' },
   business: { id: 'business', name: 'Job & Business', icon: '💼' },
   conversation: { id: 'conversation', name: 'Smalltalk & Alltag', icon: '💬' },
-  travel: { id: 'travel', name: 'Urlaub & Reise', icon: '✈️' }
+  travel: { id: 'travel',
+    gender: 'male', name: 'Urlaub & Reise', icon: '✈️' }
 };
 
 const VOCAB_DATA = [
@@ -1869,6 +1870,7 @@ const STORY_DATA = [
 const DIALOG_SCENARIOS = {
   beginner: {
     id: 'beginner',
+    gender: 'female',
     title: '🌱 Anfänger & Plaudern',
     icon: '🌱',
     partnerName: 'Emma (Lernpartnerin & Tutorin)',
@@ -1879,6 +1881,7 @@ const DIALOG_SCENARIOS = {
   },
   quiz: {
     id: 'quiz',
+    gender: 'male',
     title: '🎯 Vokabel-Prüfer & Quiz',
     icon: '🎯',
     partnerName: 'Prof. Miller (Vokabel-Coach)',
@@ -1889,6 +1892,7 @@ const DIALOG_SCENARIOS = {
   },
   standup: {
     id: 'standup',
+    gender: 'female',
     title: 'Daily Scrum Standup',
     icon: '💻',
     partnerName: 'Sarah (Scrum Master)',
@@ -1899,6 +1903,7 @@ const DIALOG_SCENARIOS = {
   },
   interview: {
     id: 'interview',
+    gender: 'male',
     title: 'IT-Vorstellungsgespräch',
     icon: '👔',
     partnerName: 'Mr. Davis (Tech Lead)',
@@ -1909,6 +1914,7 @@ const DIALOG_SCENARIOS = {
   },
   support: {
     id: 'support',
+    gender: 'male',
     title: 'Bug-Report & Ticket Support',
     icon: '🛠️',
     partnerName: 'Alex (Product Manager)',
@@ -1919,6 +1925,7 @@ const DIALOG_SCENARIOS = {
   },
   architecture: {
     id: 'architecture',
+    gender: 'female',
     title: 'Software-Architektur & Clean Code',
     icon: '📐',
     partnerName: 'Elena (Senior Architect)',
@@ -1929,6 +1936,7 @@ const DIALOG_SCENARIOS = {
   },
   smalltalk: {
     id: 'smalltalk',
+    gender: 'male',
     title: 'Kaffeepause & Smalltalk',
     icon: '☕',
     partnerName: 'Mark (Colleague)',
@@ -1949,6 +1957,7 @@ const DIALOG_SCENARIOS = {
   },
   free: {
     id: 'free',
+    gender: 'female',
     title: 'Freie Konversation',
     icon: '🌐',
     partnerName: 'AI English Coach',

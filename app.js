@@ -115,6 +115,106 @@ document.addEventListener('DOMContentLoaded', () => {
     return VOICE_PROFILES[activeVoiceProfileId] || VOICE_PROFILES.soft;
   }
 
+
+  // ============================================================
+  // BUST PORTRAIT AVATARS (CHEST TO HEAD) & SPEAKING ANIMATION
+  // ============================================================
+  const FEMALE_BUST_SVG = `<svg class="avatar-bust-svg female" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="femBg" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#4f46e5" stop-opacity="0.3"/>
+        <stop offset="100%" stop-color="#ec4899" stop-opacity="0.3"/>
+      </linearGradient>
+      <linearGradient id="femHair" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#7c2d12"/>
+        <stop offset="100%" stop-color="#451a03"/>
+      </linearGradient>
+      <linearGradient id="femSkin" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stop-color="#fed7aa"/>
+        <stop offset="100%" stop-color="#fdba74"/>
+      </linearGradient>
+      <linearGradient id="femCloth" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#6366f1"/>
+        <stop offset="100%" stop-color="#a855f7"/>
+      </linearGradient>
+    </defs>
+    <circle cx="60" cy="60" r="56" fill="url(#femBg)"/>
+    <path d="M32 45 C32 20, 88 20, 88 45 C88 75, 84 95, 80 102 C75 92, 70 85, 60 85 C50 85, 45 92, 40 102 C36 95, 32 75, 32 45 Z" fill="url(#femHair)"/>
+    <path d="M22 120 C22 94, 42 84, 60 84 C78 84, 98 94, 98 120 Z" fill="url(#femCloth)"/>
+    <path d="M52 84 L60 100 L68 84 Z" fill="url(#femSkin)"/>
+    <path d="M54 90 Q60 96 66 90" stroke="#fef08a" stroke-width="1.5" fill="none"/>
+    <path d="M52 68 L52 86 L68 86 L68 68 Z" fill="url(#femSkin)"/>
+    <path d="M52 74 Q60 80 68 74 L68 68 L52 68 Z" fill="#fb923c" opacity="0.25"/>
+    <ellipse cx="60" cy="52" rx="19" ry="22" fill="url(#femSkin)"/>
+    <circle cx="48" cy="58" r="4.5" fill="#f43f5e" opacity="0.25"/>
+    <circle cx="72" cy="58" r="4.5" fill="#f43f5e" opacity="0.25"/>
+    <path d="M47 43 Q52 40 56 44" stroke="#451a03" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+    <path d="M64 44 Q68 40 73 43" stroke="#451a03" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+    <ellipse cx="51.5" cy="49.5" rx="3" ry="3.5" fill="#1e293b"/>
+    <circle cx="50.5" cy="48" r="1.2" fill="#ffffff"/>
+    <ellipse cx="68.5" cy="49.5" rx="3" ry="3.5" fill="#1e293b"/>
+    <circle cx="67.5" cy="48" r="1.2" fill="#ffffff"/>
+    <path d="M60 51 L59 56 L62 56" stroke="#ea580c" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+    <path class="avatar-mouth" d="M53 62 Q60 67 67 62" stroke="#e11d48" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+    <path d="M34 42 C36 24, 76 20, 86 35 C88 48, 86 64, 84 72 C80 50, 78 38, 62 38 C46 38, 40 46, 36 60 C34 54, 33 48, 34 42 Z" fill="url(#femHair)"/>
+    <circle cx="41" cy="55" r="2" fill="#fef08a"/>
+    <circle cx="79" cy="55" r="2" fill="#fef08a"/>
+  </svg>`;
+
+  const MALE_BUST_SVG = `<svg class="avatar-bust-svg male" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="maleBg" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#0284c7" stop-opacity="0.3"/>
+        <stop offset="100%" stop-color="#06b6d4" stop-opacity="0.3"/>
+      </linearGradient>
+      <linearGradient id="maleHair" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#334155"/>
+        <stop offset="100%" stop-color="#0f172a"/>
+      </linearGradient>
+      <linearGradient id="maleSkin" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stop-color="#ffedd5"/>
+        <stop offset="100%" stop-color="#fed7aa"/>
+      </linearGradient>
+      <linearGradient id="maleShirt" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#0284c7"/>
+        <stop offset="100%" stop-color="#0369a1"/>
+      </linearGradient>
+    </defs>
+    <circle cx="60" cy="60" r="56" fill="url(#maleBg)"/>
+    <path d="M18 120 C18 92, 40 82, 60 82 C80 82, 102 92, 102 120 Z" fill="url(#maleShirt)"/>
+    <path d="M50 82 L60 96 L46 92 Z" fill="#ffffff"/>
+    <path d="M70 82 L60 96 L74 92 Z" fill="#f1f5f9"/>
+    <path d="M52 82 L60 94 L68 82 Z" fill="url(#maleSkin)"/>
+    <path d="M50 66 L50 84 L70 84 L70 66 Z" fill="url(#maleSkin)"/>
+    <path d="M50 72 Q60 78 70 72 L70 66 L50 66 Z" fill="#ea580c" opacity="0.2"/>
+    <path d="M41 46 C41 34, 79 34, 79 46 C79 62, 75 73, 60 73 C45 73, 41 62, 41 46 Z" fill="url(#maleSkin)"/>
+    <path d="M46 42 Q52 39 57 42" stroke="#1e293b" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+    <path d="M63 42 Q68 39 74 42" stroke="#1e293b" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+    <ellipse cx="51.5" cy="48.5" rx="3.2" ry="3.5" fill="#0f172a"/>
+    <circle cx="50.5" cy="47" r="1.2" fill="#ffffff"/>
+    <ellipse cx="68.5" cy="48.5" rx="3.2" ry="3.5" fill="#0f172a"/>
+    <circle cx="67.5" cy="47" r="1.2" fill="#ffffff"/>
+    <path d="M60 48 L59 55 L63 55" stroke="#c2410c" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+    <path class="avatar-mouth" d="M52 62 Q60 67 68 62" stroke="#991b1b" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+    <path d="M38 42 C38 24, 82 22, 82 38 C82 43, 80 47, 78 48 C76 34, 70 30, 58 30 C46 30, 42 36, 40 45 Z" fill="url(#maleHair)"/>
+    <path d="M38 42 C40 30, 52 24, 62 25 C72 26, 80 30, 82 38 C80 30, 72 27, 60 27 C48 27, 40 32, 38 42 Z" fill="#475569"/>
+    <ellipse cx="40" cy="50" rx="3" ry="5" fill="url(#maleSkin)"/>
+    <ellipse cx="80" cy="50" rx="3" ry="5" fill="url(#maleSkin)"/>
+  </svg>`;
+
+  function getPartnerAvatarSvg(scenarioId) {
+    const sc = (typeof DIALOG_SCENARIOS !== 'undefined' && DIALOG_SCENARIOS[scenarioId]) ? DIALOG_SCENARIOS[scenarioId] : null;
+    const isFemale = sc ? (sc.gender === 'female') : (scenarioId === 'beginner' || scenarioId === 'standup' || scenarioId === 'architecture');
+    return isFemale ? FEMALE_BUST_SVG : MALE_BUST_SVG;
+  }
+
+  function setAvatarSpeaking(isSpeaking) {
+    const avatarEl = document.getElementById('scenarioAvatar');
+    if (avatarEl) {
+      avatarEl.classList.toggle('is-speaking', isSpeaking);
+    }
+  }
+
   // Mobile Voice Caching & Preloading
   let cachedDeviceVoices = [];
   function updateVoicesCache() {
@@ -223,6 +323,7 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       if (window.speechSynthesis.speaking) {
         window.speechSynthesis.cancel();
+        setAvatarSpeaking(false);
       }
 
       // WICHTIG: Text vollständig von Emojis, Smileys und Formatierungen befreien!
@@ -249,7 +350,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
 
+      setAvatarSpeaking(true);
+
       utterance.onend = () => {
+        setAvatarSpeaking(false);
         window._activeUtterance = null;
         if (typeof onEndCallback === 'function') {
           onEndCallback();
@@ -257,6 +361,7 @@ document.addEventListener('DOMContentLoaded', () => {
       };
 
       utterance.onerror = (e) => {
+        setAvatarSpeaking(false);
         window._activeUtterance = null;
         console.warn('SpeechSynthesis error:', e);
       };
@@ -3009,7 +3114,16 @@ ${cleanTip}`,
     const nameEl = document.getElementById('scenarioPartnerName');
     const roleEl = document.getElementById('scenarioPartnerRole');
 
-    if (avatarEl) avatarEl.textContent = scenario.icon;
+    if (avatarEl) {
+      avatarEl.innerHTML = `
+        ${getPartnerAvatarSvg(scenarioId)}
+        <div class="speaking-badge" title="Spricht gerade">
+          <span class="wave-bar"></span>
+          <span class="wave-bar"></span>
+          <span class="wave-bar"></span>
+        </div>
+      `;
+    }
     if (nameEl) nameEl.textContent = scenario.partnerName;
     if (roleEl) roleEl.textContent = `Rolle: ${scenario.partnerRole}`;
 
