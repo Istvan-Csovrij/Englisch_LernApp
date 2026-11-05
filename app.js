@@ -115,10 +115,32 @@ document.addEventListener('DOMContentLoaded', () => {
     return VOICE_PROFILES[activeVoiceProfileId] || VOICE_PROFILES.soft;
   }
 
+  // Mobile Voice Caching & Preloading
+  let cachedDeviceVoices = [];
+  function updateVoicesCache() {
+    if ('speechSynthesis' in window) {
+      const v = window.speechSynthesis.getVoices() || [];
+      if (v && v.length > 0) cachedDeviceVoices = v;
+    }
+  }
+
+  if ('speechSynthesis' in window) {
+    updateVoicesCache();
+    window.speechSynthesis.onvoiceschanged = () => {
+      updateVoicesCache();
+      const modal = document.getElementById('voicePickerModal');
+      const container = document.getElementById('voiceListContainer');
+      if (modal && modal.classList.contains('active') && container && typeof renderVoiceListItems === 'function') {
+        renderVoiceListItems(container);
+      }
+    };
+  }
+
   function getBestEnglishVoice() {
     if (!('speechSynthesis' in window)) return null;
     try {
-      const voices = window.speechSynthesis.getVoices() || [];
+      updateVoicesCache();
+      const voices = (cachedDeviceVoices && cachedDeviceVoices.length > 0) ? cachedDeviceVoices : (window.speechSynthesis.getVoices() || []);
       if (!voices.length) return null;
 
       // 0. Prüfe benutzerdefinierte Stimme aus Einstellungen
@@ -2699,7 +2721,118 @@ ${cleanTip}`,
 
   // --- INITIALISIERUNG DES DIALOG-VIEWS ---
 
-  // --- STIMMEN-AUSWAHL & MODAL ---
+  // --- STIMMEN-AUSWAHL & MODAL (V15: HANDY- & PC-OPTIMIERT) ---
+  function renderVoiceListItems(container) {
+    updateVoicesCache();
+    const voices = (cachedDeviceVoices && cachedDeviceVoices.length > 0) ? cachedDeviceVoices : (window.speechSynthesis.getVoices() || []);
+    container.innerHTML = '';
+
+    const savedVoiceURI = localStorage.getItem('englapp_custom_voice_uri') || '';
+    const isDefaultActive = !savedVoiceURI;
+
+    // 1. IMMER als Top-Eintrag: Smartphone & System-Standardstimme (funktioniert auf JEDEM Handy & Browser!)
+    const defaultRow = document.createElement('div');
+    defaultRow.className = 'voice-item-row' + (isDefaultActive ? ' selected' : '');
+    defaultRow.innerHTML = `
+      <div class="voice-item-info">
+        <div class="voice-item-name">
+          📱 Smartphone / System Standard-Stimme
+          <span class="voice-pill-natural">🌟 Empfohlen für Handy</span>
+          ${isDefaultActive ? '<span class="voice-pill-active">Aktiv</span>' : ''}
+        </div>
+        <div class="voice-item-lang">Nutzt die installierte Sprachausgabe deines Handys (Android Google TTS / iOS Siri)</div>
+      </div>
+      <div class="voice-item-actions">
+        <button class="voice-sample-btn" id="btnTestDefaultPhone">🔊 Probe</button>
+        <button class="voice-select-btn ${isDefaultActive ? 'is-active' : ''}">${isDefaultActive ? '✓ Aktiv' : 'Wählen'}</button>
+      </div>
+    `;
+
+    defaultRow.querySelector('#btnTestDefaultPhone').addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (window.speechSynthesis.speaking) window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance("Hello! This is the standard English voice of your phone.");
+      u.lang = 'en-US';
+      u.rate = 0.94;
+      u.pitch = 0.98;
+      window.speechSynthesis.speak(u);
+    });
+
+    defaultRow.querySelector('.voice-select-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      localStorage.removeItem('englapp_custom_voice_uri');
+      showToast('📱 Smartphone Standard-Stimme aktiviert');
+      renderVoiceListItems(container);
+    });
+
+    container.appendChild(defaultRow);
+
+    // 2. Englische Stimmen filtern (en-US, en_US, en-GB, oder Name mit 'English')
+    const enVoices = voices.filter(v => {
+      const l = (v.lang || '').toLowerCase().replace('_', '-');
+      const n = (v.name || '').toLowerCase();
+      return l.startsWith('en') || n.includes('english') || n.includes('en-us') || n.includes('en-gb');
+    });
+
+    enVoices.sort((a, b) => scoreVoice(b) - scoreVoice(a));
+
+    if (enVoices.length > 0) {
+      enVoices.forEach(v => {
+        const isSelected = (savedVoiceURI && (v.voiceURI === savedVoiceURI || v.name === savedVoiceURI));
+        const isNatural = /natural|neural|online|enhanced|premium|google/i.test(v.name + ' ' + v.voiceURI);
+
+        const row = document.createElement('div');
+        row.className = 'voice-item-row' + (isSelected ? ' selected' : '');
+        row.innerHTML = `
+          <div class="voice-item-info">
+            <div class="voice-item-name">
+              ${v.name}
+              ${isNatural ? '<span class="voice-pill-natural">🌟 Natürlich</span>' : ''}
+              ${isSelected ? '<span class="voice-pill-active">Aktiv</span>' : ''}
+            </div>
+            <div class="voice-item-lang">${v.lang} ${v.localService ? '• Lokale Stimme' : '• Online/HQ'}</div>
+          </div>
+          <div class="voice-item-actions">
+            <button class="voice-sample-btn">🔊 Probe</button>
+            <button class="voice-select-btn ${isSelected ? 'is-active' : ''}">${isSelected ? '✓ Aktiv' : 'Wählen'}</button>
+          </div>
+        `;
+
+        row.querySelector('.voice-sample-btn').addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (window.speechSynthesis.speaking) window.speechSynthesis.cancel();
+          const u = new SpeechSynthesisUtterance("Hello! How does this English voice sound to you?");
+          u.voice = v;
+          u.rate = 0.94;
+          u.pitch = 0.98;
+          window.speechSynthesis.speak(u);
+        });
+
+        row.querySelector('.voice-select-btn').addEventListener('click', (e) => {
+          e.stopPropagation();
+          localStorage.setItem('englapp_custom_voice_uri', v.voiceURI);
+          showToast(`🎙️ Stimme gewählt: ${v.name}`);
+          renderVoiceListItems(container);
+        });
+
+        container.appendChild(row);
+      });
+    } else {
+      // Wenn das Smartphone noch asynchron nachlädt
+      const helpBox = document.createElement('div');
+      helpBox.style.cssText = 'background: rgba(30, 41, 59, 0.65); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 12px; margin-top: 10px; font-size: 0.84rem; color: #94a3b8; line-height: 1.45; text-align: center;';
+      helpBox.innerHTML = `
+        <p style="margin: 0 0 8px 0; color: #e2e8f0;">📱 Dein Smartphone nutzt standardmäßig die obige Standard-Stimme.</p>
+        <button id="btnRetryPhoneVoices" style="background: rgba(56, 189, 248, 0.2); border: 1px solid rgba(56, 189, 248, 0.4); color: #38bdf8; padding: 6px 14px; border-radius: 8px; font-size: 0.82rem; cursor: pointer; font-weight: 600;">🔄 Zusätzliche Stimmen laden</button>
+      `;
+      helpBox.querySelector('#btnRetryPhoneVoices').addEventListener('click', () => {
+        updateVoicesCache();
+        renderVoiceListItems(container);
+      });
+      container.appendChild(helpBox);
+    }
+  }
+
   function openVoicePickerModal() {
     let modal = document.getElementById('voicePickerModal');
     if (!modal) {
@@ -2713,10 +2846,10 @@ ${cleanTip}`,
             <button class="modal-close-btn" id="btnCloseVoiceModal">✕</button>
           </div>
           <p class="app-modal-desc">
-            Wähle hier die für dein Gerät angenehmste, weichste englische Stimme aus.
+            Wähle hier die für dein Handy oder PC angenehmste englische Stimme aus.
           </p>
-          <div style="background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; padding: 10px 12px; margin-bottom: 14px; font-size: 0.84rem; color: #a7f3d0; line-height: 1.45;">
-            💡 <strong>Tipp für flüssige Sprache:</strong> Wähle eine Stimme mit dem grünen Badge <strong>🌟 Natürlich</strong> (z. B. <em>Microsoft Jenny</em> oder <em>Google US English</em>). Diese klingen besonders weich und menschlich!
+          <div style="background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; padding: 10px 12px; margin-bottom: 12px; font-size: 0.84rem; color: #a7f3d0; line-height: 1.45;">
+            💡 <strong>Tipp für Handy & PC:</strong> Auf dem Smartphone funktioniert die <strong>Standard-Stimme</strong> immer sofort. Am PC sind Stimmen mit <strong>🌟 Natürlich</strong> am weichsten!
           </div>
           <div class="voice-list-container" id="voiceListContainer">
             <p style="text-align: center; color: var(--text-muted); padding: 16px;">Lade Stimmen...</p>
@@ -2734,73 +2867,18 @@ ${cleanTip}`,
     }
 
     const container = modal.querySelector('#voiceListContainer');
-    container.innerHTML = '';
-
-    if (!('speechSynthesis' in window)) {
-      container.innerHTML = '<p style="color: #ef4444; padding: 12px;">SpeechSynthesis wird in diesem Browser leider nicht unterstützt.</p>';
-      modal.classList.add('active');
-      return;
-    }
-
-    const voices = window.speechSynthesis.getVoices() || [];
-    const enVoices = voices.filter(v => v.lang && v.lang.toLowerCase().startsWith('en'));
-    // Natürlichste Stimmen ganz oben einsortieren
-    enVoices.sort((a, b) => scoreVoice(b) - scoreVoice(a));
-
-    if (enVoices.length === 0) {
-      container.innerHTML = '<p style="color: var(--text-muted); padding: 12px;">Keine englischen Stimmen auf diesem Gerät gefunden.</p>';
-      modal.classList.add('active');
-      return;
-    }
-
-    const savedVoiceURI = localStorage.getItem('englapp_custom_voice_uri') || '';
-    const bestDefault = getBestEnglishVoice();
-
-    enVoices.forEach(v => {
-      const isSelected = savedVoiceURI ? (v.voiceURI === savedVoiceURI) : (bestDefault && v.voiceURI === bestDefault.voiceURI);
-      const isNatural = /natural|neural|online|enhanced|premium|google/i.test(v.name + ' ' + v.voiceURI);
-
-      const row = document.createElement('div');
-      row.className = 'voice-item-row' + (isSelected ? ' selected' : '');
-      row.innerHTML = `
-        <div class="voice-item-info">
-          <div class="voice-item-name">
-            ${v.name}
-            ${isNatural ? '<span class="voice-pill-natural">🌟 Natürlich</span>' : ''}
-            ${isSelected ? '<span class="voice-pill-active">Aktiv</span>' : ''}
-          </div>
-          <div class="voice-item-lang">${v.lang} ${v.localService ? '• Lokale Stimme' : '• Online/HQ'}</div>
-        </div>
-        <div class="voice-item-actions">
-          <button class="voice-sample-btn" title="Hörprobe abspielen">🔊 Probe</button>
-          <button class="voice-select-btn ${isSelected ? 'is-active' : ''}">${isSelected ? '✓ Gewählt' : 'Auswählen'}</button>
-        </div>
-      `;
-
-      row.querySelector('.voice-sample-btn').addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (window.speechSynthesis.speaking) window.speechSynthesis.cancel();
-        const u = new SpeechSynthesisUtterance("Hello! How does this English voice sound to you? It should be very smooth and natural.");
-        u.voice = v;
-        u.rate = 0.88;
-        u.pitch = 1.0;
-        window.speechSynthesis.speak(u);
-      });
-
-      row.querySelector('.voice-select-btn').addEventListener('click', (e) => {
-        e.stopPropagation();
-        localStorage.setItem('englapp_custom_voice_uri', v.voiceURI);
-        showToast(`🎙️ Stimme aktiviert: ${v.name}`);
-        openVoicePickerModal();
-      });
-
-      container.appendChild(row);
-    });
-
+    renderVoiceListItems(container);
     modal.classList.add('active');
+
+    // Schnelle Wiederholung nach 350ms für asynchrone mobile Stimmen
+    setTimeout(() => {
+      if (modal.classList.contains('active')) {
+        renderVoiceListItems(container);
+      }
+    }, 350);
   }
 
-  function initDialogView() {
+    function initDialogView() {
     if (dialogInitialized) return;
     dialogInitialized = true;
 
@@ -3239,7 +3317,7 @@ ${cleanTip}`,
       analysis: analysis
     });
 
-    // Antwort des Partners generieren (mit robustem Fallback)
+    // Antwort des Partners generieren
     let partnerReply;
     try {
       partnerReply = generatePartnerResponse(text, scenarioId);
@@ -3247,14 +3325,41 @@ ${cleanTip}`,
       console.error('generatePartnerResponse error:', err);
       partnerReply = {
         id: 'safety_fallback',
-        en: "That is interesting{name}! Tell me more about that. What would you like to practice next?",
-        de: "Das ist interessant{name}! Erzähl mir mehr darüber. Was möchtest du als Nächstes üben?",
+        en: "That is interesting{name}! Tell me more about that.",
+        de: "Das ist interessant{name}! Erzähl mir mehr darüber.",
         suggestions: [
           "Can you teach me some new words?",
           "How are you doing today?",
-          "Let's practice a simple conversation."
+          "Let us continue chatting."
         ]
       };
+    }
+
+    // WICHTIG: Sofortige sprachliche & textliche Korrektur mit Beispielsatz
+    if (analysis && analysis.hasError) {
+      const cleanCorrected = (analysis.correctedText || '').replace(/<[^>]+>/g, '').trim();
+      let verbalEn = '';
+      let verbalDe = '';
+
+      if (analysis.isGerman) {
+        verbalEn = `In English, say: "${cleanCorrected}"! `;
+        verbalDe = `💡 Sprach-Tipp: Auf Englisch sagst du: „${cleanCorrected}“!
+`;
+      } else {
+        verbalEn = `Quick tip: say "${cleanCorrected}"! `;
+        verbalDe = `💡 Sprach-Tipp: Richtig heißt es „${cleanCorrected}“!
+`;
+      }
+
+      partnerReply.en = `${verbalEn}${partnerReply.en}`;
+      partnerReply.de = `${verbalDe}━━━━━━━━━━━━━━━━━━━━
+${partnerReply.de}`;
+
+      // Biete den korrigierten Satz sofort als ersten Vorschlags-Chip zum Wiederholen an
+      partnerReply.suggestions = [
+        cleanCorrected,
+        ...(partnerReply.suggestions || []).filter(s => s !== cleanCorrected).slice(0, 2)
+      ];
     }
 
     dialogHistories[scenarioId].push({
@@ -3265,7 +3370,7 @@ ${cleanTip}`,
       suggestions: partnerReply.suggestions || [
         "Can you teach me some new words?",
         "How are you doing today?",
-        "Let's continue chatting."
+        "Let us continue chatting."
       ]
     });
 
