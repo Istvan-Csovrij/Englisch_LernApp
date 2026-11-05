@@ -85,9 +85,9 @@ document.addEventListener('DOMContentLoaded', () => {
       name: '🌸 Weich & Natürlich',
       label: 'Weich',
       desc: 'Sanfte Aussprache, warmes Lerntempo & natürliche Betonung',
-      rate: 0.90,
-      pitch: 1.0,
-      volume: 0.92
+      rate: 0.94,
+      pitch: 0.98,
+      volume: 0.95
     },
     clear: {
       id: 'clear',
@@ -136,34 +136,31 @@ document.addEventListener('DOMContentLoaded', () => {
         const uri = (v.voiceURI || '').toLowerCase();
         let score = 0;
 
-        // 1. Prioritize Microsoft Natural / Neural / Online voices (ultra-soft & human)
-        if (name.includes('natural') || uri.includes('natural')) score += 120;
-        if (name.includes('online') || uri.includes('online')) score += 90;
-        if (name.includes('neural') || uri.includes('neural')) score += 100;
-        if (name.includes('enhanced') || uri.includes('enhanced')) score += 95;
-        if (name.includes('premium') || uri.includes('premium')) score += 95;
+        // 1. Online / Neural / Natural Stimmen haben oberste Priorität (klingen ultra-weich und menschlich)
+        if (name.includes('natural') || uri.includes('natural')) score += 500;
+        if (name.includes('online') || uri.includes('online')) score += 350;
+        if (name.includes('neural') || uri.includes('neural')) score += 400;
 
-        // 2. High-quality human voices
-        if (name.includes('jenny')) score += 80;
-        if (name.includes('aria')) score += 75;
-        if (name.includes('sonia')) score += 75;
-        if (name.includes('google us english') || name.includes('google uk english female')) score += 70;
-        if (name.includes('samantha')) score += 60;
-        if (name.includes('ava')) score += 60;
-        if (name.includes('karen') || name.includes('moira') || name.includes('serena')) score += 50;
-        if (name.includes('guy') || name.includes('ryan')) score += 40;
+        // 2. Bekannte sehr flüssige menschliche Stimmen
+        if (name.includes('jenny')) score += 250;
+        if (name.includes('aria')) score += 220;
+        if (name.includes('google us english') || name.includes('google uk english female')) score += 260;
+        if (name.includes('google')) score += 180;
+        if (name.includes('samantha')) score += 150;
+        if (name.includes('ava')) score += 120;
+        if (name.includes('guy')) score += 110;
 
-        // 3. Female timbre bonus (perceived as warmer and less metallic than robotic voices)
-        if (name.includes('female') || name.includes('zira')) score += 20;
+        // 3. Harte Roboter-Desktop-Stimmen MASSIV abwerten!
+        if (name.includes('desktop') || uri.includes('desktop')) score -= 500;
+        if (name.includes('david')) score -= 300;
+        if (name.includes('zira')) score -= 250;
+        if (name.includes('mark')) score -= 300;
+        if (name.includes('hazel')) score -= 300;
+        if (name.includes('espeak')) score -= 500;
 
-        // 4. Heavily penalize harsh robotic desktop voices
-        if (name.includes('david desktop') || name.includes('mark desktop')) score -= 90;
-        if (name.includes('desktop')) score -= 45;
-        if (name.includes('espeak')) score -= 100;
-
-        // 5. English dialect preferences
-        if (v.lang === 'en-US' || v.lang === 'en_US') score += 10;
-        if (v.lang === 'en-GB' || v.lang === 'en_GB') score += 8;
+        // 4. US / UK Dialekt-Bonus
+        if (v.lang === 'en-US' || v.lang === 'en_US') score += 15;
+        if (v.lang === 'en-GB' || v.lang === 'en_GB') score += 10;
 
         return score;
       }
@@ -173,6 +170,27 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (e) {
       return null;
     }
+  }
+
+  // Bereinigt den Text vor der Sprachausgabe: Entfernt Smileys, Emojis, Markdown & Sonderzeichen
+  function cleanTextForSpeech(raw) {
+    if (!raw) return '';
+    let clean = raw
+      .replace(/\*\*([^*]+)\*\*/g, '$1')
+      .replace(/\*([^*]+)\*/g, '$1')
+      .replace(/`([^`]+)`/g, '$1')
+      .replace(/<[^>]+>/g, '');
+    try {
+      clean = clean.replace(/\p{Extended_Pictographic}/gu, '');
+    } catch (e) {
+      clean = clean.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, '');
+    }
+    return clean
+      .replace(/[\u2600-\u27BF\uFE00-\uFE0F]/g, '')
+      .replace(/[👉👈👆👇🟢🔴🩺💡🎉⭐✔❌➔➜➤▶◀▲▼•–—]/g, ' ')
+      .replace(/[\(\)\[\]\{\}]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
   }
 
   function speakEnglish(text, customRate = null, onEndCallback = null) {
@@ -185,11 +203,15 @@ document.addEventListener('DOMContentLoaded', () => {
         window.speechSynthesis.cancel();
       }
 
+      // WICHTIG: Text vollständig von Emojis, Smileys und Formatierungen befreien!
+      const speechText = cleanTextForSpeech(text);
+      if (!speechText) return;
+
       const profile = getActiveVoiceProfile();
-      const utterance = new SpeechSynthesisUtterance(text);
+      const utterance = new SpeechSynthesisUtterance(speechText);
       utterance.lang = 'en-US';
 
-      // Use custom rate if provided (e.g. from story speed button), otherwise profile default
+      // Tempo & Tonhöhe aus Profil oder benutzerdefiniert
       utterance.rate = (typeof customRate === 'number' && customRate > 0) ? customRate : profile.rate;
       utterance.pitch = profile.pitch;
       utterance.volume = profile.volume;
@@ -197,6 +219,12 @@ document.addEventListener('DOMContentLoaded', () => {
       const voice = getBestEnglishVoice();
       if (voice) {
         utterance.voice = voice;
+        // Anti-Roboter-Weichzeichner falls nur alte Desktop-Stimme vorhanden ist:
+        const vName = (voice.name || '').toLowerCase();
+        if (vName.includes('desktop') || vName.includes('zira') || vName.includes('david')) {
+          utterance.rate = 0.94;
+          utterance.pitch = 0.95;
+        }
       }
 
       utterance.onend = () => {
@@ -1459,8 +1487,8 @@ document.addEventListener('DOMContentLoaded', () => {
         personal: [
           {
             id: 'beg_pers_1',
-            en: 'Nice to meet you{name}! I love getting to know people. In English, you can introduce yourself by saying: "Hello, my name is Istvan and I am learning software development!" Would you like to practice that?',
-            de: 'Schön dich kennenzulernen{name}! Ich lerne gerne Menschen kennen. Auf Englisch kannst du dich so vorstellen: "Hello, my name is Istvan and I am learning software development!" Möchtest du das üben?',
+            en: 'Nice to meet you{name}! How was your day today?',
+            de: 'Schön dich kennenzulernen{name}! Wie war dein Tag heute?',
             suggestions: [
               'Hello Emma, my name is Alex!',
               'I am a junior software developer.',
@@ -1469,8 +1497,8 @@ document.addEventListener('DOMContentLoaded', () => {
           },
           {
             id: 'beg_pers_2',
-            en: 'Talking about your day is very easy in English! You can simply say: "Today was good", or "Today was a busy day". How was your day today{name}?',
-            de: 'Über seinen Tag zu sprechen ist auf Englisch ganz einfach! Du kannst einfach sagen: "Today was good" (Heute war gut) oder "Today was a busy day" (Heute war ein ereignisreicher Tag). Wie war dein Tag heute?',
+            en: 'Talking about your day is easy! How was your day today{name}?',
+            de: 'Über deinen Tag zu sprechen ist einfach! Wie war dein Tag heute{name}?',
             suggestions: [
               'Today was a good day, thank you!',
               'I was busy learning English and programming.',
@@ -1481,8 +1509,8 @@ document.addEventListener('DOMContentLoaded', () => {
         hobbies: [
           {
             id: 'beg_hob_1',
-            en: 'Hobbies are the best way to practice casual English! You can say: "I like making music", or "I enjoy walking outdoors". What do you love doing in your free time{name}?',
-            de: 'Hobbys sind der beste Weg, um ungezwungenes Alltagsenglisch zu üben! Du kannst sagen: "I like making music" (Ich mache gerne Musik) oder "I enjoy walking outdoors" (Ich gehe gerne draußen spazieren). Was machst du am liebsten in deiner Freizeit?',
+            en: 'Hobbies are great for smalltalk! What do you like doing in your free time{name}?',
+            de: 'Hobbys sind toll für Smalltalk! Was machst du gern in deiner Freizeit{name}?',
             suggestions: [
               'I love making music with synthesizers.',
               'I enjoy programming and learning tech.',
@@ -1491,8 +1519,8 @@ document.addEventListener('DOMContentLoaded', () => {
           },
           {
             id: 'beg_hob_2',
-            en: 'Music and creative hobbies are so inspiring! When talking about music in English, you can say: "I produce beats" or "I listen to electronic music". Do you play any instruments or work with software?',
-            de: 'Musik und kreative Hobbys sind so inspirierend! Wenn du auf Englisch über Musik sprichst, kannst du sagen: "I produce beats" oder "I listen to electronic music". Spielst du Instrumente oder nutzt du Musiksoftware?',
+            en: 'Music is so inspiring! Do you play an instrument or create beats?',
+            de: 'Musik ist so inspirierend! Spielst du ein Instrument oder machst du Beats?',
             suggestions: [
               'I use music software and synthesizers.',
               'I listen to lots of different music styles.',
@@ -1503,8 +1531,8 @@ document.addEventListener('DOMContentLoaded', () => {
         food_drinks: [
           {
             id: 'beg_food_1',
-            en: 'Food and drinks are wonderful smalltalk topics! You can say: "My favorite food is pizza", or "I start every morning with a hot cup of coffee". What do you enjoy eating or drinking, Istvan?',
-            de: 'Essen und Trinken sind wunderbare Smalltalk-Themen! Du kannst sagen: "My favorite food is pizza" oder "I start every morning with a hot cup of coffee". Was isst oder trinkst du am liebsten?',
+            en: 'Food and drinks are fun to talk about! What is your favorite food?',
+            de: 'Über Essen zu sprechen macht Spaß! Was isst du am liebsten?',
             suggestions: [
               'I love hot coffee in the morning.',
               'My favorite food is traditional cooking.',
@@ -1515,8 +1543,8 @@ document.addEventListener('DOMContentLoaded', () => {
         learning_vocab: [
           {
             id: 'beg_voc_1',
-            en: 'Learning new words step by step is super rewarding! Here are 3 common words for you: 1. "Friendly" (freundlich), 2. "Interesting" (interessant), 3. "Exciting" (aufregend). Can you try using one in a short sentence?',
-            de: 'Schritt für Schritt neue Wörter zu lernen macht richtig Spaß! Hier sind 3 häufige Wörter: 1. "Friendly" (freundlich), 2. "Interesting" (interessant), 3. "Exciting" (aufregend). Magst du eins davon in einem kurzen Satz ausprobieren?',
+            en: 'Here are two easy words: 1. Helpful (hilfreich) and 2. Fast (schnell). Can you try one?',
+            de: 'Hier sind zwei leichte Wörter: 1. Helpful (hilfreich) und 2. Fast (schnell). Probier eins aus!',
             suggestions: [
               'English is very interesting!',
               'My colleagues are friendly and helpful.',
@@ -1525,8 +1553,8 @@ document.addEventListener('DOMContentLoaded', () => {
           },
           {
             id: 'beg_voc_2',
-            en: 'Great job! Whenever you want to ask how to say a word in English, just ask: "How do you say [word] in English?" Try it right now with any German word you like!',
-            de: 'Super! Wann immer du wissen möchtest, wie ein Wort auf Englisch heißt, frag einfach: "How do you say [Wort] in English?" Probier es gleich mal mit einem deutschen Wort deiner Wahl!',
+            en: 'Great job! Whenever you want to learn a word, just ask me!',
+            de: 'Toll gemacht! Wann immer du ein Wort lernen möchtest, frag mich einfach!',
             suggestions: [
               "How do you say 'Erfolg' in English?",
               "How do you say 'Feierabend' in English?",
@@ -1537,8 +1565,8 @@ document.addEventListener('DOMContentLoaded', () => {
         weather_daily: [
           {
             id: 'beg_wea_1',
-            en: 'In England and English-speaking countries, people always talk about the weather! You can say: "It is sunny today", "It is raining", or "It is cold outside". How is the weather where you are?',
-            de: 'In England und englischsprachigen Ländern sprechen die Menschen ständig über das Wetter! Du kannst sagen: "It is sunny today" (sonnig), "It is raining" (es regnet) oder "It is cold outside" (kalt). Wie ist das Wetter bei dir?',
+            en: 'Talking about the weather is classic English smalltalk! How is the weather today?',
+            de: 'Über das Wetter zu sprechen ist klassischer Smalltalk! Wie ist das Wetter heute?',
             suggestions: [
               'It is sunny and nice today.',
               'It is raining and grey outside.',
@@ -1549,8 +1577,8 @@ document.addEventListener('DOMContentLoaded', () => {
         casual_chat: [
           {
             id: 'beg_chat_1',
-            en: 'I really enjoy our relaxed conversation{name}! Remember: you don\'t need complex words or perfect grammar to be understood. Simple, clear sentences are the best! What would you like to talk about next?',
-            de: 'Ich genieße unser entspanntes Gespräch sehr{name}! Denk immer daran: Du brauchst keine komplizierten Wörter oder perfekte Grammatik, um verstanden zu werden. Einfache, klare Sätze sind das Beste! Worüber möchtest du als Nächstes sprechen?',
+            en: 'I really enjoy our conversation{name}! What would you like to talk about next?',
+            de: 'Ich genieße unser Gespräch sehr{name}! Worüber möchtest du als Nächstes sprechen?',
             suggestions: [
               'Can we talk about daily routines?',
               'Can you ask me an easy question?',
@@ -1563,8 +1591,8 @@ document.addEventListener('DOMContentLoaded', () => {
         database: [
           {
             id: 'su_db_1',
-            en: 'Great progress on the database optimization{name}! Query tuning has a huge impact on system performance. Did you analyze the execution plan with EXPLAIN, or did you add composite indexes?',
-            de: 'Großartiger Fortschritt bei der Datenbankoptimierung{name}! Abfrageoptimierung hat großen Einfluss auf die Performance. Hast du den Ausführungsplan mit EXPLAIN analysiert oder zusammengesetzte Indizes angelegt?',
+            en: 'Great progress on the database{name}! Did you analyze the query with EXPLAIN?',
+            de: 'Großartiger Fortschritt bei der Datenbank{name}! Hast du die Abfrage mit EXPLAIN analysiert?',
             suggestions: [
               'I analyzed the execution plan and added an index on the user ID column.',
               'I refactored a slow SQL join that was causing a full table scan.',
@@ -1573,8 +1601,8 @@ document.addEventListener('DOMContentLoaded', () => {
           },
           {
             id: 'su_db_2',
-            en: 'Excellent! Database latency was one of our main concerns during peak hours. Are your query improvements already verified with automated unit tests?',
-            de: 'Hervorragend! Die Datenbank-Latenz war eine unserer Hauptsorgen in Spitzenzeiten. Sind deine Abfrage-Optimierungen schon durch automatisierte Modultests abgesichert?',
+            en: 'Excellent! Did the query response time improve after your index changes?',
+            de: 'Ausgezeichnet! Hat sich die Abfragezeit durch deine Index-Änderungen verbessert?',
             suggestions: [
               'Yes, all unit and integration tests are passing green.',
               'I wrote test cases covering large result sets and empty tables.',
@@ -1583,8 +1611,8 @@ document.addEventListener('DOMContentLoaded', () => {
           },
           {
             id: 'su_db_3',
-            en: 'That sounds very solid. Once your pull request is merged, we can monitor the database connection pool in our staging environment. Do you need any assistance with the migration script?',
-            de: 'Das klingt sehr solide. Sobald dein Pull Request gemergt ist, können wir den Verbindungspool auf der Testumgebung beobachten. Brauchst du Hilfe beim Migrationsskript?',
+            en: 'That sounds very solid! Is your pull request ready for review?',
+            de: 'Das klingt sehr solide! Ist dein Pull Request bereit zum Review?',
             suggestions: [
               'No assistance needed, the Flyway migration script is tested.',
               'Could someone take a quick look at the rollback script with me?',
@@ -1595,8 +1623,8 @@ document.addEventListener('DOMContentLoaded', () => {
         testing: [
           {
             id: 'su_test_1',
-            en: 'Writing automated tests upfront is great development practice! What is your current test coverage, and did you encounter any tricky edge cases?',
-            de: 'Automatisierte Tests vorab zu schreiben ist eine vorbildliche Praxis! Wie ist deine Testabdeckung und bist du auf knifflige Randfälle gestoßen?',
+            en: 'Writing automated tests is great practice! What is your current test coverage?',
+            de: 'Automatisierte Tests zu schreiben ist top! Wie hoch ist deine Testabdeckung?',
             suggestions: [
               'I covered edge cases for null values and invalid user inputs.',
               'Our unit test suite now has over eighty percent coverage.',
@@ -1605,8 +1633,8 @@ document.addEventListener('DOMContentLoaded', () => {
           },
           {
             id: 'su_test_2',
-            en: 'Good automated test suites give the entire team confidence before releasing to production. Are these tests running smoothly in our CI/CD pipeline?',
-            de: 'Gute automatisierte Testsuiten geben dem ganzen Team Sicherheit vor dem Release. Laufen diese Tests reibungslos in unserer CI/CD-Pipeline?',
+            en: 'Automated tests give the team confidence. Are all unit tests passing now?',
+            de: 'Tests geben dem Team Sicherheit. Laufen jetzt alle Unit-Tests durch?',
             suggestions: [
               'Yes, the continuous integration pipeline completed in under three minutes.',
               'I had to fix a flaky test, but now everything passes reliably.',
@@ -1617,8 +1645,8 @@ document.addEventListener('DOMContentLoaded', () => {
         bug_fix: [
           {
             id: 'su_bug_1',
-            en: 'Thanks for taking care of that bug ticket{name}! What was the root cause of the issue, and could you reproduce it easily in your local setup?',
-            de: 'Danke, dass du das Fehlerticket übernommen hast{name}! Was war die Ursache des Problems und konntest du es lokal leicht nachstellen?',
+            en: 'Thanks for fixing that bug{name}! What was the root cause?',
+            de: 'Danke fürs Beheben des Fehlers{name}! Was war die Ursache?',
             suggestions: [
               'The root cause was an unhandled null pointer exception in the auth controller.',
               'I reproduced the error using a special character in the username.',
@@ -1627,8 +1655,8 @@ document.addEventListener('DOMContentLoaded', () => {
           },
           {
             id: 'su_bug_2',
-            en: 'Great job identifying the root cause quickly! Is your fix already deployed to the staging environment, or are you waiting for a code review first?',
-            de: 'Klasse, dass du die Ursache so schnell gefunden hast! Ist der Fix schon auf dem Testserver oder wartest du noch auf ein Code Review?',
+            en: 'Good job finding the bug! Did you write a regression test for it?',
+            de: 'Gute Arbeit beim Finden des Fehlers! Hast du einen Regressionstest dafür geschrieben?',
             suggestions: [
               'I opened a pull request and asked a senior colleague for review.',
               'It is already tested on staging and verified by our QA team.',
@@ -1639,8 +1667,8 @@ document.addEventListener('DOMContentLoaded', () => {
         blocker: [
           {
             id: 'su_block_1',
-            en: 'I understand. Let\'s remove that blocker as quickly as possible! Would it help if we set up a fifteen-minute pair programming session after the meeting?',
-            de: 'Verstehe. Lass uns dieses Hindernis so schnell wie möglich aus dem Weg räumen! Würde es helfen, wenn wir nach dem Meeting eine 15-minütige Pair-Programming-Session machen?',
+            en: 'Blockers can be frustrating. Do you need help from another developer?',
+            de: 'Blocker können frustrieren. Brauchst du Unterstützung von einem Entwickler?',
             suggestions: [
               'Yes please, a quick pair programming session would be very helpful.',
               'I only need permission access to the staging database server.',
@@ -1651,8 +1679,8 @@ document.addEventListener('DOMContentLoaded', () => {
         general_progress: [
           {
             id: 'su_gen_1',
-            en: 'Sounds like you made great headway yesterday{name}! What is your primary milestone for today, and do you foresee any architectural challenges?',
-            de: 'Klingt, als hättest du gestern tolle Fortschritte gemacht{name}! Was ist dein Hauptziel für heute und siehst du architektonische Herausforderungen?',
+            en: 'Sounds like great progress yesterday{name}! What is your main focus today?',
+            de: 'Klingt nach tollem Fortschritt gestern{name}! Was ist dein Hauptfokus heute?',
             suggestions: [
               'Today my focus is on finishing the REST API endpoints.',
               'I plan to refactor the service layer and improve modularity.',
@@ -1661,8 +1689,8 @@ document.addEventListener('DOMContentLoaded', () => {
           },
           {
             id: 'su_gen_2',
-            en: 'That aligns perfectly with our sprint velocity! Keep up the momentum. Is there any dependency on other teams that we need to coordinate?',
-            de: 'Das passt perfekt zu unserer Sprint-Geschwindigkeit! Mach weiter so. Gibt es Abhängigkeiten zu anderen Teams, die wir abstimmen müssen?',
+            en: 'Thanks for the clear update{name}! Do you foresee any blockers today?',
+            de: 'Danke für das klare Update{name}! Siehst du irgendwelche Blocker für heute?',
             suggestions: [
               'No external dependencies, everything is within our team scope.',
               'The frontend team is waiting for my API payload specification.',
@@ -1671,8 +1699,8 @@ document.addEventListener('DOMContentLoaded', () => {
           },
           {
             id: 'su_gen_3',
-            en: 'Awesome! We are in great shape for the upcoming sprint review. Thanks for the clear update{name}!',
-            de: 'Großartig! Wir stehen für das kommende Sprint-Review bestens da. Danke für das klare Update{name}!',
+            en: 'Awesome! We are in great shape for the sprint review. Keep it up{name}!',
+            de: 'Großartig! Wir stehen für das Sprint-Review bestens da. Weiter so{name}!',
             suggestions: [
               'Thank you Sarah, let\'s deliver a successful sprint!',
               'I will document the new endpoints in Swagger/OpenAPI today.',
@@ -1686,8 +1714,8 @@ document.addEventListener('DOMContentLoaded', () => {
         experience: [
           {
             id: 'int_exp_1',
-            en: 'That sounds very comprehensive! Which programming languages and databases have you worked with the most during your training as an application developer?',
-            de: 'Das klingt sehr fundiert! Mit welchen Programmiersprachen und Datenbanken hast du während deiner Fachinformatiker-Ausbildung am meisten gearbeitet?',
+            en: 'Could you tell me about a project you worked on recently?',
+            de: 'Können Sie mir von einem Projekt erzählen, an dem Sie kürzlich gearbeitet haben?',
             suggestions: [
               'I have hands-on experience with Java, Python, and SQL databases.',
               'I specialize in object-oriented programming, REST APIs, and clean code.',
@@ -1696,8 +1724,8 @@ document.addEventListener('DOMContentLoaded', () => {
           },
           {
             id: 'int_exp_2',
-            en: 'Impressive! Could you give me an example of a challenging programming problem you solved recently, and how you approached the solution?',
-            de: 'Beeindruckend! Könntest du mir ein Beispiel für ein kniffliges Programmierproblem nennen, das du kürzlich gelöst hast, und wie du vorgegangen bist?',
+            en: 'That sounds very practical. What technologies did you use for the backend?',
+            de: 'Das klingt sehr praxisnah. Welche Technologien haben Sie im Backend eingesetzt?',
             suggestions: [
               'I resolved a database bottleneck by optimizing query joins and indexes.',
               'I refactored tightly coupled legacy code into modular, testable classes.',
@@ -1708,8 +1736,8 @@ document.addEventListener('DOMContentLoaded', () => {
         teamwork: [
           {
             id: 'int_team_1',
-            en: 'Collaboration and code quality are essential for our engineering team. How do you approach receiving constructive feedback during peer code reviews?',
-            de: 'Zusammenarbeit und Codequalität sind für unser Team unverzichtbar. Wie gehst du mit konstruktivem Feedback in Code Reviews um?',
+            en: 'How do you handle disagreement or different opinions in a dev team?',
+            de: 'Wie gehen Sie mit Meinungsverschiedenheiten in einem Entwicklerteam um?',
             suggestions: [
               'I appreciate constructive feedback because it improves our codebase.',
               'I treat code reviews as a valuable learning opportunity from peers.',
@@ -1718,8 +1746,8 @@ document.addEventListener('DOMContentLoaded', () => {
           },
           {
             id: 'int_team_2',
-            en: 'That demonstrates great professional maturity. How do you handle situations when project requirements change abruptly or deadlines are tight?',
-            de: 'Das beweist große berufliche Reife. Wie gehst du mit Situationen um, in denen sich Anforderungen plötzlich ändern oder Deadlines knapp sind?',
+            en: 'Communication is key. How do you do code reviews with your peers?',
+            de: 'Kommunikation ist entscheidend. Wie führen Sie Code-Reviews mit Kollegen durch?',
             suggestions: [
               'I prioritize core functionality first and communicate transparently with stakeholders.',
               'I stay calm, break down tasks into small increments, and focus on clean solutions.',
@@ -1730,8 +1758,8 @@ document.addEventListener('DOMContentLoaded', () => {
         motivation: [
           {
             id: 'int_mot_1',
-            en: 'What made you choose application development as your profession, and where do you see your technical focus in the next few years?',
-            de: 'Was hat dich dazu bewogen, Anwendungsentwicklung zu deinem Beruf zu machen, und wo siehst du deinen Schwerpunkt in den nächsten Jahren?',
+            en: 'What motivates you most about software development?',
+            de: 'Was motiviert Sie an der Softwareentwicklung am meisten?',
             suggestions: [
               'I love solving complex problems with logic and writing software that helps people.',
               'I want to specialize in scalable backend architectures and cloud technologies.',
@@ -1740,8 +1768,8 @@ document.addEventListener('DOMContentLoaded', () => {
           },
           {
             id: 'int_mot_2',
-            en: 'Your enthusiasm and clear technical understanding are exactly what we look for in our developers. Do you have any questions for us regarding our technology stack or development culture?',
-            de: 'Deine Begeisterung und dein klares technisches Verständnis sind genau das, was wir suchen. Hast du Fragen zu unserem Tech-Stack oder unserer Entwicklungskultur?',
+            en: 'Where do you see yourself developing in the next two to three years?',
+            de: 'Wo sehen Sie Ihre fachliche Entwicklung in den nächsten zwei bis drei Jahren?',
             suggestions: [
               'What CI/CD tools and cloud platforms does your team currently utilize?',
               'How does your engineering team support continuous professional training?',
@@ -1755,8 +1783,8 @@ document.addEventListener('DOMContentLoaded', () => {
         database_incident: [
           {
             id: 'sup_db_1',
-            en: 'Thanks for taking the lead on this ticket{name}! The database timeouts are impacting checkout during peak hours. Could you inspect the connection pool metrics in Grafana first?',
-            de: 'Danke, dass du die Führung bei diesem Ticket übernimmst{name}! Die Datenbank-Timeouts beeinträchtigen den Checkout. Könntest du zuerst die Verbindungspool-Metriken in Grafana prüfen?',
+            en: 'Thanks for checking this ticket{name}! Database timeouts are impacting checkout.',
+            de: 'Danke fürs Prüfen dieses Tickets{name}! Datenbank-Timeouts bremsen das Checkout aus.',
             suggestions: [
               'I am checking the database connection pool metrics right now.',
               'The pool seems maxed out at 50 connections with high query wait times.',
@@ -1765,8 +1793,8 @@ document.addEventListener('DOMContentLoaded', () => {
           },
           {
             id: 'sup_db_2',
-            en: 'That confirms our suspicion! An unindexed table scan was holding connection locks for too long. Can you prepare a hotfix with a composite index on the orders table?',
-            de: 'Das bestätigt unseren Verdacht! Ein Tabellenscan ohne Index hielt die Verbindungen zu lange blockiert. Kannst du einen Hotfix mit einem Index auf der Orders-Tabelle vorbereiten?',
+            en: 'Good observation! Did you check the slow query log on the database server?',
+            de: 'Gute Beobachtung! Hast du das Slow-Query-Log auf dem Server geprüft?',
             suggestions: [
               'I prepared the migration script and tested it locally without errors.',
               'The query execution dropped from 2 seconds to under 10 milliseconds.',
@@ -1775,8 +1803,8 @@ document.addEventListener('DOMContentLoaded', () => {
           },
           {
             id: 'sup_db_3',
-            en: 'Outstanding turnaround time! The deployment pipeline finished, and production response times are back to normal. Let\'s document our findings in a quick post-mortem summary.',
-            de: 'Hervorragende Reaktionszeit! Die Pipeline ist durch und die Produktionszeiten sind wieder normal. Lass uns die Erkenntnisse kurz im Post-Mortem dokumentieren.',
+            en: 'Excellent! Let us run load tests in staging before deploying the fix.',
+            de: 'Ausgezeichnet! Lass uns Lasttests im Staging machen, bevor wir deployen.',
             suggestions: [
               'I will write the post-mortem summary highlighting the root cause.',
               'We should add an automated alert if connection pool usage exceeds 80%.',
@@ -1790,8 +1818,8 @@ document.addEventListener('DOMContentLoaded', () => {
         clean_code: [
           {
             id: 'arch_clean_1',
-            en: 'Welcome{name}! We want to refactor our monolithic service layer. How would you apply the Single Responsibility Principle to break up our 2,000-line OrderManager class?',
-            de: 'Willkommen{name}! Wir wollen unsere monolithische Service-Schicht umbauen. Wie würdest du das Single-Responsibility-Prinzip anwenden, um die 2.000 Zeilen lange OrderManager-Klasse aufzuteilen?',
+            en: 'Welcome{name}! How would you apply the Single Responsibility Principle here?',
+            de: 'Willkommen{name}! Wie würdest du hier das Single-Responsibility-Prinzip anwenden?',
             suggestions: [
               'I would split it into dedicated classes: OrderValidation, OrderPricing, and OrderRepository.',
               'We should extract interfaces so each service component has a single reason to change.',
@@ -1800,8 +1828,8 @@ document.addEventListener('DOMContentLoaded', () => {
           },
           {
             id: 'arch_clean_2',
-            en: 'Spot on! Separating validation, pricing calculation, and data persistence decouples our business logic. What are your thoughts on using Dependency Injection to wire these components together?',
-            de: 'Volltreffer! Die Trennung von Validierung, Preiskalkulation und Persistenz entkoppelt unsere Geschäftslogik. Was hältst du vom Einsatz von Dependency Injection zur Verknüpfung?',
+            en: 'Your architectural intuition is great{name}! How do you design clear REST APIs?',
+            de: 'Deine Architektur-Intuition ist super{name}! Wie gestaltest du klare REST-APIs?',
             suggestions: [
               'Dependency Injection is crucial because it allows us to mock dependencies easily in unit tests.',
               'It keeps our classes loosely coupled and adheres to the Inversion of Control principle.',
@@ -1810,8 +1838,8 @@ document.addEventListener('DOMContentLoaded', () => {
           },
           {
             id: 'arch_clean_3',
-            en: 'Your architectural intuition is top notch{name}! When building RESTful APIs, how do you ensure clear response structures and proper HTTP status code handling?',
-            de: 'Deine architektonische Intuition ist erstklassig{name}! Wie stellst du beim Entwurf von REST-APIs klare Antwortstrukturen und saubere HTTP-Statuscodes sicher?',
+            en: 'Decoupled services are much easier to maintain and test.',
+            de: 'Entkoppelte Services sind viel einfacher zu warten und zu testen.'
             suggestions: [
               'I use standard HTTP codes: 200 for OK, 201 for Created, 400 for Bad Request, and 404 for Not Found.',
               'I design standardized JSON response envelopes containing data, error messages, and pagination metadata.',
@@ -1825,8 +1853,8 @@ document.addEventListener('DOMContentLoaded', () => {
         music_hobby: [
           {
             id: 'st_music_1',
-            en: 'Producing electronic music sounds like such a fascinating hobby{name}! What digital audio workstation do you use, and do you enjoy sound design or composing melodies more?',
-            de: 'Elektronische Musik zu produzieren klingt nach einem faszinierenden Hobby{name}! Welche DAW nutzt du und macht dir Sounddesign oder das Melodienkomponieren mehr Spaß?',
+            en: 'Producing electronic music sounds fascinating{name}! What software do you use?',
+            de: 'Elektronische Musik zu machen klingt faszinierend{name}! Welche Software nutzt du?',
             suggestions: [
               'I use a DAW and software synthesizers to sculpt unique basslines and melodies.',
               'I enjoy designing custom synth patches with oscillators, filters, and audio effects.',
@@ -1835,8 +1863,8 @@ document.addEventListener('DOMContentLoaded', () => {
           },
           {
             id: 'st_music_2',
-            en: 'That is really cool. There is actually a strong psychological connection between music production and programming – both require structured logic and creative problem solving!',
-            de: 'Das ist echt cool. Es gibt eine starke Verbindung zwischen Musikproduktion und Programmieren – beides erfordert logische Struktur und kreative Problemlösung!',
+            en: 'Creative hobbies are a wonderful balance to programming! Do you play synths?',
+            de: 'Kreative Hobbys sind ein toller Ausgleich zum Coden! Spielst du Synthesizer?',
             suggestions: [
               'Yes, layering sounds in a DAW feels very similar to structuring clean software classes.',
               'Adjusting frequencies and mastering tracks requires the same attention to detail as debugging.',
@@ -1847,8 +1875,8 @@ document.addEventListener('DOMContentLoaded', () => {
         coffee_break: [
           {
             id: 'st_coffee_1',
-            en: 'Taking regular coffee and screen breaks is so important in software development! How is your week going so far with the new project tasks?',
-            de: 'Regelmäßige Kaffee- und Bildschirmpausen sind in der Softwareentwicklung so wichtig! Wie läuft deine Woche bisher mit den neuen Projektaufgaben?',
+            en: 'Coffee breaks are essential! How is your week going so far?',
+            de: 'Kaffeepausen sind essenziell! Wie läuft deine Woche bisher?',
             suggestions: [
               'My week is going really well, making steady progress on my sprint backlog.',
               'Taking a short walk away from the monitors definitely clears my head.',
@@ -1857,8 +1885,8 @@ document.addEventListener('DOMContentLoaded', () => {
           },
           {
             id: 'st_coffee_2',
-            en: 'The weather forecast for the weekend looks absolutely sunny and pleasant too! Do you have any plans to get outside or attend any tech meetups?',
-            de: 'Der Wetterbericht fürs Wochenende sieht auch absolut sonnig und angenehm aus! Hast du Pläne rauszugehen oder ein Technik-Meetup zu besuchen?',
+            en: 'Any fun plans for the upcoming weekend, or just relaxing?',
+            de: 'Schöne Pläne fürs Wochenende oder einfach nur entspannen?'
             suggestions: [
               'I want to enjoy some outdoor sunshine and produce new music on Sunday.',
               'I might check out an online developer talk about modern cloud architecture.',
@@ -1872,8 +1900,8 @@ document.addEventListener('DOMContentLoaded', () => {
         london_hotel: [
           {
             id: 'trv_lon_1',
-            en: 'Good day Mr. Csovrij! I see your reservation for three nights in our executive suite. May I assist you with your luggage or provide a map of Central London?',
-            de: 'Guten Tag Herr Csovrij! Ich sehe Ihre Reservierung für drei Nächte in unserer Executive Suite. Darf ich Ihnen mit dem Gepäck helfen oder einen Stadtplan geben?',
+            en: 'Good evening! I can check your hotel reservation. What is your name?',
+            de: 'Guten Abend! Ich kann deine Hotelreservierung prüfen. Wie lautet dein Name?'
             suggestions: [
               'Thank you! Here is my passport and booking confirmation.',
               'Could you tell me what time complimentary breakfast is served in the morning?',
@@ -1882,8 +1910,8 @@ document.addEventListener('DOMContentLoaded', () => {
           },
           {
             id: 'trv_lon_2',
-            en: 'Certainly! Breakfast is served in our restaurant from 7:00 to 10:30 AM. To get to Shoreditch, simply take the Central Line to Bank and change for the Northern Line to Old Street.',
-            de: 'Sehr gerne! Frühstück wird im Restaurant von 7:00 bis 10:30 Uhr serviert. Nach Shoreditch nehmen Sie einfach die Central Line bis Bank und steigen in die Northern Line nach Old Street um.',
+            en: 'Welcome to London! Breakfast is served from 7 to 10 in the morning.',
+            de: 'Willkommen in London! Frühstück gibt es morgens von 7 bis 10 Uhr.'
             suggestions: [
               'That is very clear and convenient, thank you for the directions!',
               'Can I pay on the Underground with my contactless credit card or phone?',
@@ -1892,8 +1920,8 @@ document.addEventListener('DOMContentLoaded', () => {
           },
           {
             id: 'trv_lon_3',
-            en: 'Yes, contactless payment or Apple Pay is accepted at all station barriers! For dinner, I highly recommend "The George", an authentic historic restaurant just two blocks down the avenue.',
-            de: 'Ja, kontaktloses Bezahlen oder Apple Pay funktioniert an allen Schranken! Fürs Abendessen empfehle ich "The George", ein authentisches historisches Restaurant nur zwei Straßen weiter.',
+            en: 'The nearest tube station is Piccadilly Circus, just a two-minute walk away.',
+            de: 'Die nächste U-Bahn-Station ist Piccadilly Circus, nur zwei Minuten zu Fuß.'
             suggestions: [
               'That sounds wonderful, I will definitely check out The George tonight.',
               'Thank you very much for your outstanding British hospitality!',
@@ -1907,8 +1935,8 @@ document.addEventListener('DOMContentLoaded', () => {
         general: [
           {
             id: 'fr_1',
-            en: 'That is very interesting{name}! Tell me more about that. How do you apply this in your daily programming work or personal routine?',
-            de: 'Das ist sehr interessant{name}! Erzähl mir mehr darüber. Wie wendest du das in deiner täglichen Programmierarbeit oder deinem Alltag an?',
+            en: 'That is very interesting{name}! Tell me more about that.',
+            de: 'Das ist sehr interessant{name}! Erzähl mir mehr darüber.'
             suggestions: [
               'In my daily routine, I balance intensive coding with continuous learning.',
               'I focus on writing readable code with clean architecture and automated tests.',
@@ -1917,8 +1945,8 @@ document.addEventListener('DOMContentLoaded', () => {
           },
           {
             id: 'fr_2',
-            en: 'You express your thoughts very clearly in English! What area of software engineering do you find most fascinating right now?',
-            de: 'Du drückst deine Gedanken auf Englisch sehr klar aus! Welches Gebiet der Softwaretechnik findest du im Moment am faszinierendsten?',
+            en: 'You are expressing yourself very clearly! What would you like to talk about next?',
+            de: 'Du drückst dich sehr verständlich aus! Worüber möchtest du als Nächstes sprechen?'
             suggestions: [
               'I am fascinated by scalable backend microservices and efficient database design.',
               'I love how agile Scrum frameworks enable collaborative and iterative development.',
@@ -1927,8 +1955,8 @@ document.addEventListener('DOMContentLoaded', () => {
           },
           {
             id: 'fr_3',
-            en: 'That is a great perspective. Continuous practice and curiosity are the best ingredients for becoming an outstanding software engineer. What goal are you working towards next?',
-            de: 'Das ist eine tolle Perspektive. Kontinuierliche Übung und Neugier sind die besten Zutaten für einen herausragenden Softwareentwickler. An welchem Ziel arbeitest du als Nächstes?',
+            en: 'Great conversation{name}! Feel free to ask me anything.',
+            de: 'Tolles Gespräch{name}! Du kannst mich jederzeit alles fragen.'
             suggestions: [
               'My next milestone is acing my Fachinformatiker AP 1 certification exam.',
               'I want to expand my English IT vocabulary to collaborate in international teams.',
@@ -2029,8 +2057,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         return {
           id: 'intent_name_saved',
-          en: `Wonderful to meet you, ${extractedName}! 🎉 I have saved your name and will remember it. In this chat, there is zero pressure: we can talk about everyday life, hobbies, or practice words and sentences together. What would you like to talk about today?`,
-          de: `Wunderbar, dich kennenzulernen, ${extractedName}! 🎉 Ich habe deinen Namen gespeichert und spreche dich ab jetzt so an. Hier gibt es null Leistungsdruck: Wir können über den Alltag, Hobbys plaudern oder Sätze üben. Worüber möchtest du heute sprechen?`,
+          en: `Nice to meet you, ${extractedName}! What would you like to talk about today?`,
+          de: `Schön dich kennenzulernen, ${extractedName}! Worüber möchtest du heute sprechen?`,
           suggestions: [
             "Can you teach me some new conversational words?",
             "How old are you, and what are your hobbies?",
@@ -2062,31 +2090,27 @@ document.addEventListener('DOMContentLoaded', () => {
             const cleanTip = analysis.explanation.replace(/<[^>]*>/g, '').trim();
             return {
               id: 'intent_correction_report',
-              en: `Here is your SentenceDoctor feedback${this.salutation()}!\n\n👉 Your sentence was:\n"${lastUserText}"\n\n🔍 Analysis & Improvements:\n${cleanTip}\n\n✅ How to say it 100% correctly:\n👉 "${analysis.correctedText}"\n\nWould you like to try typing or speaking this corrected sentence?`,
-              de: `Hier ist deine genaue SentenceDoctor-Analyse${this.salutation()}!\n\n👉 Dein letzter Satz war:\n„${lastUserText}“\n\n🔍 Deine Fehler & Verbesserungen:\n${cleanTip}\n\n✅ So klingt es 100% richtig auf Englisch:\n👉 „${analysis.correctedText}“\n\nProbier gleich mal aus, den korrigierten Satz einzugeben oder zu sprechen!`,
-              suggestions: [
-                analysis.correctedText,
-                "Can you explain the grammar rule in more detail?",
-                "Understood! Let's continue chatting."
-              ]
+              en: `Here is your correction${this.salutation()}:
+"${analysis.correctedText}"
+${cleanTip}`,
+          de: `Hier ist deine Korrektur${this.salutation()}:
+„${analysis.correctedText}“
+${cleanTip}`,
+          suggestions: [analysis.correctedText, 'Can you explain this rule?', 'Let us continue chatting.']
             };
           } else {
             return {
               id: 'intent_correction_report_clean',
-              en: `Great news${this.salutation()}! I analyzed your previous sentence:\n\n👉 "${lastUserText}"\n\nYour sentence was already grammatically correct, natural, and very clear! 👍 You made no mistakes. What would you like to practice next?`,
-              de: `Gute Nachrichten${this.salutation()}! Ich habe deinen letzten Satz analysiert:\n\n👉 „${lastUserText}“\n\nDein Satz war grammatikalisch bereits völlig fehlerfrei und gut verständlich! 👍 Du hast keine Fehler gemacht. Worüber möchtest du als Nächstes sprechen?`,
-              suggestions: [
-                "Can you teach me 3 useful new words?",
-                "Can you ask me an everyday question in English?",
-                "Let's practice a realistic conversation."
-              ]
+              en: `Your last sentence was completely correct${this.salutation()}! What would you like to practice next?`,
+          de: `Dein letzter Satz war völlig fehlerfrei${this.salutation()}! Was möchtest du als Nächstes üben?`,
+          suggestions: ['Teach me 2 new words.', 'Ask me an everyday question.', 'Let us continue chatting.']
             };
           }
         } else {
           return {
             id: 'intent_correction_report_empty',
-            en: `I would love to check your English and show you your mistakes${this.salutation()}! 😊 Write or speak any English sentence right now, and I will analyze your spelling, grammar, and sentence structure step by step!`,
-            de: `Sehr gerne überprüfe ich dein Englisch und zeige dir deine Fehler${this.salutation()}! 😊 Schreib oder sprich mir jetzt einfach einen englischen Satz, und ich analysiere Rechtschreibung, Grammatik und Satzbau Schritt für Schritt!`,
+            en: `Write or speak any English sentence, and I will check your grammar${this.salutation()}!`,
+            de: `Schreib oder sprich einen englischen Satz, und ich überprüfe deine Grammatik${this.salutation()}!`,
             suggestions: [
               "Yesterday I worked on my programming project.",
               "I want learn more English words for my job.",
@@ -2104,8 +2128,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (scenarioId === 'beginner') {
           return {
             id: 'intent_name_beginner',
-            en: `Hello${this.salutation()}! My name is ${meta.name}, and I am your ${meta.role}. I am very happy to meet you! How are you feeling today, and would you like to practice simple English together?`,
-            de: `Hallo${this.salutation()}! Mein Name ist ${meta.name} und ich bin deine ${meta.role}. Ich freue mich sehr, dich kennenzulernen! Wie geht es dir heute und möchtest du einfaches Englisch mit mir üben?`,
+            en: `My name is ${meta.name}, your ${meta.role}. How are you doing today?`,
+            de: `Mein Name ist ${meta.name}, deine ${meta.role}. Wie geht es dir heute?`,
             suggestions: [
               "Nice to meet you Emma! I am ready to practice.",
               "Hello Emma! What are your favorite topics?",
@@ -2115,8 +2139,8 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (scenarioId === 'standup') {
           return {
             id: 'intent_name_standup',
-            en: `Good morning${this.salutation()}! My name is ${meta.name}, and I am the ${meta.role} for our development team. Nice to meet you! How did your work go yesterday?`,
-            de: `Guten Morgen${this.salutation()}! Mein Name ist ${meta.name} und ich bin die ${meta.role} für unser Entwicklerteam. Schön dich kennenzulernen! Wie lief deine Arbeit gestern?`,
+            en: `Good morning! My name is ${meta.name}, your ${meta.role}. What did you accomplish yesterday?`,
+            de: `Guten Morgen! Mein Name ist ${meta.name}, deine ${meta.role}. Was hast du gestern geschafft?`,
             suggestions: [
               "Nice to meet you, Sarah! Yesterday I fixed an issue in our codebase.",
               "Good morning Sarah! Yesterday I worked on the database queries.",
@@ -2126,57 +2150,37 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (scenarioId === 'interview') {
           return {
             id: 'intent_name_interview',
-            en: `Hello${this.salutation()}, my name is ${meta.name}. I am the ${meta.role} conducting your technical interview today. Nice to meet you! Are you ready to tell me about yourself?`,
-            de: `Hallo${this.salutation()}, mein Name ist ${meta.name}. Ich bin der ${meta.role} und führe heute dein Vorstellungsgespräch. Schön dich kennenzulernen! Möchtest du dich kurz vorstellen?`,
-            suggestions: [
-              "Nice to meet you Mr. Davis! I would love to introduce myself.",
-              "Hello Mr. Davis! I have prepared a summary of my technical skills.",
-              "I am ready! I can explain my background in software development."
-            ]
+            en: `Hello, my name is ${meta.name}. Could you briefly introduce yourself?`,
+          de: `Hallo, mein Name ist ${meta.name}. Können Sie sich kurz vorstellen?`,
+          suggestions: ['Hello Mr. Davis, I am a software developer.', 'Nice to meet you. I specialize in backend code.', 'Ready when you are!']
           };
         } else if (scenarioId === 'support') {
           return {
             id: 'intent_name_support',
-            en: `Hi${this.salutation()}! My name is ${meta.name}, and I am the ${meta.role} managing our production incidents. Thanks for jumping in! Have you seen the latest error logs?`,
-            de: `Hi${this.salutation()}! Mein Name ist ${meta.name} und ich bin der ${meta.role} für unsere Produktionsvorfälle. Danke fürs Dazukommen! Hast du die neuesten Fehler-Logs gesehen?`,
-            suggestions: [
-              "Hi Alex! Yes, I am analyzing the server logs right now.",
-              "Hello Alex! What is the severity of this production bug?",
-              "I will check the error stack trace immediately."
-            ]
+            en: `Hi! My name is ${meta.name}. Can you check the database connection pool ticket?`,
+          de: `Hi! Mein Name ist ${meta.name}. Kannst du das Datenbank-Ticket prüfen?`,
+          suggestions: ['I am looking into the connection pool now.', 'Do we have error logs for the checkout?', 'On it!']
           };
         } else if (scenarioId === 'smalltalk') {
           return {
             id: 'intent_name_smalltalk',
-            en: `Hey${this.salutation()}! I'm ${meta.name}, your teammate from the backend team. Great to chat over a coffee! How is your week going so far?`,
-            de: `Hey${this.salutation()}! Ich bin ${meta.name}, dein Kollege aus dem Backend-Team. Schön, beim Kaffee zu quatschen! Wie läuft deine Woche bisher?`,
-            suggestions: [
-              "Nice to meet you Mark! My week has been busy but good.",
-              "Hey Mark! Coffee is definitely needed today. How about you?",
-              "Doing well! Did you get a chance to work on your music projects?"
-            ]
+            en: `Hey! I am ${meta.name}. How is your day going so far?`,
+          de: `Hey! Ich bin ${meta.name}. Wie läuft dein Tag bisher?`,
+          suggestions: ['Pretty good, thanks! How about you?', 'Busy working on my code.', 'Just taking a short break.']
           };
         } else if (scenarioId === 'travel') {
           return {
             id: 'intent_name_travel',
-            en: `Good day${this.salutation()}! My name is ${meta.name}, and I am the ${meta.role} here at the Royal Grand Hotel in London. How may I be of service to you today?`,
-            de: `Guten Tag${this.salutation()}! Mein Name ist ${meta.name} und ich bin der ${meta.role} hier im Royal Grand Hotel in London. Wie kann ich Ihnen heute behilflich sein?`,
-            suggestions: [
-              "Good day James! I would like to check into my room, please.",
-              "Could you recommend an authentic English pub or restaurant?",
-              "Is breakfast included with my room reservation?"
-            ]
+            en: `Welcome to London! My name is ${meta.name}. How can I help you today?`,
+          de: `Willkommen in London! Mein Name ist ${meta.name}. Wie kann ich dir heute helfen?`,
+          suggestions: ['I have a reservation under my name.', 'Can I check in early?', 'Where is the nearest tube station?']
           };
         } else {
           return {
             id: 'intent_name_general',
-            en: `Hello${this.salutation()}! My name is ${meta.name}, and I am your ${meta.role}. I am here to help you practice English naturally. What would you like to talk about?`,
-            de: `Hallo${this.salutation()}! Mein Name ist ${meta.name} und ich bin dein ${meta.role}. Ich bin hier, um dir beim natürlichen Englisch-Lernen zu helfen. Worüber möchtest du sprechen?`,
-            suggestions: [
-              "Nice to meet you! I want to practice everyday English.",
-              "Could you explain some technical terms to me?",
-              "Let's practice a realistic conversation."
-            ]
+            en: `My name is ${meta.name}. What would you like to practice today?`,
+          de: `Mein Name ist ${meta.name}. Was möchtest du heute üben?`,
+          suggestions: ['Let us practice daily conversation.', 'Can you teach me some new words?', 'How are you doing today?']
           };
         }
       }
@@ -2186,8 +2190,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (scenarioId === 'beginner') {
           return {
             id: 'intent_age_beginner',
-            en: `I am 28 years old! In English, we say: "I am ... years old" or simply "I am 28". How old are you${this.salutation()}? Would you like to practice saying your age?`,
-            de: `Ich bin 28 Jahre alt! Auf Englisch sagt man: "I am ... years old" oder einfach "I am 28". Wie alt bist du${this.salutation()}? Möchtest du üben, dein Alter zu sagen?`,
+            en: `I am 28 years old. How old are you${this.salutation()}?`,
+            de: `Ich bin 28 Jahre alt. Wie alt bist du${this.salutation()}?`,
             suggestions: [
               "I am in my twenties.",
               "I am in my thirties.",
@@ -2198,8 +2202,8 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (scenarioId === 'standup') {
           return {
             id: 'intent_age_standup',
-            en: `Haha, that's a fun question${this.salutation()}! I am 31 years old. What about you? In English, you say: "I am ... years old". How old are you?`,
-            de: `Haha, das ist eine sympathische Frage${this.salutation()}! Ich bin 31 Jahre alt. Und du? Auf Englisch sagt man: "I am ... years old". Wie alt bist du?`,
+            en: `I am 31 years old. How old are you${this.salutation()}?`,
+            de: `Ich bin 31 Jahre alt. Wie alt bist du${this.salutation()}?`,
             suggestions: [
               "I am in my thirties.",
               "I am in my twenties.",
@@ -2210,24 +2214,16 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (scenarioId === 'interview') {
           return {
             id: 'intent_age_interview',
-            en: `I am 42 years old, and I have been leading software engineering teams for over 15 years. How about you${this.salutation()}? How old are you, and how long have you been coding?`,
-            de: `Ich bin 42 Jahre alt und leite seit über 15 Jahren Softwareentwicklungsteams. Wie ist es bei dir${this.salutation()}? Wie alt bist du und wie lange programmierst du schon?`,
-            suggestions: [
-              "I am in my twenties and enjoying software development.",
-              "I am in my thirties and learning very fast.",
-              "I started coding during my apprenticeship."
-            ]
+            en: `I have been leading engineering teams for 15 years. How long have you been coding?`,
+          de: `Ich leite seit 15 Jahren Entwicklungsteams. Wie lange programmierst du schon?`,
+          suggestions: ['I have been coding for two years.', 'I recently finished my FIAE training.', 'I started learning web development last year.']
           };
         } else {
           return {
             id: 'intent_age_general',
-            en: `${meta.name} smiles: I am around 30 years old! How old are you${this.salutation()}? In English, you answer with "I am ... years old".`,
-            de: `${meta.name} lächelt: Ich bin um die 30 Jahre alt! Wie alt bist du${this.salutation()}? Auf Englisch antwortest du mit "I am ... years old".`,
-            suggestions: [
-              "I am in my twenties.",
-              "I am in my thirties.",
-              "I am in my forties."
-            ]
+            en: `I am around 30 years old! How old are you${this.salutation()}?`,
+          de: `Ich bin um die 30 Jahre alt! Wie alt bist du${this.salutation()}?`,
+          suggestions: ['I am in my twenties.', 'I am in my thirties.', 'I am in my forties.']
           };
         }
       }
@@ -2236,13 +2232,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (/\b(i\s+am\s+(a\s+)?(complete\s+)?beginner|anf[aä]nger|learn\s+english|english\s+lernen|sprach[en]*\s+lernen|my\s+english\s+is\s+(bad|poor|not\s+good)|help\s+me\s+(to\s+)?learn|teach\s+me|einfach\s+lernen|anf[aä]ngerlevel)\b/i.test(norm)) {
         return {
           id: 'intent_beginner_welcome',
-          en: `Welcome${this.salutation()}! Never worry about being a beginner—everyone starts somewhere, and practicing every day is the secret to speaking fluently! I will speak clearly, use simple words, and help you step by step. What would you like to practice first: everyday words, simple questions, or talking about yourself?`,
-          de: `Willkommen${this.salutation()}! Mach dir überhaupt keine Sorgen, Anfänger zu sein – jeder fängt mal an und tägliches Üben ist das Geheimnis zum fließenden Sprechen! Ich spreche langsam und einfach mit dir. Womit möchtest du starten: Alltagswörter, einfache Fragen oder dich kurz vorstellen?`,
-          suggestions: [
-            "Let's practice introducing myself in English.",
-            "Can you teach me 5 useful everyday English words?",
-            "Can we practice simple small talk questions?"
-          ]
+          en: `You are doing great! Do not worry about mistakes. What topic would you like to try?`,
+          de: `Du machst das super! Mach dir keine Sorgen wegen Fehlern. Welches Thema möchtest du probieren?`,
+          suggestions: ['Let us talk about hobbies.', 'Teach me simple English words.', 'How was your day?']
         };
       }
 
@@ -2250,13 +2242,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (/\b(can\s+we\s+(just\s+)?chat|just\s+talk|einfach\s+unterhalten|lass\s+uns\s+plaudern|nur\s+reden|talk\s+with\s+me|speak\s+with\s+me|let('?s)?\s+talk|let('?s)?\s+chat|unterhaltung)\b/i.test(norm)) {
         return {
           id: 'intent_just_chat',
-          en: `I would love to just chat with you${this.salutation()}! We don't have to talk about work or tickets at all. We can talk about life, movies, hobbies, food, or whatever you enjoy. Tell me: how was your morning so far?`,
-          de: `Ich würde mich sehr gerne einfach so mit dir unterhalten${this.salutation()}! Wir müssen überhaupt nicht über Arbeit reden. Wir können über das Leben, Filme, Hobbys, Essen oder was auch immer dir Spaß macht plaudern. Erzähl mal: Wie war dein Morgen bisher?`,
-          suggestions: [
-            "My morning was good, I had a fresh cup of coffee.",
-            "I was busy with my computer training today.",
-            "Can we talk about hobbies and music?"
-          ]
+          en: `I would love to just chat! How was your day today?`,
+          de: `Sehr gerne plaudern wir einfach! Wie war dein Tag heute?`,
+          suggestions: ['Today was good, thank you!', 'I was busy learning English and programming.', 'A bit tired, but good.']
         };
       }
 
@@ -2264,13 +2252,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (/\b(teach\s+me\s+words|give\s+me\s+words|neue\s+w[oö]rter|w[oö]rter\s+lernen|vokabeln\s+lernen|bring\s+mir\s+w[oö]rter\s+bei|learn\s+words|more\s+words|vokabeln|words\s+please)\b/i.test(norm)) {
         return {
           id: 'intent_teach_words',
-          en: `Here are 3 super useful conversational words for you today: 1. "Reliable" (verlässlich), 2. "Effortless" (mühelos), 3. "Challenging" (anspruchsvoll). Which of these 3 words do you like most? Try to build a short sentence with it!`,
-          de: `Hier sind 3 sehr nützliche Gesprächswörter für heute: 1. "Reliable" (verlässlich), 2. "Effortless" (mühelos), 3. "Challenging" (anspruchsvoll). Welches gefällt dir am besten? Probier mal einen kurzen Satz damit!`,
-          suggestions: [
-            "My friend is very reliable.",
-            "Learning English is challenging, but fun!",
-            "Teach me 3 more words, please!"
-          ]
+          en: `Here are two great words: 1. Reliable (zuverlässig) and 2. Breakthrough (Durchbruch). Can you use one in a sentence?`,
+          de: `Hier sind zwei tolle Wörter: 1. Reliable (zuverlässig) und 2. Breakthrough (Durchbruch). Kannst du einen Satz damit bilden?`,
+          suggestions: ['Our server is very reliable.', 'This is a real breakthrough for our team.', 'Teach me two more words!']
         };
       }
 
@@ -2278,13 +2262,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (/\b(how\s+do\s+you\s+say|what\s+is\s+.*in\s+english|wie\s+sagt\s+man|was\s+hei[sß]+t\s+.*auf\s+englisch|what\s+does\s+.*mean|was\s+bedeutet)\b/i.test(norm)) {
         return {
           id: 'intent_word_translation',
-          en: `In English, you can say: "Thank you" or "Thanks" for "Danke", "Please" for "Bitte", and "Goodbye" or "See you soon" for "Auf Wiedersehen"! Which specific word or phrase would you like to know?`,
-          de: `Im Englischen sagt man: "Thank you" oder "Thanks" für "Danke", "Please" für "Bitte" und "Goodbye" oder "See you soon" für "Auf Wiedersehen"! Welches konkrete Wort möchtest du wissen?`,
-          suggestions: [
-            "How do you say 'Schönen Tag noch' in English?",
-            "How do you say 'Ich verstehe' in English?",
-            "Can we practice a full sentence?"
-          ]
+          en: `In English, "Danke" is "Thank you", and "Bitte" is "Please". What other word would you like to know?`,
+          de: `Auf Englisch heißt „Danke“ „Thank you“ und „Bitte“ „Please“. Welches andere Wort möchtest du wissen?`,
+          suggestions: ['How do you say Feierabend in English?', 'How do you say Schnitzeljagd?', 'Thank you very much!']
         };
       }
 
@@ -2292,13 +2272,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (/\b(where\s+(are\s+you\s+from|do\s+you\s+live|do\s+you\s+come\s+from)|woher\s+kommst\s+du|wo\s+wohnst\s+du|where\s+from)\b/i.test(norm)) {
         return {
           id: 'intent_origin_location',
-          en: `I live and work in Munich, Germany, but originally I worked with international software teams in London and Dublin! Where are you from${this.salutation()}? Where do you live?`,
-          de: `Ich wohne und arbeite in München, habe aber mehrere Jahre mit internationalen Entwicklerteams in London und Dublin gearbeitet! Woher kommst du${this.salutation()}? Wo wohnst du?`,
-          suggestions: [
-            "I come from Hungary, and I live in Germany.",
-            "I live in Germany and work as a software developer.",
-            "Have you ever visited London?"
-          ]
+          en: `I am from London in the UK. Where are you from${this.salutation()}?`,
+          de: `Ich komme aus London in England. Woher kommst du${this.salutation()}?`,
+          suggestions: ['I am from Germany.', 'I live in a small town near the mountains.', 'I live in Frankfurt.']
         };
       }
 
@@ -2306,13 +2282,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (/\b(what\s+are\s+your\s+hobbies|what\s+do\s+you\s+do\s+in\s+your\s+free\s+time|your\s+hobby|hobbys|was\s+machst\s+du\s+in\s+deiner\s+freizeit|freizeit)\b/i.test(norm)) {
         return {
           id: 'intent_hobbies_freetime',
-          en: `In my free time, I love producing electronic music on synthesizers, going for mountain hikes, and learning new programming languages! What are your favorite hobbies${this.salutation()}? What do you enjoy doing?`,
-          de: `In meiner Freizeit produziere ich elektronische Musik am Synthesizer, wandere in den Bergen und probiere neue Programmiersprachen aus! Was sind deine Lieblings-Hobbys${this.salutation()}?`,
-          suggestions: [
-            "I love making music and producing beats.",
-            "I enjoy programming and learning new technologies.",
-            "I like relaxing, reading, and spending time outdoors."
-          ]
+          en: `I love reading, music, and learning languages. What are your favorite hobbies?`,
+          de: `Ich mag Lesen, Musik und Sprachen lernen. Was sind deine Lieblingshobbys?`,
+          suggestions: ['I love making music with synthesizers.', 'I enjoy programming and gaming.', 'I like walking outdoors and relaxing.']
         };
       }
 
@@ -2320,13 +2292,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (/\b(what\s+do\s+you\s+like\s+to\s+eat|favorite\s+food|do\s+you\s+like\s+coffee|do\s+you\s+drink\s+coffee|lieblingsessen|was\s+isst\s+du|pizza|burger|pasta)\b/i.test(norm)) {
         return {
           id: 'intent_food_drinks',
-          en: `I run on strong black coffee and fresh Italian pizza! ☕🍕 What about you${this.salutation()}? What is your favorite food or drink? Do you like coffee or tea?`,
-          de: `Mein Treibstoff ist starker schwarzer Kaffee und frische italienische Pizza! ☕🍕 Was magst du am liebsten${this.salutation()}? Trinkst du lieber Kaffee oder Tee?`,
-          suggestions: [
-            "I love coffee in the morning to start my day.",
-            "My favorite food is traditional homemade cooking.",
-            "I prefer tea over coffee."
-          ]
+          en: `I love coffee, pasta, and pizza! What is your favorite food?`,
+          de: `Ich liebe Kaffee, Pasta und Pizza! Was isst du am liebsten?`,
+          suggestions: ['My favorite food is Italian pizza.', 'I love fresh sushi and Asian food.', 'I just need a strong coffee!']
         };
       }
 
@@ -2334,13 +2302,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (/\b(do\s+you\s+have\s+(a\s+)?(pet|dog|cat)|pets|haustier|hast\s+du\s+einen\s+hund|katze|tiere)\b/i.test(norm)) {
         return {
           id: 'intent_pets_animals',
-          en: `I love dogs, especially Golden Retrievers—they are friendly, loyal, and full of energy! Do you have any pets at home${this.salutation()}, or do you prefer dogs or cats?`,
-          de: `Ich liebe Hunde, besonders Golden Retriever – sie sind so freundlich und treu! Hast du Haustiere zu Hause${this.salutation()}, oder magst du eher Hunde oder Katzen?`,
-          suggestions: [
-            "I have a pet at home.",
-            "I love dogs because they are friendly.",
-            "I don't have pets right now, but I like animals."
-          ]
+          en: `I love dogs and cats! Do you have any pets?`,
+          de: `Ich mag Hunde und Katzen! Hast du Haustiere?`,
+          suggestions: ['Yes, I have a cat at home.', 'No, but I would love to have a dog.', 'I do not have any pets right now.']
         };
       }
 
@@ -2348,13 +2312,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (/\b(what\s+music\s+do\s+you\s+like|favorite\s+music|what\s+kind\s+of\s+music|welche\s+musik|lieblingsmusik)\b/i.test(norm)) {
         return {
           id: 'intent_music_taste',
-          en: `I love electronic ambient music with groovy synth beats when I focus, and rock when I relax! What kind of music do you like listening to${this.salutation()}?`,
-          de: `Ich höre gerne elektronische Ambient-Musik mit Synthesizer-Beats beim Arbeiten und Rock zum Entspannen! Welche Musik hörst du gerne${this.salutation()}?`,
-          suggestions: [
-            "I love electronic music and synth sounds.",
-            "I enjoy rock and classic pop.",
-            "I like listening to relaxing music while studying."
-          ]
+          en: `I listen to electronic and rock music. What music do you enjoy?`,
+          de: `Ich höre gerne elektronische Musik und Rock. Welche Musik magst du?`,
+          suggestions: ['I listen to electronic synth music.', 'I love rock and metal.', 'I enjoy relaxing acoustic songs.']
         };
       }
 
@@ -2362,13 +2322,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (/\b(how\s+is\s+the\s+weather|what\s+is\s+the\s+weather\s+like|wie\s+ist\s+das\s+wetter|is\s+it\s+cold|is\s+it\s+sunny|is\s+it\s+raining|wetter)\b/i.test(norm)) {
         return {
           id: 'intent_weather_chat',
-          en: `It is a bit chilly and overcast today—perfect weather to stay warm indoors with a hot cup of tea and practice English! How is the weather where you are right now${this.salutation()}?`,
-          de: `Draußen ist es heute etwas kühl und bedeckt – perfektes Wetter, um drinnen bei einem heißen Tee Englisch zu üben! Wie ist das Wetter bei dir gerade${this.salutation()}?`,
-          suggestions: [
-            "It is sunny and pleasant today.",
-            "It is raining and grey outside.",
-            "It is cold outside today."
-          ]
+          en: `It is a bit cloudy here today. How is the weather with you?`,
+          de: `Hier ist es heute etwas wolkig. Wie ist das Wetter bei dir?`,
+          suggestions: ['It is warm and sunny here.', 'It is raining outside today.', 'It is cold and windy.']
         };
       }
 
@@ -2376,13 +2332,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (/\b(tell\s+me\s+a\s+joke|something\s+funny|make\s+me\s+laugh|erz[aä]hl.*witz|hast\s+du\s+einen\s+witz|funny)\b/i.test(norm)) {
         return {
           id: 'intent_tell_joke',
-          en: `Here is a classic programmer joke for you: Why do Java developers wear glasses? Because they don't C#! 😄 (Do you get the pun between 'see sharp' and the language 'C#'?)`,
-          de: `Hier ist ein echter Programmierer-Witz für dich: Why do Java developers wear glasses? Because they don't C#! 😄 (Verstehst du das Wortspiel aus 'see sharp' = scharf sehen und der Programmiersprache C#?)`,
-          suggestions: [
-            "Haha, that is a funny pun!",
-            "Tell me another English joke, please!",
-            "Can you explain the pun again?"
-          ]
+          en: `Why do programmers prefer dark mode? Because light attracts bugs! Did you like it?`,
+          de: `Warum bevorzugen Programmierer Dark Mode? Weil Licht Bugs anzieht! Gefällt er dir?`,
+          suggestions: ['Haha, good one!', 'Tell me another joke!', 'That is very true for developers.']
         };
       }
 
@@ -2390,13 +2342,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (/\b(i\s+am\s+(very\s+)?(tired|exhausted|stressed|happy|sad|bored)|ich\s+bin\s+m[uü]de|gestresst)\b/i.test(norm)) {
         return {
           id: 'intent_feelings_empathy',
-          en: `I hear you${this.salutation()}! It is completely normal to feel that way. Take a deep breath, grab some water, and relax. We can keep our conversation light and easy. How can I make your day a little better?`,
-          de: `Das verstehe ich gut${this.salutation()}! Das ist völlig normal. Nimm dir einen kurzen Moment zum Durchatmen und mach dir keinen Stress. Wir machen ganz entspannt weiter. Wie kann ich dir deinen Tag etwas verschönern?`,
-          suggestions: [
-            "Let's do a very quick and easy 2-minute chat.",
-            "Can you tell me an easy English phrase?",
-            "I feel ready to continue now."
-          ]
+          en: `Take a short break${this.salutation()}! We can do a very easy exercise, or just relax. What do you prefer?`,
+          de: `Mach eine kurze Pause${this.salutation()}! Wir können eine ganz leichte Übung machen oder entspannen. Was möchtest du?`,
+          suggestions: ['Let us just do a very simple dialogue.', 'I will take a short coffee break.', 'I feel better now, let us continue!']
         };
       }
 
@@ -2404,13 +2352,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (/\b(ask\s+me\s+a\s+question|frag\s+mich\s+(etwas|was)|give\s+me\s+a\s+question|ask\s+me\s+something)\b/i.test(norm)) {
         return {
           id: 'intent_ask_me_question',
-          en: `Here is a fun conversational question for you: If you could travel to any country in the world tomorrow, where would you go and why?`,
-          de: `Hier ist eine schöne Frage für dich: Wenn du morgen in jedes Land der Welt reisen könntest, wohin würdest du reisen und warum?`,
-          suggestions: [
-            "I would love to travel to London, England.",
-            "I would visit Japan to see the technology and culture.",
-            "I prefer spending my vacation at a warm beach."
-          ]
+          en: `Here is a question for you: What did you have for breakfast today?`,
+          de: `Hier ist eine Frage für dich: Was hast du heute gefrühstückt?`,
+          suggestions: ['I had coffee and toast.', 'I had a bowl of oatmeal with fruit.', 'I skipped breakfast this morning.']
         };
       }
 
@@ -2418,13 +2362,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (/\b(are\s+you\s+(a\s+)?(robot|ai|real|human)|bist\s+du\s+(ein\s+roboter|eine\s+ki))\b/i.test(norm)) {
         return {
           id: 'intent_ai_identity',
-          en: `I am your virtual English learning companion, powered by smart conversational intelligence! My goal is to give you a patient, friendly partner you can practice with anytime without fear of making mistakes. How are you enjoying our conversation?`,
-          de: `Ich bin deine virtuelle Englisch-Lernbegleiterin, angetrieben von intelligenter Gesprächsführung! Mein Ziel ist es, dir eine geduldige Partnerin zu bieten, mit der du jederzeit stressfrei Englisch üben kannst. Wie gefällt dir unser Gespräch bisher?`,
-          suggestions: [
-            "I like practicing English with you!",
-            "Can you correct my grammar when I make mistakes?",
-            "Let's practice some more sentences."
-          ]
+          en: `I am your AI English coach, here to help you practice anytime! What would you like to work on?`,
+          de: `Ich bin dein KI-Englisch-Coach, um dir jederzeit beim Üben zu helfen! Woran möchtest du arbeiten?`,
+          suggestions: ['Let us practice daily conversation.', 'Can you test my vocabulary?', 'Teach me some business English.']
         };
       }
 
@@ -2432,13 +2372,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (/^(yes|yeah|yep|sure|ok|okay|cool|super|great|thanks|thank you|danke|genau|ja|nein|no)\b/i.test(norm)) {
         return {
           id: 'intent_short_affirmation',
-          en: `Awesome${this.salutation()}! I am glad to hear that. What would you like to talk about or practice next?`,
-          de: `Klasse${this.salutation()}! Das freut mich. Worüber möchtest du als Nächstes sprechen oder was möchtest du üben?`,
-          suggestions: [
-            "Can you teach me some new conversational words?",
-            "Let's talk about hobbies and daily routines.",
-            "Can we practice a job interview question?"
-          ]
+          en: `Awesome! What would you like to talk about next?`,
+          de: `Klasse! Worüber möchtest du als Nächstes sprechen?`,
+          suggestions: ['Tell me about your hobbies.', 'Can you teach me two new words?', 'Let us practice an interview question.']
         };
       }
 
@@ -2446,13 +2382,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (/\b(how\s+are\s+you|how\s+r\s+u|how\s+is\s+it\s+going|hows\s+it\s+going|wie\s+geht\s+es\s+dir|wie\s+gehts)\b/i.test(norm)) {
         return {
           id: 'intent_how_are_you',
-          en: `Good morning${this.salutation()}! I am doing very well, thank you for asking! How are you doing today, and are you ready for our ${meta.desc}?`,
-          de: `Guten Morgen${this.salutation()}! Mir geht es sehr gut, vielen Dank der Nachfrage! Wie geht es dir heute und bist du bereit für unser ${meta.desc}?`,
-          suggestions: [
-            "I am doing great, thank you! Ready to start.",
-            "A bit tired, but looking forward to today's tasks.",
-            "Good morning! What should we focus on first?"
-          ]
+          en: `I am doing great, thank you! How are you doing today?`,
+          de: `Mir geht es super, danke! Wie geht es dir heute?`,
+          suggestions: ['I am doing well, thank you!', 'Pretty busy, but having a good day.', 'A bit tired, but happy to learn English.']
         };
       }
 
@@ -2460,13 +2392,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (/^(hello|hi|hey|good\s+morning|good\s+day|guten\s+morgen|hallo|servus)\b/i.test(norm) && norm.length < 25) {
         return {
           id: 'intent_greeting_simple',
-          en: `Good morning${this.salutation()}! Great to see you. How is your day going so far? Let's get started with our ${meta.desc}.`,
-          de: `Guten Morgen${this.salutation()}! Schön dich zu sehen. Wie läuft dein Tag bisher? Lass uns mit unserem ${meta.desc} starten.`,
-          suggestions: [
-            "Good morning! I am ready to give my update.",
-            "Hello! Everything is going smoothly today.",
-            "Nice to see you! How is your day going?"
-          ]
+          en: `Good morning${this.salutation()}! How are you doing today?`,
+          de: `Guten Morgen${this.salutation()}! Wie geht es dir heute?`,
+          suggestions: ['Good morning! I am ready to practice.', 'Doing well, thank you! What are we working on today?', 'Hello! How are you?']
         };
       }
 
@@ -2474,13 +2402,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (/\b(what\s+is\s+your\s+job|what\s+do\s+you\s+do|what\s+are\s+your\s+tasks|was\s+machst\s+du|was\s+ist\s+deine\s+aufgabe)\b/i.test(norm)) {
         return {
           id: 'intent_partner_role',
-          en: `As the ${meta.role}, my responsibility is to facilitate our team, clear obstacles, and ensure we deliver high-quality software on time. How can I help you today?`,
-          de: `Als ${meta.role} ist es meine Aufgabe, unser Team zu unterstützen, Hindernisse aus dem Weg zu räumen und sicherzustellen, dass wir reibungslos entwickeln. Wie kann ich dir heute helfen?`,
-          suggestions: [
-            "Could you help me coordinate with the frontend team?",
-            "I would like to discuss our sprint backlog priorities.",
-            "Everything is clear, I have no blockers right now."
-          ]
+          en: `I am your ${meta.role}. I am here to help you practice English! What would you like to talk about?`,
+          de: `Ich bin deine ${meta.role}. Ich helfe dir beim Englischüben! Worüber möchtest du sprechen?`,
+          suggestions: ['Let us practice a realistic work dialogue.', 'Teach me some phrases for meetings.', 'How should I answer in a standup?']
         };
       }
 
@@ -2488,13 +2412,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (/\b(what\s+are\s+we\s+doing|what\s+is\s+standup|what\s+should\s+i\s+say|was\s+machen\s+wir|was\s+soll\s+ich\s+sagen)\b/i.test(norm)) {
         return {
           id: 'intent_explain_standup',
-          en: `In a Daily Standup, we do a quick 15-minute sync. Every developer answers three simple questions: 1. What did you accomplish yesterday? 2. What will you do today? 3. Do you have any blockers? Give it a try!`,
-          de: `In einem Daily Standup stimmen wir uns kurz 15 Minuten ab. Jeder Entwickler beantwortet drei einfache Fragen: 1. Was hast du gestern geschafft? 2. Was machst du heute? 3. Gibt es Blocker? Probier es einfach aus!`,
-          suggestions: [
-            "Yesterday I fixed a bug, today I will write tests, no blockers.",
-            "Yesterday I worked on database queries, today I continue.",
-            "I am waiting for credentials, so I am currently blocked."
-          ]
+          en: `In a standup, we answer three questions: 1. What did you do yesterday? 2. What are you doing today? 3. Any blockers?`,
+          de: `Im Standup beantworten wir drei Fragen: 1. Was hast du gestern gemacht? 2. Was machst du heute? 3. Gibt es Blocker?`,
+          suggestions: ['Yesterday I fixed a database issue.', 'Today I will write unit tests.', 'No blockers for me today.']
         };
       }
 
@@ -2502,13 +2422,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (/\b(i\s+do\s*not\s+understand|i\s+dont\s+understand|can\s+you\s+help|repeat\s+please|nicht\s+verstanden|hilfe|hilf\s+mir)\b/i.test(norm)) {
         return {
           id: 'intent_help_understand',
-          en: `No worries at all${this.salutation()}! Take your time. You can speak in simple words, or tap one of the suggested answers below. You can also ask me questions in German if you like!`,
-          de: `Keine Sorge${this.salutation()}! Lass dir Zeit. Du kannst in einfachen Worten sprechen oder unten auf die Antwortvorschläge tippen. Du kannst mich auch auf Deutsch fragen!`,
-          suggestions: [
-            "Yesterday I worked on my programming tasks.",
-            "Could you explain that in simpler words, please?",
-            "I am ready to try again in English."
-          ]
+          en: `No problem at all! Let us take it step by step. What would you like to practice?`,
+          de: `Gar kein Problem! Wir machen es Schritt für Schritt. Was möchtest du üben?`,
+          suggestions: ['Please ask me a very simple question.', 'Can you explain that word in German?', 'Let us start with basic phrases.']
         };
       }
 
@@ -2516,13 +2432,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (/\b(do\s+you\s+speak\s+german|sprichst\s+du\s+deutsch|can\s+you\s+speak\s+german|verstehst\s+du\s+deutsch)\b/i.test(norm)) {
         return {
           id: 'intent_speak_german',
-          en: `Yes, I understand German very well! However, speaking English with you helps you prepare for international teams and your FIAE exams. Feel free to ask questions in German whenever you need help!`,
-          de: `Ja, ich verstehe Deutsch sehr gut! Aber wenn wir Englisch sprechen, hilft es dir optimal für internationale Teams und deine Prüfungen. Du darfst mich aber jederzeit auf Deutsch um Rat fragen!`,
-          suggestions: [
-            "Understood! Let's continue practicing in English.",
-            "Could you translate my last sentence into English?",
-            "What is the English word for 'Fehlersuche'?"
-          ]
+          en: `I understand German, but let us try simple English together! What would you like to say?`,
+          de: `Ich verstehe Deutsch, aber lass uns einfaches Englisch üben! Was möchtest du sagen?`,
+          suggestions: ['I want to say that I worked on the server.', 'How do you say Feierabend?', 'Okay, let us speak English!']
         };
       }
 
@@ -2530,24 +2442,18 @@ document.addEventListener('DOMContentLoaded', () => {
       if (/\bwhat\s+is\s+sql\b/i.test(norm) || /\bwas\s+ist\s+sql\b/i.test(norm)) {
         return {
           id: 'intent_what_is_sql',
-          en: `SQL stands for Structured Query Language. It is the standard language for relational databases like PostgreSQL and MySQL to query, insert, and update data.`,
-          de: `SQL steht für Structured Query Language. Es ist die Standardsprache für relationale Datenbanken wie PostgreSQL und MySQL, um Daten abzufragen, einzufügen und zu aktualisieren.`,
-          suggestions: [
-            "I use SELECT and JOIN queries frequently.",
-            "Indexes make SQL queries much faster."
-          ]
+          en: `SQL stands for Structured Query Language. It is used to query databases. Would you like to practice SQL terms?`,
+          de: `SQL steht für Structured Query Language und wird für Datenbankabfragen genutzt. Möchtest du SQL-Begriffe üben?`,
+          suggestions: ['Yes, teach me 3 SQL terms.', 'I use SQL SELECT and JOIN queries daily.', 'What is a database index?']
         };
       }
 
       if (/\bwhat\s+is\s+git\b/i.test(norm) || /\bwas\s+ist\s+git\b/i.test(norm)) {
         return {
           id: 'intent_what_is_git',
-          en: `Git is a distributed version control system. It tracks changes in code and allows teams to collaborate through branches, commits, and pull requests.`,
-          de: `Git ist ein verteiltes Versionskontrollsystem. Es verfolgt Code-Änderungen und ermöglicht Teams die Zusammenarbeit über Branches, Commits und Pull Requests.`,
-          suggestions: [
-            "I commit my changes regularly to git.",
-            "Pull requests are great for code reviews."
-          ]
+          en: `Git is a version control system used to track changes in code. Do you use Git every day?`,
+          de: `Git ist ein Versionskontrollsystem zur Nachverfolgung von Code-Änderungen. Nutzt du Git täglich?`,
+          suggestions: ['Yes, I use git commit and git push daily.', 'What is the difference between git merge and rebase?', 'Git is very important for our team.']
         };
       }
 
@@ -2555,13 +2461,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (/\b(yesterday\s+i\s+was\s+(sick|ill|off|absent|on\s+vacation)|i\s+was\s+sick|war\s+krank|hatte\s+urlaub)\b/i.test(norm)) {
         return {
           id: 'intent_sick_leave',
-          en: `Welcome back${this.salutation()}! I hope you had some good rest. What is your main priority to get started with today?`,
-          de: `Willkommen zurück${this.salutation()}! Ich hoffe, du konntest dich gut erholen. Was ist deine wichtigste Aufgabe für den Einstieg heute?`,
-          suggestions: [
-            "Today I am catching up on unread emails and tickets.",
-            "I am starting work on the authentication module.",
-            "I have no blockers today."
-          ]
+          en: `Welcome back${this.salutation()}! I hope you had some good rest. What is your focus for today?`,
+          de: `Willkommen zurück${this.salutation()}! Ich hoffe, du konntest dich gut erholen. Was ist dein Fokus für heute?`,
+          suggestions: ['I am catching up on unread tickets.', 'Today I will review open pull requests.', 'Taking it easy today.']
         };
       }
 
@@ -2569,13 +2471,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (/\b(no\s+blockers|no\s+blocker|dont\s+have\s+any\s+blockers|everything\s+is\s+fine|keine\s+blocker)\b/i.test(norm)) {
         return {
           id: 'intent_no_blockers',
-          en: `That's fantastic news${this.salutation()}! Having no blockers means smooth sailing. What feature or ticket are you tackling next?`,
-          de: `Das sind fantastische Neuigkeiten${this.salutation()}! Keine Blocker bedeutet freie Bahn. Welches Feature oder Ticket gehst du als nächstes an?`,
-          suggestions: [
-            "I will continue refactoring the backend service.",
-            "I will write unit tests for the API endpoints.",
-            "I plan to finish this user story by the end of the day."
-          ]
+          en: `Awesome! Great to hear there are no blockers. Keep up the great work!`,
+          de: `Klasse! Schön zu hören, dass es keine Hindernisse gibt. Weiter so!`,
+          suggestions: ['I will finish the ticket before lunch.', 'Let us review the sprint board.', 'Thanks!']
         };
       }
 
@@ -2583,13 +2481,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (/\?\s*$/.test(norm.trim())) {
         return {
           id: 'intent_general_question',
-          en: `That is a good question${this.salutation()}! In our ${meta.desc}, my goal is to support your progress. Could you tell me a bit more about what you have in mind?`,
-          de: `Das ist eine gute Frage${this.salutation()}! In unserem ${meta.desc} ist es mein Ziel, dich zu unterstützen. Kannst du mir etwas mehr darüber erzählen?`,
-          suggestions: [
-            "I wanted to ask about our priorities.",
-            "I was wondering about our deployment schedule.",
-            "Let's continue with our normal conversation."
-          ]
+          en: `That is a great question${this.salutation()}! What are your thoughts on it?`,
+          de: `Das ist eine gute Frage${this.salutation()}! Was denkst du darüber?`,
+          suggestions: ['I think it is very useful for developers.', 'I am still learning about it.', 'Could you give me an example?']
         };
       }
 
@@ -2684,30 +2578,30 @@ document.addEventListener('DOMContentLoaded', () => {
       if (scenarioId === 'beginner') {
         const beginnerFallbacks = [
           {
-            en: `That is really nice to hear${this.salutation()}! 😊 In everyday English, we often follow up by asking: "And how about you?" Would you like to ask me something, or shall I tell you about my favorite English words?`,
-            de: `Das ist wirklich schön zu hören${this.salutation()}! 😊 Im Alltagsenglisch fragt man oft nach mit: "And how about you?" (Und wie ist es bei dir?). Möchtest du mich etwas fragen oder soll ich dir meine englischen Lieblingswörter verraten?`,
+            en: `That sounds interesting${this.salutation()}! Tell me more about that.`,
+            de: `Das klingt interessant${this.salutation()}! Erzähl mir mehr darüber.`,
             suggestions: [
               "And how about you? What are you doing today?",
-              "Can you teach me 3 useful English words?",
+              "Can you teach me 2 useful English words?",
               "What is your favorite hobby, Emma?"
             ]
           },
           {
-            en: `You are doing wonderfully${this.salutation()}! Practice makes perfect. What is a topic you enjoy talking about most: food, music, travel, or computers?`,
-            de: `Du machst das wunderbar${this.salutation()}! Übung macht den Meister. Über welches Thema sprichst du am liebsten: Essen, Musik, Reisen oder Computer?`,
+            en: `You are doing great${this.salutation()}! What topic do you enjoy most: music, food, or computers?`,
+            de: `Du machst das super${this.salutation()}! Welches Thema magst du am liebsten: Musik, Essen oder Computer?`,
             suggestions: [
-              "I really enjoy talking about music and creative hobbies.",
-              "I like talking about computers, programming, and technology.",
+              "I really enjoy talking about music and hobbies.",
+              "I like talking about computers and programming.",
               "Tell me about good food and cooking!"
             ]
           },
           {
-            en: `Great conversation${this.salutation()}! English has many simple sentences you can use every day. Would you like to practice a short dialogue with me?`,
-            de: `Tolles Gespräch${this.salutation()}! Im Englischen gibt es viele einfache Sätze, die du täglich nutzen kannst. Möchtest du einen kurzen Dialog mit mir üben?`,
+            en: `Great practice${this.salutation()}! What would you like to talk about next?`,
+            de: `Tolles Training${this.salutation()}! Worüber möchtest du als Nächstes sprechen?`,
             suggestions: [
-              "Yes! Please give me a simple sentence to practice.",
               "Can you ask me an everyday question in English?",
-              "How do you say 'Schönen Feierabend' in English?"
+              "How do you say 'Schönen Feierabend' in English?",
+              "Let's practice a short dialogue."
             ]
           }
         ];
@@ -2819,8 +2713,11 @@ document.addEventListener('DOMContentLoaded', () => {
             <button class="modal-close-btn" id="btnCloseVoiceModal">✕</button>
           </div>
           <p class="app-modal-desc">
-            Wähle hier die für dein Gerät angenehmste, weichste englische Stimme aus. Du kannst jede Stimme mit <strong>🔊 Probe</strong> testen.
+            Wähle hier die für dein Gerät angenehmste, weichste englische Stimme aus.
           </p>
+          <div style="background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; padding: 10px 12px; margin-bottom: 14px; font-size: 0.84rem; color: #a7f3d0; line-height: 1.45;">
+            💡 <strong>Tipp für flüssige Sprache:</strong> Wähle eine Stimme mit dem grünen Badge <strong>🌟 Natürlich</strong> (z. B. <em>Microsoft Jenny</em> oder <em>Google US English</em>). Diese klingen besonders weich und menschlich!
+          </div>
           <div class="voice-list-container" id="voiceListContainer">
             <p style="text-align: center; color: var(--text-muted); padding: 16px;">Lade Stimmen...</p>
           </div>
@@ -2847,6 +2744,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const voices = window.speechSynthesis.getVoices() || [];
     const enVoices = voices.filter(v => v.lang && v.lang.toLowerCase().startsWith('en'));
+    // Natürlichste Stimmen ganz oben einsortieren
+    enVoices.sort((a, b) => scoreVoice(b) - scoreVoice(a));
 
     if (enVoices.length === 0) {
       container.innerHTML = '<p style="color: var(--text-muted); padding: 12px;">Keine englischen Stimmen auf diesem Gerät gefunden.</p>';
