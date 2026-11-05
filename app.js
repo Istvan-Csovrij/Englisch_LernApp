@@ -972,7 +972,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // 5. DIALOG-COACH & SATZ-DOKTOR LOGIK
   // ============================================================
   let currentDialogMode = 'text'; // 'text' oder 'voice'
-  let currentScenarioId = 'standup';
+  let currentScenarioId = 'beginner';
   let dialogHistories = {};
   let dialogInitialized = false;
 
@@ -1000,6 +1000,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // 1A. Typo & Spelling Checker for common English learner typos
       const commonTypos = [
+        { regex: /\bhow\s+old\s+you\s+are\b/gi, fix: 'how old are you', tip: 'Fragen-Satzbau: Bei Fragen steht das Verb vor dem Subjekt: <em>"How old are you?"</em>' },
+        { regex: /\bi\s+have\s+\d+\s+years\b/gi, fix: 'I am ... years old', tip: 'Alter auf Englisch: Sage <em>"I am ... years old"</em> (mit <strong>to be</strong>, nicht "have").' },
+        { regex: /\bi\s+am\s+beginner\b/gi, fix: 'I am a beginner', tip: 'Artikelregel: Vor zählbaren Berufen/Rollen im Singular gehört ein <em>"a"</em>: <strong>"I am a beginner"</strong>.' },
+        { regex: /\bi\s+want\s+learn\b/gi, fix: 'I want to learn', tip: 'Infinitiv mit "to": Nach "want" folgt <strong>"to"</strong> + Verb: <em>"I want to learn"</em>.' },
+        { regex: /\bhow\s+to\s+say\b/gi, fix: 'how do you say', tip: 'Vollständige Frage: <em>"How do you say [Wort] in English?"</em>' },
         { regex: /\bwath\b/gi, fix: 'what', tip: 'W-Fragen beginnen mit <em>"wh"</em> (<strong>what</strong>, <em>where, when, why</em>).' },
         { regex: /\bwaht\b/gi, fix: 'what', tip: '<em>"what"</em> (nicht "waht").' },
         { regex: /\bmornig\b/gi, fix: 'morning', tip: '<em>"morning"</em> wird mit <strong>"ng"</strong> am Ende geschrieben.' },
@@ -1348,6 +1353,110 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Antwort-Katalog mit Dutzenden dynamischen Antwort-Zweigen
     scenarios: {
+      beginner: {
+        personal: [
+          {
+            id: 'beg_pers_1',
+            en: 'Nice to meet you, Istvan! I love getting to know people. In English, you can introduce yourself by saying: "Hello, my name is Istvan and I am learning software development!" Would you like to practice that?',
+            de: 'Schön dich kennenzulernen, Istvan! Ich lerne gerne Menschen kennen. Auf Englisch kannst du dich so vorstellen: "Hello, my name is Istvan and I am learning software development!" Möchtest du das üben?',
+            suggestions: [
+              'Hello Emma, my name is Istvan!',
+              'I am a junior software developer.',
+              'What is your favorite topic to talk about?'
+            ]
+          },
+          {
+            id: 'beg_pers_2',
+            en: 'Talking about your day is very easy in English! You can simply say: "Today was good", or "Today was a busy day". How was your day today, Istvan?',
+            de: 'Über seinen Tag zu sprechen ist auf Englisch ganz einfach! Du kannst einfach sagen: "Today was good" (Heute war gut) oder "Today was a busy day" (Heute war ein ereignisreicher Tag). Wie war dein Tag heute?',
+            suggestions: [
+              'Today was a good day, thank you!',
+              'I was busy learning English and programming.',
+              'A bit tired, but feeling positive!'
+            ]
+          }
+        ],
+        hobbies: [
+          {
+            id: 'beg_hob_1',
+            en: 'Hobbies are the best way to practice casual English! You can say: "I like making music", or "I enjoy walking outdoors". What do you love doing in your free time, Istvan?',
+            de: 'Hobbys sind der beste Weg, um ungezwungenes Alltagsenglisch zu üben! Du kannst sagen: "I like making music" (Ich mache gerne Musik) oder "I enjoy walking outdoors" (Ich gehe gerne draußen spazieren). Was machst du am liebsten in deiner Freizeit?',
+            suggestions: [
+              'I love making music with synthesizers.',
+              'I enjoy programming and learning tech.',
+              'I like watching good movies and relaxing.'
+            ]
+          },
+          {
+            id: 'beg_hob_2',
+            en: 'Music and creative hobbies are so inspiring! When talking about music in English, you can say: "I produce beats" or "I listen to electronic music". Do you play any instruments or work with software?',
+            de: 'Musik und kreative Hobbys sind so inspirierend! Wenn du auf Englisch über Musik sprichst, kannst du sagen: "I produce beats" oder "I listen to electronic music". Spielst du Instrumente oder nutzt du Musiksoftware?',
+            suggestions: [
+              'I use music software and synthesizers.',
+              'I listen to lots of different music styles.',
+              'Music helps me concentrate and relax.'
+            ]
+          }
+        ],
+        food_drinks: [
+          {
+            id: 'beg_food_1',
+            en: 'Food and drinks are wonderful smalltalk topics! You can say: "My favorite food is pizza", or "I start every morning with a hot cup of coffee". What do you enjoy eating or drinking, Istvan?',
+            de: 'Essen und Trinken sind wunderbare Smalltalk-Themen! Du kannst sagen: "My favorite food is pizza" oder "I start every morning with a hot cup of coffee". Was isst oder trinkst du am liebsten?',
+            suggestions: [
+              'I love hot coffee in the morning.',
+              'My favorite food is traditional cooking.',
+              'I enjoy cooking good food at home.'
+            ]
+          }
+        ],
+        learning_vocab: [
+          {
+            id: 'beg_voc_1',
+            en: 'Learning new words step by step is super rewarding! Here are 3 common words for you: 1. "Friendly" (freundlich), 2. "Interesting" (interessant), 3. "Exciting" (aufregend). Can you try using one in a short sentence?',
+            de: 'Schritt für Schritt neue Wörter zu lernen macht richtig Spaß! Hier sind 3 häufige Wörter: 1. "Friendly" (freundlich), 2. "Interesting" (interessant), 3. "Exciting" (aufregend). Magst du eins davon in einem kurzen Satz ausprobieren?',
+            suggestions: [
+              'English is very interesting!',
+              'My colleagues are friendly and helpful.',
+              'Can you give me 3 more words?'
+            ]
+          },
+          {
+            id: 'beg_voc_2',
+            en: 'Great job! Whenever you want to ask how to say a word in English, just ask: "How do you say [word] in English?" Try it right now with any German word you like!',
+            de: 'Super! Wann immer du wissen möchtest, wie ein Wort auf Englisch heißt, frag einfach: "How do you say [Wort] in English?" Probier es gleich mal mit einem deutschen Wort deiner Wahl!',
+            suggestions: [
+              "How do you say 'Erfolg' in English?",
+              "How do you say 'Feierabend' in English?",
+              'Can you teach me another useful sentence?'
+            ]
+          }
+        ],
+        weather_daily: [
+          {
+            id: 'beg_wea_1',
+            en: 'In England and English-speaking countries, people always talk about the weather! You can say: "It is sunny today", "It is raining", or "It is cold outside". How is the weather where you are?',
+            de: 'In England und englischsprachigen Ländern sprechen die Menschen ständig über das Wetter! Du kannst sagen: "It is sunny today" (sonnig), "It is raining" (es regnet) oder "It is cold outside" (kalt). Wie ist das Wetter bei dir?',
+            suggestions: [
+              'It is sunny and nice today.',
+              'It is raining and grey outside.',
+              'It is cold, but cozy inside!'
+            ]
+          }
+        ],
+        casual_chat: [
+          {
+            id: 'beg_chat_1',
+            en: 'I really enjoy our relaxed conversation, Istvan! Remember: you don\'t need complex words or perfect grammar to be understood. Simple, clear sentences are the best! What would you like to talk about next?',
+            de: 'Ich genieße unser entspanntes Gespräch sehr, Istvan! Denk immer daran: Du brauchst keine komplizierten Wörter oder perfekte Grammatik, um verstanden zu werden. Einfache, klare Sätze sind das Beste! Worüber möchtest du als Nächstes sprechen?',
+            suggestions: [
+              'Can we talk about daily routines?',
+              'Can you ask me an easy question?',
+              'Can we practice English for IT?'
+            ]
+          }
+        ]
+      },
       standup: {
         database: [
           {
@@ -1730,32 +1839,41 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Hauptfunktion: Erkennt Thema, Turn-Zähler und wählt abwechslungsreiche Antworten
     normalizeInput(raw) {
-      let t = (raw || '').toLowerCase().trim();
-      t = t.replace(/[\?\,\.\!\:\;]/g, ' $& ');
-      const typoMap = {
-        'wath': 'what', 'waht': 'what', 'wat': 'what', 'whot': 'what', 'wut': 'what',
-        'mornig': 'morning', 'mornin': 'morning', 'gud': 'good', 'godd': 'good',
-        'yuor': 'your', 'yor': 'your', 'ur': 'your', 'nam': 'name', 'naem': 'name',
-        'who r u': 'who are you', 'how r u': 'how are you', 'hw': 'how', 'pls': 'please', 'plz': 'please',
-        'dont': "don't", 'didnt': "didn't", 'cant': "can't", 'wont': "won't", 'im': 'i am'
-      };
-      const words = t.split(/\s+/).filter(Boolean);
-      const normalizedWords = words.map(w => typoMap[w] || w);
-      return normalizedWords.join(' ');
-    },
+      if (!raw) return '';
+      let text = raw.trim().toLowerCase();
 
-    getPartnerMeta(scenarioId) {
-      const meta = {
-        standup: { name: 'Sarah', role: 'Scrum Master & Agile Coach', desc: 'Daily Scrum Standup' },
-        interview: { name: 'Mr. Davis', role: 'Lead Software Architect', desc: 'IT-Vorstellungsgespräch' },
-        support: { name: 'Alex', role: 'Senior Product Manager', desc: 'Bug-Report & Ticket Support' },
-        architecture: { name: 'David', role: 'Senior Cloud Solutions Architect', desc: 'System-Architektur Review' },
-        smalltalk: { name: 'Mark', role: 'Senior Developer & Teammate', desc: 'Kaffeepause & Smalltalk' },
-        travel: { name: 'James', role: 'Head Concierge at Royal Grand Hotel', desc: 'Hotel & London Reisen' },
-        free: { name: 'AI English Coach', role: 'Persönlicher Sprachtrainer', desc: 'Freie Konversation' },
-        quiz: { name: 'Prof. Miller', role: 'Vokabel-Coach', desc: 'Vokabel-Prüfer & Quiz' }
-      };
-      return meta[scenarioId] || meta.standup;
+      // Typo- & Phonetik-Normalisierung für typische Fehler von Lernenden
+      const typoMap = [
+        [/\bhow\s+old\s+r\s+u\b/g, 'how old are you'],
+        [/\bur\b/g, 'your'],
+        [/\bu\b/g, 'you'],
+        [/\bwath\b/g, 'what'],
+        [/\bwaht\b/g, 'what'],
+        [/\bwat\b/g, 'what'],
+        [/\bmornig\b/g, 'morning'],
+        [/\byuor\b/g, 'your'],
+        [/\byuo\b/g, 'you'],
+        [/\bnam\b/g, 'name'],
+        [/\bnaem\b/g, 'name'],
+        [/\bplese\b/g, 'please'],
+        [/\bplz\b/g, 'please'],
+        [/\bteh\b/g, 'the'],
+        [/\bwich\b/g, 'which'],
+        [/\bbecaus\b/g, 'because'],
+        [/\balot\b/g, 'a lot'],
+        [/\banfanger\b/g, 'beginner'],
+        [/\banfaenger\b/g, 'beginner'],
+        [/\bworter\b/g, 'words'],
+        [/\bwoerter\b/g, 'words'],
+        [/\bunterhalten\b/g, 'chat'],
+        [/\bplaudern\b/g, 'chat'],
+        [/\beinfach\b/g, 'simple']
+      ];
+
+      for (const [pattern, repl] of typoMap) {
+        text = text.replace(pattern, repl);
+      }
+      return text;
     },
 
     detectDirectIntent(rawInput, scenarioId) {
@@ -1767,7 +1885,18 @@ document.addEventListener('DOMContentLoaded', () => {
           /\bwho\s+(are\s+you|is\s+this|am\s+i\s+talking\s+to)\b/i.test(norm) ||
           /\bwhats\s+your\s+name\b/i.test(norm) ||
           /\bname\s*\?/i.test(norm)) {
-        if (scenarioId === 'standup') {
+        if (scenarioId === 'beginner') {
+          return {
+            id: 'intent_name_beginner',
+            en: `Hello Istvan! My name is ${meta.name}, and I am your ${meta.role}. I am very happy to meet you! How are you feeling today, and would you like to practice simple English together?`,
+            de: `Hallo Istvan! Mein Name ist ${meta.name} und ich bin deine ${meta.role}. Ich freue mich sehr, dich kennenzulernen! Wie geht es dir heute und möchtest du einfaches Englisch mit mir üben?`,
+            suggestions: [
+              "Nice to meet you Emma! I am ready to practice.",
+              "Hello Emma! What are your favorite topics?",
+              "Can you teach me some easy English words?"
+            ]
+          };
+        } else if (scenarioId === 'standup') {
           return {
             id: 'intent_name_standup',
             en: `Good morning Istvan! My name is ${meta.name}, and I am the ${meta.role} for our development team. Nice to meet you! How did your work go yesterday?`,
@@ -1818,26 +1947,287 @@ document.addEventListener('DOMContentLoaded', () => {
             de: `Guten Tag, mein Herr! Mein Name ist ${meta.name} und ich bin der ${meta.role} hier im Royal Grand Hotel in London. Wie kann ich Ihnen heute behilflich sein?`,
             suggestions: [
               "Good day James! I would like to check into my room, please.",
-              "Hello James! Could you recommend a good English restaurant nearby?",
-              "Could you please tell me how to get to the Underground station?"
+              "Could you recommend an authentic English pub or restaurant?",
+              "Is breakfast included with my room reservation?"
             ]
           };
         } else {
           return {
-            id: 'intent_name_generic',
-            en: `Hello Istvan! My name is ${meta.name}, and I am your ${meta.role}. It's a pleasure to speak with you! What would you like to discuss today?`,
-            de: `Hallo Istvan! Mein Name ist ${meta.name} und ich bin dein ${meta.role}. Es ist mir eine Freude mit dir zu sprechen! Worüber möchtest du heute sprechen?`,
+            id: 'intent_name_general',
+            en: `Hello Istvan! My name is ${meta.name}, and I am your ${meta.role}. I am here to help you practice English naturally. What would you like to talk about?`,
+            de: `Hallo Istvan! Mein Name ist ${meta.name} und ich bin dein ${meta.role}. Ich bin hier, um dir beim natürlichen Englisch-Lernen zu helfen. Worüber möchtest du sprechen?`,
             suggestions: [
-              `Nice to meet you, ${meta.name}!`,
-              "I would like to practice my daily English conversation.",
-              "Could you explain an IT concept to me?"
+              "Nice to meet you! I want to practice everyday English.",
+              "Could you explain some technical terms to me?",
+              "Let's practice a realistic conversation."
             ]
           };
         }
       }
 
-      // 2. Asking "How are you? / How are you doing?"
-      if (/\b(how\s+are\s+you|how\s+r\s+u|how\s+is\s+it\s+going|how\s+are\s+things|how\s+do\s+you\s+do)\b/i.test(norm)) {
+      // 2. Asking for Partner's Age / "How old are you?" / "What is your age?" / "Wie alt bist du?"
+      if (/\b(how\s+old(\s+(are\s+you|r\s+u|is\s+she|is\s+he))?|what\s+is\s+your\s+age|whats\s+your\s+age|your\s+age|ur\s+age|wie\s+alt\s+bist\s+du)\b/i.test(norm)) {
+        if (scenarioId === 'beginner') {
+          return {
+            id: 'intent_age_beginner',
+            en: `I am 28 years old! In English, we say: "I am ... years old" or simply "I am 28". How old are you, Istvan? Would you like to practice saying your age?`,
+            de: `Ich bin 28 Jahre alt! Auf Englisch sagt man: "I am ... years old" oder einfach "I am 28". Wie alt bist du, Istvan? Möchtest du üben, dein Alter zu sagen?`,
+            suggestions: [
+              "I am in my twenties.",
+              "I am in my thirties.",
+              "I am in my forties.",
+              "Can you teach me how to say numbers in English?"
+            ]
+          };
+        } else if (scenarioId === 'standup') {
+          return {
+            id: 'intent_age_standup',
+            en: `Haha, that's a fun question, Istvan! I am 31 years old. What about you? In English, you say: "I am ... years old". How old are you?`,
+            de: `Haha, das ist eine sympathische Frage, Istvan! Ich bin 31 Jahre alt. Und du? Auf Englisch sagt man: "I am ... years old". Wie alt bist du?`,
+            suggestions: [
+              "I am in my thirties.",
+              "I am in my twenties.",
+              "Nice! Now let's continue with our daily standup.",
+              "How long have you been a Scrum Master?"
+            ]
+          };
+        } else if (scenarioId === 'interview') {
+          return {
+            id: 'intent_age_interview',
+            en: `I am 42 years old, and I have been leading software engineering teams for over 15 years. How about you, Istvan? How old are you, and how long have you been coding?`,
+            de: `Ich bin 42 Jahre alt und leite seit über 15 Jahren Softwareentwicklungsteams. Wie ist es bei dir, Istvan? Wie alt bist du und wie lange programmierst du schon?`,
+            suggestions: [
+              "I am in my twenties and enjoying software development.",
+              "I am in my thirties and learning very fast.",
+              "I started coding during my apprenticeship."
+            ]
+          };
+        } else {
+          return {
+            id: 'intent_age_general',
+            en: `${meta.name} smiles: I am around 30 years old! How old are you, Istvan? In English, you answer with "I am ... years old".`,
+            de: `${meta.name} lächelt: Ich bin um die 30 Jahre alt! Wie alt bist du, Istvan? Auf Englisch antwortest du mit "I am ... years old".`,
+            suggestions: [
+              "I am in my twenties.",
+              "I am in my thirties.",
+              "I am in my forties."
+            ]
+          };
+        }
+      }
+
+      // 3. "I am a beginner" / "I want to learn English" / "My English is not good" / "Sprache lernen"
+      if (/\b(i\s+am\s+(a\s+)?(complete\s+)?beginner|anf[aä]nger|learn\s+english|english\s+lernen|sprach[en]*\s+lernen|my\s+english\s+is\s+(bad|poor|not\s+good)|help\s+me\s+(to\s+)?learn|teach\s+me|einfach\s+lernen|anf[aä]ngerlevel)\b/i.test(norm)) {
+        return {
+          id: 'intent_beginner_welcome',
+          en: `Welcome, Istvan! Never worry about being a beginner—everyone starts somewhere, and practicing every day is the secret to speaking fluently! I will speak clearly, use simple words, and help you step by step. What would you like to practice first: everyday words, simple questions, or talking about yourself?`,
+          de: `Willkommen, Istvan! Mach dir überhaupt keine Sorgen, Anfänger zu sein – jeder fängt mal an und tägliches Üben ist das Geheimnis zum fließenden Sprechen! Ich spreche langsam und einfach mit dir. Womit möchtest du starten: Alltagswörter, einfache Fragen oder dich kurz vorstellen?`,
+          suggestions: [
+            "Let's practice introducing myself in English.",
+            "Can you teach me 5 useful everyday English words?",
+            "Can we practice simple small talk questions?"
+          ]
+        };
+      }
+
+      // 4. "Can we just chat / converse?" / "Einfach unterhalten / plaudern"
+      if (/\b(can\s+we\s+(just\s+)?chat|just\s+talk|einfach\s+unterhalten|lass\s+uns\s+plaudern|nur\s+reden|talk\s+with\s+me|speak\s+with\s+me|let('?s)?\s+talk|let('?s)?\s+chat|unterhaltung)\b/i.test(norm)) {
+        return {
+          id: 'intent_just_chat',
+          en: `I would love to just chat with you, Istvan! We don't have to talk about work or tickets at all. We can talk about life, movies, hobbies, food, or whatever you enjoy. Tell me: how was your morning so far?`,
+          de: `Ich würde mich sehr gerne einfach so mit dir unterhalten, Istvan! Wir müssen überhaupt nicht über Arbeit reden. Wir können über das Leben, Filme, Hobbys, Essen oder was auch immer dir Spaß macht plaudern. Erzähl mal: Wie war dein Morgen bisher?`,
+          suggestions: [
+            "My morning was good, I had a fresh cup of coffee.",
+            "I was busy with my computer training today.",
+            "Can we talk about hobbies and music?"
+          ]
+        };
+      }
+
+      // 5. Asking for Words / Vocabulary ("teach me words", "give me words", "neue wörter", "bring mir wörter bei")
+      if (/\b(teach\s+me\s+words|give\s+me\s+words|neue\s+w[oö]rter|w[oö]rter\s+lernen|vokabeln\s+lernen|bring\s+mir\s+w[oö]rter\s+bei|learn\s+words|more\s+words|vokabeln|words\s+please)\b/i.test(norm)) {
+        return {
+          id: 'intent_teach_words',
+          en: `Here are 3 super useful conversational words for you today: 1. "Reliable" (verlässlich), 2. "Effortless" (mühelos), 3. "Challenging" (anspruchsvoll). Which of these 3 words do you like most? Try to build a short sentence with it!`,
+          de: `Hier sind 3 sehr nützliche Gesprächswörter für heute: 1. "Reliable" (verlässlich), 2. "Effortless" (mühelos), 3. "Challenging" (anspruchsvoll). Welches gefällt dir am besten? Probier mal einen kurzen Satz damit!`,
+          suggestions: [
+            "My friend is very reliable.",
+            "Learning English is challenging, but fun!",
+            "Teach me 3 more words, please!"
+          ]
+        };
+      }
+
+      // 6. Word Translation & "How do you say X in English?" / "Was heißt X?" / "Was bedeutet X?"
+      if (/\b(how\s+do\s+you\s+say|what\s+is\s+.*in\s+english|wie\s+sagt\s+man|was\s+hei[sß]+t\s+.*auf\s+englisch|what\s+does\s+.*mean|was\s+bedeutet)\b/i.test(norm)) {
+        return {
+          id: 'intent_word_translation',
+          en: `In English, you can say: "Thank you" or "Thanks" for "Danke", "Please" for "Bitte", and "Goodbye" or "See you soon" for "Auf Wiedersehen"! Which specific word or phrase would you like to know?`,
+          de: `Im Englischen sagt man: "Thank you" oder "Thanks" für "Danke", "Please" für "Bitte" und "Goodbye" oder "See you soon" für "Auf Wiedersehen"! Welches konkrete Wort möchtest du wissen?`,
+          suggestions: [
+            "How do you say 'Schönen Tag noch' in English?",
+            "How do you say 'Ich verstehe' in English?",
+            "Can we practice a full sentence?"
+          ]
+        };
+      }
+
+      // 7. Where are you from / Where do you live? / Woher kommst du?
+      if (/\b(where\s+(are\s+you\s+from|do\s+you\s+live|do\s+you\s+come\s+from)|woher\s+kommst\s+du|wo\s+wohnst\s+du|where\s+from)\b/i.test(norm)) {
+        return {
+          id: 'intent_origin_location',
+          en: `I live and work in Munich, Germany, but originally I worked with international software teams in London and Dublin! Where are you from, Istvan? Where do you live?`,
+          de: `Ich wohne und arbeite in München, habe aber mehrere Jahre mit internationalen Entwicklerteams in London und Dublin gearbeitet! Woher kommst du, Istvan? Wo wohnst du?`,
+          suggestions: [
+            "I come from Hungary, and I live in Germany.",
+            "I live in Germany and work as a software developer.",
+            "Have you ever visited London?"
+          ]
+        };
+      }
+
+      // 8. Hobbies & Free Time / Was machst du in der Freizeit?
+      if (/\b(what\s+are\s+your\s+hobbies|what\s+do\s+you\s+do\s+in\s+your\s+free\s+time|your\s+hobby|hobbys|was\s+machst\s+du\s+in\s+deiner\s+freizeit|freizeit)\b/i.test(norm)) {
+        return {
+          id: 'intent_hobbies_freetime',
+          en: `In my free time, I love producing electronic music on synthesizers, going for mountain hikes, and learning new programming languages! What are your favorite hobbies, Istvan? What do you enjoy doing?`,
+          de: `In meiner Freizeit produziere ich elektronische Musik am Synthesizer, wandere in den Bergen und probiere neue Programmiersprachen aus! Was sind deine Lieblings-Hobbys, Istvan?`,
+          suggestions: [
+            "I love making music and producing beats.",
+            "I enjoy programming and learning new technologies.",
+            "I like relaxing, reading, and spending time outdoors."
+          ]
+        };
+      }
+
+      // 9. Food & Drinks / Lieblingsessen / Kaffee / Pizza
+      if (/\b(what\s+do\s+you\s+like\s+to\s+eat|favorite\s+food|do\s+you\s+like\s+coffee|do\s+you\s+drink\s+coffee|lieblingsessen|was\s+isst\s+du|pizza|burger|pasta)\b/i.test(norm)) {
+        return {
+          id: 'intent_food_drinks',
+          en: `I run on strong black coffee and fresh Italian pizza! ☕🍕 What about you, Istvan? What is your favorite food or drink? Do you like coffee or tea?`,
+          de: `Mein Treibstoff ist starker schwarzer Kaffee und frische italienische Pizza! ☕🍕 Was magst du am liebsten, Istvan? Trinkst du lieber Kaffee oder Tee?`,
+          suggestions: [
+            "I love coffee in the morning to start my day.",
+            "My favorite food is traditional homemade cooking.",
+            "I prefer tea over coffee."
+          ]
+        };
+      }
+
+      // 10. Pets & Animals / Haustiere / Hund / Katze
+      if (/\b(do\s+you\s+have\s+(a\s+)?(pet|dog|cat)|pets|haustier|hast\s+du\s+einen\s+hund|katze|tiere)\b/i.test(norm)) {
+        return {
+          id: 'intent_pets_animals',
+          en: `I love dogs, especially Golden Retrievers—they are friendly, loyal, and full of energy! Do you have any pets at home, Istvan, or do you prefer dogs or cats?`,
+          de: `Ich liebe Hunde, besonders Golden Retriever – sie sind so freundlich und treu! Hast du Haustiere zu Hause, Istvan, oder magst du eher Hunde oder Katzen?`,
+          suggestions: [
+            "I have a pet at home.",
+            "I love dogs because they are friendly.",
+            "I don't have pets right now, but I like animals."
+          ]
+        };
+      }
+
+      // 11. Music & Entertainment / Musik
+      if (/\b(what\s+music\s+do\s+you\s+like|favorite\s+music|what\s+kind\s+of\s+music|welche\s+musik|lieblingsmusik)\b/i.test(norm)) {
+        return {
+          id: 'intent_music_taste',
+          en: `I love electronic ambient music with groovy synth beats when I focus, and rock when I relax! What kind of music do you like listening to, Istvan?`,
+          de: `Ich höre gerne elektronische Ambient-Musik mit Synthesizer-Beats beim Arbeiten und Rock zum Entspannen! Welche Musik hörst du gerne, Istvan?`,
+          suggestions: [
+            "I love electronic music and synth sounds.",
+            "I enjoy rock and classic pop.",
+            "I like listening to relaxing music while studying."
+          ]
+        };
+      }
+
+      // 12. Weather / Wetter / Cold / Sunny / Raining
+      if (/\b(how\s+is\s+the\s+weather|what\s+is\s+the\s+weather\s+like|wie\s+ist\s+das\s+wetter|is\s+it\s+cold|is\s+it\s+sunny|is\s+it\s+raining|wetter)\b/i.test(norm)) {
+        return {
+          id: 'intent_weather_chat',
+          en: `It is a bit chilly and overcast today—perfect weather to stay warm indoors with a hot cup of tea and practice English! How is the weather where you are right now, Istvan?`,
+          de: `Draußen ist es heute etwas kühl und bedeckt – perfektes Wetter, um drinnen bei einem heißen Tee Englisch zu üben! Wie ist das Wetter bei dir gerade, Istvan?`,
+          suggestions: [
+            "It is sunny and pleasant today.",
+            "It is raining and grey outside.",
+            "It is cold outside today."
+          ]
+        };
+      }
+
+      // 13. Telling a Joke / Humor
+      if (/\b(tell\s+me\s+a\s+joke|something\s+funny|make\s+me\s+laugh|erz[aä]hl.*witz|hast\s+du\s+einen\s+witz|funny)\b/i.test(norm)) {
+        return {
+          id: 'intent_tell_joke',
+          en: `Here is a classic programmer joke for you: Why do Java developers wear glasses? Because they don't C#! 😄 (Do you get the pun between 'see sharp' and the language 'C#'?)`,
+          de: `Hier ist ein echter Programmierer-Witz für dich: Why do Java developers wear glasses? Because they don't C#! 😄 (Verstehst du das Wortspiel aus 'see sharp' = scharf sehen und der Programmiersprache C#?)`,
+          suggestions: [
+            "Haha, that is a funny pun!",
+            "Tell me another English joke, please!",
+            "Can you explain the pun again?"
+          ]
+        };
+      }
+
+      // 14. Feelings & Emotions / Müde / Gestresst
+      if (/\b(i\s+am\s+(very\s+)?(tired|exhausted|stressed|happy|sad|bored)|ich\s+bin\s+m[uü]de|gestresst)\b/i.test(norm)) {
+        return {
+          id: 'intent_feelings_empathy',
+          en: `I hear you, Istvan! It is completely normal to feel that way. Take a deep breath, grab some water, and relax. We can keep our conversation light and easy. How can I make your day a little better?`,
+          de: `Das verstehe ich gut, Istvan! Das ist völlig normal. Nimm dir einen kurzen Moment zum Durchatmen und mach dir keinen Stress. Wir machen ganz entspannt weiter. Wie kann ich dir deinen Tag etwas verschönern?`,
+          suggestions: [
+            "Let's do a very quick and easy 2-minute chat.",
+            "Can you tell me an easy English phrase?",
+            "I feel ready to continue now."
+          ]
+        };
+      }
+
+      // 15. Ask me a Question / Frag mich was
+      if (/\b(ask\s+me\s+a\s+question|frag\s+mich\s+(etwas|was)|give\s+me\s+a\s+question|ask\s+me\s+something)\b/i.test(norm)) {
+        return {
+          id: 'intent_ask_me_question',
+          en: `Here is a fun conversational question for you: If you could travel to any country in the world tomorrow, where would you go and why?`,
+          de: `Hier ist eine schöne Frage für dich: Wenn du morgen in jedes Land der Welt reisen könntest, wohin würdest du reisen und warum?`,
+          suggestions: [
+            "I would love to travel to London, England.",
+            "I would visit Japan to see the technology and culture.",
+            "I prefer spending my vacation at a warm beach."
+          ]
+        };
+      }
+
+      // 16. Are you real / AI / Robot?
+      if (/\b(are\s+you\s+(a\s+)?(robot|ai|real|human)|bist\s+du\s+(ein\s+roboter|eine\s+ki))\b/i.test(norm)) {
+        return {
+          id: 'intent_ai_identity',
+          en: `I am your virtual English learning companion, powered by smart conversational intelligence! My goal is to give you a patient, friendly partner you can practice with anytime without fear of making mistakes. How are you enjoying our conversation?`,
+          de: `Ich bin deine virtuelle Englisch-Lernbegleiterin, angetrieben von intelligenter Gesprächsführung! Mein Ziel ist es, dir eine geduldige Partnerin zu bieten, mit der du jederzeit stressfrei Englisch üben kannst. Wie gefällt dir unser Gespräch bisher?`,
+          suggestions: [
+            "I like practicing English with you!",
+            "Can you correct my grammar when I make mistakes?",
+            "Let's practice some more sentences."
+          ]
+        };
+      }
+
+      // 17. Short Affirmations ("yes", "no", "okay", "cool", "super", "genau", "danke")
+      if (/^(yes|yeah|yep|sure|ok|okay|cool|super|great|thanks|thank you|danke|genau|ja|nein|no)\b/i.test(norm)) {
+        return {
+          id: 'intent_short_affirmation',
+          en: `Awesome, Istvan! I am glad to hear that. What would you like to talk about or practice next?`,
+          de: `Klasse, Istvan! Das freut mich. Worüber möchtest du als Nächstes sprechen oder was möchtest du üben?`,
+          suggestions: [
+            "Can you teach me some new conversational words?",
+            "Let's talk about hobbies and daily routines.",
+            "Can we practice a job interview question?"
+          ]
+        };
+      }
+
+      // 18. Asking "How are you? / How are you doing?"
+      if (/\b(how\s+are\s+you|how\s+r\s+u|how\s+is\s+it\s+going|hows\s+it\s+going|wie\s+geht\s+es\s+dir|wie\s+gehts)\b/i.test(norm)) {
         return {
           id: 'intent_how_are_you',
           en: `Good morning Istvan! I am doing very well, thank you for asking! How are you doing today, and are you ready for our ${meta.desc}?`,
@@ -1850,8 +2240,8 @@ document.addEventListener('DOMContentLoaded', () => {
         };
       }
 
-      // 3. Simple greeting (Hello, Good morning, Hi) without technical update
-      if (/^\s*(good\s+morning|good\s+afternoon|good\s+day|hello|hi|hey)\s*[\!\.\,]*\s*$/i.test(norm)) {
+      // 19. Simple greeting (Hello, Good morning, Hi) without technical update
+      if (/^(hello|hi|hey|good\s+morning|good\s+day|guten\s+morgen|hallo|servus)\b/i.test(norm) && norm.length < 25) {
         return {
           id: 'intent_greeting_simple',
           en: `Good morning Istvan! Great to see you. How is your day going so far? Let's get started with our ${meta.desc}.`,
@@ -1859,44 +2249,31 @@ document.addEventListener('DOMContentLoaded', () => {
           suggestions: [
             "Good morning! I am ready to give my update.",
             "Hello! Everything is going smoothly today.",
-            "Good morning! What is the main priority for today?"
+            "Nice to see you! How is your day going?"
           ]
         };
       }
 
-      // 4. Questions about the Partner's Job / Role ("What is your job?", "What do you do?")
-      if (/\b(what\s+do\s+you\s+do|what\s+is\s+your\s+job|what\s+is\s+your\s+role|what\s+are\s+you\s+doing)\b/i.test(norm)) {
-        if (scenarioId === 'standup') {
-          return {
-            id: 'intent_role_standup',
-            en: `As your Scrum Master, my job is to facilitate agile meetings, remove blockers for developers like you, and ensure our sprint stays on track. How can I support your tasks today?`,
-            de: `Als dein Scrum Master ist es meine Aufgabe, agile Meetings zu leiten, Hindernisse für Entwickler wie dich aus dem Weg zu räumen und den Sprint-Zeitplan zu sichern. Wie kann ich dich heute unterstützen?`,
-            suggestions: [
-              "I have a blocker with database credentials.",
-              "Everything is on track, no blockers today.",
-              "Could we review our sprint board together?"
-            ]
-          };
-        } else {
-          return {
-            id: 'intent_role_generic',
-            en: `I work as a ${meta.role}. In this session, my goal is to help you practice technical communication in English. How are you feeling about your progress?`,
-            de: `Ich arbeite als ${meta.role}. In dieser Sitzung ist es mein Ziel, dir beim Üben technischer englischer Kommunikation zu helfen. Wie fühlst du dich bei deinen Fortschritten?`,
-            suggestions: [
-              "I feel I am improving step by step.",
-              "Technical vocabulary is challenging, but I am learning.",
-              "Let's practice some more questions!"
-            ]
-          };
-        }
+      // 20. Questions about the Partner's Job / Role ("What is your job?", "What do you do?")
+      if (/\b(what\s+is\s+your\s+job|what\s+do\s+you\s+do|what\s+are\s+your\s+tasks|was\s+machst\s+du|was\s+ist\s+deine\s+aufgabe)\b/i.test(norm)) {
+        return {
+          id: 'intent_partner_role',
+          en: `As the ${meta.role}, my responsibility is to facilitate our team, clear obstacles, and ensure we deliver high-quality software on time. How can I help you today?`,
+          de: `Als ${meta.role} ist es meine Aufgabe, unser Team zu unterstützen, Hindernisse aus dem Weg zu räumen und sicherzustellen, dass wir reibungslos entwickeln. Wie kann ich dir heute helfen?`,
+          suggestions: [
+            "Could you help me coordinate with the frontend team?",
+            "I would like to discuss our sprint backlog priorities.",
+            "Everything is clear, I have no blockers right now."
+          ]
+        };
       }
 
-      // 5. Questions about Standup / "What are we doing in this meeting?"
-      if (/\b(what\s+are\s+we\s+doing|what\s+is\s+this\s+meeting|what\s+is\s+standup|what\s+is\s+scrum|what\s+should\s+i\s+say|what\s+should\s+i\s+do|explain\s+standup)\b/i.test(norm)) {
+      // 21. Questions about Standup / "What are we doing in this meeting?"
+      if (/\b(what\s+are\s+we\s+doing|what\s+is\s+standup|what\s+should\s+i\s+say|was\s+machen\s+wir|was\s+soll\s+ich\s+sagen)\b/i.test(norm)) {
         return {
           id: 'intent_explain_standup',
-          en: `In a Daily Standup, the team does a quick 15-minute sync. Every developer answers three simple questions: 1. What did you accomplish yesterday? 2. What will you do today? 3. Do you have any blockers? For example: 'Yesterday I worked on code, today I will test it, no blockers.' Give it a try!`,
-          de: `In einem Daily Standup stimmt sich das Team kurz 15 Minuten ab. Jeder Entwickler beantwortet drei einfache Fragen: 1. Was hast du gestern geschafft? 2. Was machst du heute? 3. Gibt es Blocker? Z.B.: 'Yesterday I worked on code, today I will test it, no blockers.' Probier es einfach aus!`,
+          en: `In a Daily Standup, we do a quick 15-minute sync. Every developer answers three simple questions: 1. What did you accomplish yesterday? 2. What will you do today? 3. Do you have any blockers? Give it a try!`,
+          de: `In einem Daily Standup stimmen wir uns kurz 15 Minuten ab. Jeder Entwickler beantwortet drei einfache Fragen: 1. Was hast du gestern geschafft? 2. Was machst du heute? 3. Gibt es Blocker? Probier es einfach aus!`,
           suggestions: [
             "Yesterday I fixed a bug, today I will write tests, no blockers.",
             "Yesterday I worked on database queries, today I continue.",
@@ -1905,12 +2282,12 @@ document.addEventListener('DOMContentLoaded', () => {
         };
       }
 
-      // 6. Asking for Help / "I don't understand / Repeat please"
-      if (/\b(i\s+don'?t\s+understand|i\s+do\s+not\s+understand|can\s+you\s+help\s+me|help\s+me|what\s+did\s+you\s+say|repeat\s+please|could\s+you\s+repeat|i\s+am\s+confused|auf\s+deutsch)\b/i.test(norm)) {
+      // 22. Asking for Help / "I don't understand / Repeat please"
+      if (/\b(i\s+do\s*not\s+understand|i\s+dont\s+understand|can\s+you\s+help|repeat\s+please|nicht\s+verstanden|hilfe|hilf\s+mir)\b/i.test(norm)) {
         return {
-          id: 'intent_help_needed',
-          en: `No worries at all, Istvan! Take your time. You can speak in simple words, or tap one of the suggested answers below. You can also ask me questions in German whenever you like! What would you like to say?`,
-          de: `Keine Sorge, Istvan! Lass dir Zeit. Du kannst in einfachen Worten sprechen oder unten auf die Antwortvorschläge tippen. Du kannst mich auch auf Deutsch fragen, wenn du möchtest! Was möchtest du sagen?`,
+          id: 'intent_help_understand',
+          en: `No worries at all, Istvan! Take your time. You can speak in simple words, or tap one of the suggested answers below. You can also ask me questions in German if you like!`,
+          de: `Keine Sorge, Istvan! Lass dir Zeit. Du kannst in einfachen Worten sprechen oder unten auf die Antwortvorschläge tippen. Du kannst mich auch auf Deutsch fragen!`,
           suggestions: [
             "Yesterday I worked on my programming tasks.",
             "Could you explain that in simpler words, please?",
@@ -1919,84 +2296,49 @@ document.addEventListener('DOMContentLoaded', () => {
         };
       }
 
-      // 7. Asking about German Language ("Do you speak German?")
-      if (/\b(german|deutsch|speak\s+german|understand\s+german)\b/i.test(norm)) {
+      // 23. Asking about German Language ("Do you speak German?")
+      if (/\b(do\s+you\s+speak\s+german|sprichst\s+du\s+deutsch|can\s+you\s+speak\s+german|verstehst\s+du\s+deutsch)\b/i.test(norm)) {
         return {
           id: 'intent_speak_german',
-          en: `Yes, absolutely! I understand both English and German. We can chat in English to train your speaking skills, and whenever you need an explanation, I will provide it in German. What would you like to practice?`,
-          de: `Ja, absolut! Ich verstehe sowohl Englisch als auch Deutsch. Wir können auf Englisch chatten, um deine Sprachpraxis zu trainieren, und wenn du eine Erklärung brauchst, gebe ich sie dir auf Deutsch. Was möchtest du üben?`,
+          en: `Yes, I understand German very well! However, speaking English with you helps you prepare for international teams and your FIAE exams. Feel free to ask questions in German whenever you need help!`,
+          de: `Ja, ich verstehe Deutsch sehr gut! Aber wenn wir Englisch sprechen, hilft es dir optimal für internationale Teams und deine Prüfungen. Du darfst mich aber jederzeit auf Deutsch um Rat fragen!`,
           suggestions: [
-            "Let's practice the daily standup in English.",
-            "Could you quiz me on English IT vocabulary?",
-            "I would like to practice job interview questions."
+            "Understood! Let's continue practicing in English.",
+            "Could you translate my last sentence into English?",
+            "What is the English word for 'Fehlersuche'?"
           ]
         };
       }
 
-      // 8. Technical Questions ("What is SQL / Git / Python / Docker / Index?")
-      if (/\b(what\s+is|explain|tell\s+me\s+about)\b.*\b(sql|python|git|docker|api|database|bug|index|test|pipeline|linux)\b/i.test(norm)) {
-        if (norm.includes('sql')) {
-          return {
-            id: 'intent_tech_sql',
-            en: `SQL stands for Structured Query Language. It is the standard language for relational databases like PostgreSQL and MySQL to query, insert, and update data. Would you like to practice SQL queries?`,
-            de: `SQL steht für Structured Query Language. Es ist die Standardsprache für relationale Datenbanken wie PostgreSQL und MySQL, um Daten abzufragen, einzufügen und zu aktualisieren. Möchtest du SQL-Abfragen üben?`,
-            suggestions: [
-              "I use SELECT and JOIN queries frequently.",
-              "Indexes make SQL queries much faster.",
-              "Could you show me an example SQL query?"
-            ]
-          };
-        } else if (norm.includes('git')) {
-          return {
-            id: 'intent_tech_git',
-            en: `Git is a distributed version control system. It tracks changes in source code and allows developers to collaborate using branches, commits, and pull requests. Do you use Git every day?`,
-            de: `Git ist ein verteiltes Versionskontrollsystem. Es verfolgt Code-Änderungen und ermöglicht Entwicklern die Zusammenarbeit über Branches, Commits und Pull Requests. Nutzt du Git täglich?`,
-            suggestions: [
-              "I commit my changes regularly to git.",
-              "Pull requests are great for code reviews.",
-              "I recently resolved a merge conflict."
-            ]
-          };
-        } else if (norm.includes('python')) {
-          return {
-            id: 'intent_tech_python',
-            en: `Python is a high-level, interpreted programming language known for its clean, readable syntax and versatile libraries. It is widely used in backend development, automation, and AI. Have you written Python code?`,
-            de: `Python ist eine höhere, interpretierte Programmiersprache, die für ihre saubere, lesbare Syntax und vielseitigen Bibliotheken bekannt ist. Hast du schon Python-Code geschrieben?`,
-            suggestions: [
-              "Yes, I write Python scripts for automation.",
-              "Python syntax is very readable and beginner-friendly.",
-              "I use Python along with SQL for data processing."
-            ]
-          };
-        } else if (norm.includes('index')) {
-          return {
-            id: 'intent_tech_index',
-            en: `A database index is a data structure (like a B-Tree) that speeds up data retrieval operations on a table at the cost of additional storage and slower writes. Do you use indexes on primary keys?`,
-            de: `Ein Datenbank-Index ist eine Datenstruktur (wie ein B-Baum), die Abfragen auf einer Tabelle stark beschleunigt, auf Kosten von zusätzlichem Speicherplatz. Nutzt du Indizes auf Primärschlüsseln?`,
-            suggestions: [
-              "Yes, primary keys are indexed automatically.",
-              "Composite indexes speed up multi-column queries.",
-              "Too many indexes can slow down INSERT operations."
-            ]
-          };
-        } else {
-          return {
-            id: 'intent_tech_generic',
-            en: `In software engineering, understanding technical architecture and clean code principles is fundamental for your FIAE AP 1 qualification. Which technology do you want to explore next?`,
-            de: `In der Softwareentwicklung ist das Verständnis von technischer Architektur und Clean-Code-Prinzipien grundlegend für deine FIAE AP 1 Qualifikation. Welche Technologie möchtest du als Nächstes vertiefen?`,
-            suggestions: [
-              "I want to improve my database design skills.",
-              "I am focusing on automated unit testing.",
-              "Continuous integration pipelines are very interesting."
-            ]
-          };
-        }
+      // 24. Technical Questions ("What is SQL / Git / Python / Docker / Index?")
+      if (/\bwhat\s+is\s+sql\b/i.test(norm) || /\bwas\s+ist\s+sql\b/i.test(norm)) {
+        return {
+          id: 'intent_what_is_sql',
+          en: `SQL stands for Structured Query Language. It is the standard language for relational databases like PostgreSQL and MySQL to query, insert, and update data.`,
+          de: `SQL steht für Structured Query Language. Es ist die Standardsprache für relationale Datenbanken wie PostgreSQL und MySQL, um Daten abzufragen, einzufügen und zu aktualisieren.`,
+          suggestions: [
+            "I use SELECT and JOIN queries frequently.",
+            "Indexes make SQL queries much faster."
+          ]
+        };
       }
 
-      // 9. Status: Off / Vacation / Weekend / Sick leave
-      if (/\b(vacation|holiday|day\s+off|weekend|sick|was\s+ill|was\s+off)\b/i.test(norm)) {
+      if (/\bwhat\s+is\s+git\b/i.test(norm) || /\bwas\s+ist\s+git\b/i.test(norm)) {
         return {
-          id: 'intent_status_off',
+          id: 'intent_what_is_git',
+          en: `Git is a distributed version control system. It tracks changes in code and allows teams to collaborate through branches, commits, and pull requests.`,
+          de: `Git ist ein verteiltes Versionskontrollsystem. Es verfolgt Code-Änderungen und ermöglicht Teams die Zusammenarbeit über Branches, Commits und Pull Requests.`,
+          suggestions: [
+            "I commit my changes regularly to git.",
+            "Pull requests are great for code reviews."
+          ]
+        };
+      }
+
+      // 25. Status: Off / Vacation / Weekend / Sick leave
+      if (/\b(yesterday\s+i\s+was\s+(sick|ill|off|absent|on\s+vacation)|i\s+was\s+sick|war\s+krank|hatte\s+urlaub)\b/i.test(norm)) {
+        return {
+          id: 'intent_sick_leave',
           en: `Welcome back, Istvan! I hope you had some good rest. What is your main priority to get started with today?`,
           de: `Willkommen zurück, Istvan! Ich hoffe, du konntest dich gut erholen. Was ist deine wichtigste Aufgabe für den Einstieg heute?`,
           suggestions: [
@@ -2007,12 +2349,12 @@ document.addEventListener('DOMContentLoaded', () => {
         };
       }
 
-      // 10. Status: No blockers
-      if (/\b(no\s+blocker|no\s+blockers|no\s+problem|everything\s+is\s+fine|all\s+good|no\s+issues)\b/i.test(norm)) {
+      // 26. Status: No blockers
+      if (/\b(no\s+blockers|no\s+blocker|dont\s+have\s+any\s+blockers|everything\s+is\s+fine|keine\s+blocker)\b/i.test(norm)) {
         return {
           id: 'intent_no_blockers',
           en: `That's fantastic news, Istvan! Having no blockers means smooth sailing. What feature or ticket are you tackling next?`,
-          de: `Das sind fantastische Neuigkeiten, Istvan! Keine Blocker bedeutet freie Bahn. Welches Feature oder Ticket gehst du als Nächstes an?`,
+          de: `Das sind fantastische Neuigkeiten, Istvan! Keine Blocker bedeutet freie Bahn. Welches Feature oder Ticket gehst du als nächstes an?`,
           suggestions: [
             "I will continue refactoring the backend service.",
             "I will write unit tests for the API endpoints.",
@@ -2021,16 +2363,16 @@ document.addEventListener('DOMContentLoaded', () => {
         };
       }
 
-      // 11. General direct question ending with '?'
-      if (rawInput.includes('?')) {
+      // 27. General direct question ending with '?'
+      if (/\?\s*$/.test(norm.trim())) {
         return {
           id: 'intent_general_question',
-          en: `That is an interesting question, Istvan! In our ${meta.desc}, my goal is to guide you and answer your questions. Could you tell me a little bit more about what you have in mind?`,
-          de: `Das ist eine interessante Frage, Istvan! In unserem ${meta.desc} ist es mein Ziel, dich zu unterstützen und deine Fragen zu beantworten. Kannst du mir etwas mehr darüber erzählen?`,
+          en: `That is a good question, Istvan! In our ${meta.desc}, my goal is to support your progress. Could you tell me a bit more about what you have in mind?`,
+          de: `Das ist eine gute Frage, Istvan! In unserem ${meta.desc} ist es mein Ziel, dich zu unterstützen. Kannst du mir etwas mehr darüber erzählen?`,
           suggestions: [
-            "I wanted to ask about our sprint priorities.",
+            "I wanted to ask about our priorities.",
             "I was wondering about our deployment schedule.",
-            "Let's continue with our normal update."
+            "Let's continue with our normal conversation."
           ]
         };
       }
@@ -2038,14 +2380,13 @@ document.addEventListener('DOMContentLoaded', () => {
       return null;
     },
 
-    // Hauptfunktion: Erkennt direkte Fragen, Themen, Turn-Zähler und wählt treffsichere Antworten
     generateResponse(userInput, scenarioId) {
       this.state.turnCount++;
       const lower = userInput.toLowerCase();
-      const scenario = this.scenarios[scenarioId] || this.scenarios.standup;
+      const scenario = this.scenarios[scenarioId] || this.scenarios.beginner || this.scenarios.standup;
       const meta = this.getPartnerMeta(scenarioId);
 
-      // 1. ZUERST: Prüfen auf direkte Fragen & Gesprächsabsichten (Name, Begrüßung, Rolle, Hilfe, etc.)
+      // 1. ZUERST: Prüfen auf direkte Fragen & Gesprächsabsichten (Name, Alter, Begrüßung, Rolle, Hilfe, etc.)
       const directReply = this.detectDirectIntent(userInput, scenarioId);
       if (directReply) {
         return directReply;
@@ -2054,6 +2395,27 @@ document.addEventListener('DOMContentLoaded', () => {
       // 2. Falls keine direkte Frage: Thema anhand von Schlüsselwörtern ermitteln
       let topicList = [];
 
+      // Allgemeine & Anfänger-Themen
+      if (lower.includes('name') || lower.includes('hello') || lower.includes('meet') || lower.includes('day') || lower.includes('introduce')) {
+        topicList.push('personal');
+      }
+      if (lower.includes('hobby') || lower.includes('music') || lower.includes('synth') || lower.includes('beat') || lower.includes('guitar') || lower.includes('walk')) {
+        topicList.push('hobbies', 'music_hobby');
+      }
+      if (lower.includes('food') || lower.includes('eat') || lower.includes('pizza') || lower.includes('coffee') || lower.includes('tea') || lower.includes('drink')) {
+        topicList.push('food_drinks', 'coffee_break');
+      }
+      if (lower.includes('word') || lower.includes('vocab') || lower.includes('learn') || lower.includes('sentence') || lower.includes('teach')) {
+        topicList.push('learning_vocab');
+      }
+      if (lower.includes('weather') || lower.includes('sunny') || lower.includes('rain') || lower.includes('cold') || lower.includes('cloud')) {
+        topicList.push('weather_daily', 'coffee_break');
+      }
+      if (lower.includes('chat') || lower.includes('talk') || lower.includes('conversation') || lower.includes('speak')) {
+        topicList.push('casual_chat');
+      }
+
+      // Technische Themen
       if (lower.includes('database') || lower.includes('query') || lower.includes('sql') || lower.includes('index') || lower.includes('table') || lower.includes('timeout')) {
         topicList.push('database', 'database_incident');
       }
@@ -2065,12 +2427,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       if (lower.includes('clean code') || lower.includes('solid') || lower.includes('architecture') || lower.includes('refactor') || lower.includes('class') || lower.includes('api')) {
         topicList.push('clean_code');
-      }
-      if (lower.includes('music') || lower.includes('synth') || lower.includes('beat') || lower.includes('studio') || lower.includes('daw') || lower.includes('hobby')) {
-        topicList.push('music_hobby');
-      }
-      if (lower.includes('coffee') || lower.includes('break') || lower.includes('weather') || lower.includes('weekend') || lower.includes('tired')) {
-        topicList.push('coffee_break');
       }
       if (lower.includes('hotel') || lower.includes('room') || lower.includes('london') || lower.includes('passport') || lower.includes('reservation') || lower.includes('tube')) {
         topicList.push('london_hotel');
@@ -2108,41 +2464,90 @@ document.addEventListener('DOMContentLoaded', () => {
         return chosen;
       }
 
-      // 4. INTELLIGENTER KONVERSATIONS-FALLBACK (Kein blindes Ausgeben von Datenbankoptimierung mehr!)
-      if (scenarioId === 'standup') {
+      // 4. INTELLIGENTER KONVERSATIONS-FALLBACK (Kein starres Wiederholen desselben Satzes!)
+      if (scenarioId === 'beginner') {
+        const beginnerFallbacks = [
+          {
+            en: `That is really nice to hear, Istvan! 😊 In everyday English, we often follow up by asking: "And how about you?" Would you like to ask me something, or shall I tell you about my favorite English words?`,
+            de: `Das ist wirklich schön zu hören, Istvan! 😊 Im Alltagsenglisch fragt man oft nach mit: "And how about you?" (Und wie ist es bei dir?). Möchtest du mich etwas fragen oder soll ich dir meine englischen Lieblingswörter verraten?`,
+            suggestions: [
+              "And how about you? What are you doing today?",
+              "Can you teach me 3 useful English words?",
+              "What is your favorite hobby, Emma?"
+            ]
+          },
+          {
+            en: `You are doing wonderfully, Istvan! Practice makes perfect. What is a topic you enjoy talking about most: food, music, travel, or computers?`,
+            de: `Du machst das wunderbar, Istvan! Übung macht den Meister. Über welches Thema sprichst du am liebsten: Essen, Musik, Reisen oder Computer?`,
+            suggestions: [
+              "I really enjoy talking about music and creative hobbies.",
+              "I like talking about computers, programming, and technology.",
+              "Tell me about good food and cooking!"
+            ]
+          },
+          {
+            en: `Great conversation, Istvan! English has many simple sentences you can use every day. Would you like to practice a short dialogue with me?`,
+            de: `Tolles Gespräch, Istvan! Im Englischen gibt es viele einfache Sätze, die du täglich nutzen kannst. Möchtest du einen kurzen Dialog mit mir üben?`,
+            suggestions: [
+              "Yes! Please give me a simple sentence to practice.",
+              "Can you ask me an everyday question in English?",
+              "How do you say 'Schönen Feierabend' in English?"
+            ]
+          }
+        ];
         return {
-          id: 'standup_open_fallback_' + this.state.turnCount,
-          en: `Thanks for the update, Istvan! What are you planning to work on today, and do you foresee any blockers?`,
-          de: `Danke für dein Update, Istvan! Woran planst du heute zu arbeiten und siehst du irgendwelche Hindernisse (Blocker)?`,
-          suggestions: [
-            "Today I will implement the new API endpoints.",
-            "I plan to write automated unit tests for our service.",
-            "I have no blockers and everything is on track."
-          ]
-        };
-      } else if (scenarioId === 'interview') {
-        return {
-          id: 'interview_open_fallback_' + this.state.turnCount,
-          en: `Thank you for sharing that, Istvan. Could you tell me about a challenging technical problem you solved recently?`,
-          de: `Vielen Dank für deine Ausführung, Istvan. Könntest du mir von einem anspruchsvollen technischen Problem erzählen, das du kürzlich gelöst hast?`,
-          suggestions: [
-            "I resolved a performance issue in our SQL database.",
-            "I refactored legacy code to follow clean architecture principles.",
-            "I designed an automated continuous integration pipeline."
-          ]
-        };
-      } else {
-        return {
-          id: 'generic_open_fallback_' + this.state.turnCount,
-          en: `That sounds very interesting, Istvan! How would you like to continue our conversation in ${meta.desc}?`,
-          de: `Das klingt sehr interessant, Istvan! Wie möchtest du unser Gespräch in ${meta.desc} fortsetzen?`,
-          suggestions: [
-            "I would like to practice technical English terms.",
-            "Could we practice some more questions and answers?",
-            "Let's move on to the next topic."
-          ]
+          id: 'beginner_open_fallback_' + this.state.turnCount,
+          ...beginnerFallbacks[(this.state.turnCount - 1) % beginnerFallbacks.length]
         };
       }
+
+      if (scenarioId === 'standup') {
+        const standupFallbacks = [
+          {
+            en: `Thanks for the update, Istvan! What are you planning to work on today, and do you foresee any blockers?`,
+            de: `Danke für dein Update, Istvan! Woran planst du heute zu arbeiten und siehst du irgendwelche Hindernisse (Blocker)?`,
+            suggestions: [
+              "Today I will write unit tests for the new service.",
+              "I plan to finish the documentation and review open PRs.",
+              "Everything is on track, no blockers today!"
+            ]
+          },
+          {
+            en: `Great progress, Istvan! Keep up the momentum. Are there any dependencies on other team members or external teams today?`,
+            de: `Toller Fortschritt, Istvan! Bleib am Ball. Gibt es heute irgendwelche Abhängigkeiten zu anderen Teammitgliedern oder Teams?`,
+            suggestions: [
+              "No dependencies, I have everything I need to proceed.",
+              "I am coordinating with the frontend team on API data formats.",
+              "I will ping DevOps if deployment needs assistance."
+            ]
+          },
+          {
+            en: `Understood, Istvan! That gives us a clear picture. Is there anything specific you would like to discuss after standup?`,
+            de: `Verstanden, Istvan! Das gibt uns ein klares Bild. Gibt es etwas Bestimmtes, das du nach dem Standup besprechen möchtest?`,
+            suggestions: [
+              "Nothing to discuss, I can jump straight into coding.",
+              "A quick 5-minute sync on architecture would be helpful.",
+              "All good on my side, thanks Sarah!"
+            ]
+          }
+        ];
+        return {
+          id: 'standup_open_fallback_' + this.state.turnCount,
+          ...standupFallbacks[(this.state.turnCount - 1) % standupFallbacks.length]
+        };
+      }
+
+      // Allgemeiner Fallback für andere Szenarien
+      return {
+        id: 'open_fallback_' + this.state.turnCount,
+        en: `Thanks for sharing, Istvan! In our ${meta.desc}, every contribution helps. What would you like to focus on next?`,
+        de: `Danke fürs Teilen, Istvan! In unserem ${meta.desc} hilft jeder Beitrag weiter. Worauf möchtest du dich als Nächstes konzentrieren?`,
+        suggestions: [
+          "Let's continue with our planned discussion.",
+          "Could you explain the next step in simple terms?",
+          "I am ready to proceed."
+        ]
+      };
     }
   };
 
@@ -2305,6 +2710,13 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function getInitialSuggestions(scenarioId) {
+    if (scenarioId === 'beginner') {
+      return [
+        'Hello Emma! I am a beginner, can we practice simple conversation?',
+        'How old are you, and what are your favorite hobbies?',
+        'Can you teach me some useful everyday English words?'
+      ];
+    }
     if (scenarioId === 'standup') {
       return [
         'Yesterday I worked on optimizing the database queries.',
@@ -2473,7 +2885,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const scenarioId = currentScenarioId;
 
     // 1. Absicht erkennen, Vokabeln abzufragen (Quiz-Intent in JEDEM Szenario!)
-    const isQuizIntent = /(abfrag|frage.*mich|teste.*mich|quiz|vokabeln.*abfrag|wörter.*abfrag|teste.*mein.*englisch|wörter.*fragen|vokabeltest)/i.test(text);
+    const isQuizIntent = /\b(abfrag|frage.*mich|teste.*mich|quiz|vokabeln.*abfrag|wörter.*abfrag|teste.*mein.*englisch|wörter.*fragen|vokabeltest)\b/i.test(text);
     if (isQuizIntent && currentScenarioId !== 'quiz') {
       const quizBtn = document.querySelector('.scenario-btn[data-scenario="quiz"]');
       if (quizBtn) {

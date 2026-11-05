@@ -1462,6 +1462,16 @@ const STORY_DATA = [
 // 5. DIALOG- & KONVERSATIONS-SZENARIEN (MIT SPRECHEN & KORREKTUR)
 // ============================================================
 const DIALOG_SCENARIOS = {
+  beginner: {
+    id: 'beginner',
+    title: '🌱 Anfänger & Plaudern',
+    icon: '🌱',
+    partnerName: 'Emma (Lernpartnerin & Tutorin)',
+    partnerRole: 'Geduldige Englisch-Tutorin für Alltag & Smalltalk',
+    initialPrompt: 'Hello Istvan! Welcome! 😊 I am Emma, your friendly English tutor. In this chat, there is zero pressure: we can talk about anything you like—hobbies, everyday life, food, pets, or we can practice simple words and sentences together. What would you like to talk about today?',
+    initialPromptDe: 'Hallo Istvan! Willkommen! 😊 Ich bin Emma, deine freundliche Sprachbegleiterin. Hier gibt es null Leistungsdruck: Wir können über alles sprechen, was dir Spaß macht – Hobbys, Alltag, Essen, Haustiere oder einfach neue Wörter lernen. Worüber möchtest du heute sprechen?',
+    contextKeywords: ['hello', 'hi', 'chat', 'talk', 'beginner', 'learn', 'words', 'hobby', 'music', 'food', 'weather', 'old', 'age', 'live', 'from', 'pet', 'dog', 'cat', 'help', 'simple', 'easy', 'question']
+  },
   quiz: {
     id: 'quiz',
     title: '🎯 Vokabel-Prüfer & Quiz',
