@@ -1,5 +1,5 @@
 // Service Worker: Offline-Support für Englisch-LernApp
-const CACHE_NAME = 'english-master-cache-v8';
+const CACHE_NAME = 'english-master-cache-v9';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',

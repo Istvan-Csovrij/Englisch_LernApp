@@ -997,6 +997,27 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!clean) return null;
 
       const lower = clean.toLowerCase();
+
+      // 1A. Typo & Spelling Checker for common English learner typos
+      const commonTypos = [
+        { regex: /\bwath\b/gi, fix: 'what', tip: 'W-Fragen beginnen mit <em>"wh"</em> (<strong>what</strong>, <em>where, when, why</em>).' },
+        { regex: /\bwaht\b/gi, fix: 'what', tip: '<em>"what"</em> (nicht "waht").' },
+        { regex: /\bmornig\b/gi, fix: 'morning', tip: '<em>"morning"</em> wird mit <strong>"ng"</strong> am Ende geschrieben.' },
+        { regex: /\byuor\b/gi, fix: 'your', tip: '<em>"your"</em> (dein/deine).' },
+        { regex: /\bnam\b/gi, fix: 'name', tip: '<em>"name"</em> mit stummem <strong>e</strong>.' },
+        { regex: /\bplese\b/gi, fix: 'please', tip: '<em>"please"</em> (bitte).' },
+        { regex: /\bteh\b/gi, fix: 'the', tip: '<em>"the"</em> (der/die/das).' },
+        { regex: /\bwich\b/gi, fix: 'which', tip: '<em>"which"</em> (welche/r/s).' }
+      ];
+
+      let foundTypos = [];
+      let typoCorrected = clean;
+      for (const t of commonTypos) {
+        if (t.regex.test(clean)) {
+          foundTypos.push(t);
+          typoCorrected = typoCorrected.replace(t.regex, t.fix);
+        }
+      }
       const words = lower.replace(/[^a-zäöüß0-9\s]/g, '').split(/\s+/).filter(Boolean);
 
       // 1. Prüfen auf deutsche Eingabe
@@ -1159,6 +1180,13 @@ document.addEventListener('DOMContentLoaded', () => {
       let techPraise = '';
       if (!hasError && foundTechVocab.length > 0) {
         techPraise = `<br>🌟 <strong>Starkes Fachvokabular:</strong> Du hast Fachbegriffe wie <em>"${foundTechVocab.join(', ')}"</em> verwendet – das klingt wie professionelles Englisch erfahrener Softwareentwickler!`;
+      }
+
+      if (foundTypos.length > 0 && !hasError) {
+        hasError = true;
+        corrected = typoCorrected;
+        const tips = foundTypos.map(t => t.tip).join(' ');
+        explanation = `💡 <strong>Rechtschreib-Tipp:</strong> ${tips}`;
       }
 
       return {
@@ -1701,12 +1729,329 @@ document.addEventListener('DOMContentLoaded', () => {
     },
 
     // Hauptfunktion: Erkennt Thema, Turn-Zähler und wählt abwechslungsreiche Antworten
+    normalizeInput(raw) {
+      let t = (raw || '').toLowerCase().trim();
+      t = t.replace(/[\?\,\.\!\:\;]/g, ' $& ');
+      const typoMap = {
+        'wath': 'what', 'waht': 'what', 'wat': 'what', 'whot': 'what', 'wut': 'what',
+        'mornig': 'morning', 'mornin': 'morning', 'gud': 'good', 'godd': 'good',
+        'yuor': 'your', 'yor': 'your', 'ur': 'your', 'nam': 'name', 'naem': 'name',
+        'who r u': 'who are you', 'how r u': 'how are you', 'hw': 'how', 'pls': 'please', 'plz': 'please',
+        'dont': "don't", 'didnt': "didn't", 'cant': "can't", 'wont': "won't", 'im': 'i am'
+      };
+      const words = t.split(/\s+/).filter(Boolean);
+      const normalizedWords = words.map(w => typoMap[w] || w);
+      return normalizedWords.join(' ');
+    },
+
+    getPartnerMeta(scenarioId) {
+      const meta = {
+        standup: { name: 'Sarah', role: 'Scrum Master & Agile Coach', desc: 'Daily Scrum Standup' },
+        interview: { name: 'Mr. Davis', role: 'Lead Software Architect', desc: 'IT-Vorstellungsgespräch' },
+        support: { name: 'Alex', role: 'Senior Product Manager', desc: 'Bug-Report & Ticket Support' },
+        architecture: { name: 'David', role: 'Senior Cloud Solutions Architect', desc: 'System-Architektur Review' },
+        smalltalk: { name: 'Mark', role: 'Senior Developer & Teammate', desc: 'Kaffeepause & Smalltalk' },
+        travel: { name: 'James', role: 'Head Concierge at Royal Grand Hotel', desc: 'Hotel & London Reisen' },
+        free: { name: 'AI English Coach', role: 'Persönlicher Sprachtrainer', desc: 'Freie Konversation' },
+        quiz: { name: 'Prof. Miller', role: 'Vokabel-Coach', desc: 'Vokabel-Prüfer & Quiz' }
+      };
+      return meta[scenarioId] || meta.standup;
+    },
+
+    detectDirectIntent(rawInput, scenarioId) {
+      const norm = this.normalizeInput(rawInput);
+      const meta = this.getPartnerMeta(scenarioId);
+
+      // 1. Asking for Partner's Name / Identity ("What is your name?", "wath is your name?", "who are you?")
+      if (/\b(what|tell|may|can)\b.*\b(your|ur)\s+(name|naem)\b/i.test(norm) ||
+          /\bwho\s+(are\s+you|is\s+this|am\s+i\s+talking\s+to)\b/i.test(norm) ||
+          /\bwhats\s+your\s+name\b/i.test(norm) ||
+          /\bname\s*\?/i.test(norm)) {
+        if (scenarioId === 'standup') {
+          return {
+            id: 'intent_name_standup',
+            en: `Good morning Istvan! My name is ${meta.name}, and I am the ${meta.role} for our development team. Nice to meet you! How did your work go yesterday?`,
+            de: `Guten Morgen Istvan! Mein Name ist ${meta.name} und ich bin die ${meta.role} für unser Entwicklerteam. Schön dich kennenzulernen! Wie lief deine Arbeit gestern?`,
+            suggestions: [
+              "Nice to meet you, Sarah! Yesterday I fixed an issue in our codebase.",
+              "Good morning Sarah! Yesterday I worked on the database queries.",
+              "Hello Sarah, what is the main goal for today's sprint?"
+            ]
+          };
+        } else if (scenarioId === 'interview') {
+          return {
+            id: 'intent_name_interview',
+            en: `Hello Istvan, my name is ${meta.name}. I am the ${meta.role} conducting your technical interview today. Nice to meet you! Are you ready to tell me about yourself?`,
+            de: `Hallo Istvan, mein Name ist ${meta.name}. Ich bin der ${meta.role} und führe heute dein Vorstellungsgespräch. Schön dich kennenzulernen! Möchtest du dich kurz vorstellen?`,
+            suggestions: [
+              "Nice to meet you Mr. Davis! I would love to introduce myself.",
+              "Hello Mr. Davis! I have prepared a summary of my technical skills.",
+              "I am ready! I can explain my background in software development."
+            ]
+          };
+        } else if (scenarioId === 'support') {
+          return {
+            id: 'intent_name_support',
+            en: `Hi Istvan! My name is ${meta.name}, and I am the ${meta.role} managing our production incidents. Thanks for jumping in! Have you seen the latest error logs?`,
+            de: `Hi Istvan! Mein Name ist ${meta.name} und ich bin der ${meta.role} für unsere Produktionsvorfälle. Danke fürs Dazukommen! Hast du die neuesten Fehler-Logs gesehen?`,
+            suggestions: [
+              "Hi Alex! Yes, I am analyzing the server logs right now.",
+              "Hello Alex! What is the severity of this production bug?",
+              "I will check the error stack trace immediately."
+            ]
+          };
+        } else if (scenarioId === 'smalltalk') {
+          return {
+            id: 'intent_name_smalltalk',
+            en: `Hey Istvan! I'm ${meta.name}, your teammate from the backend team. Great to chat over a coffee! How is your week going so far?`,
+            de: `Hey Istvan! Ich bin ${meta.name}, dein Kollege aus dem Backend-Team. Schön, beim Kaffee zu quatschen! Wie läuft deine Woche bisher?`,
+            suggestions: [
+              "Nice to meet you Mark! My week has been busy but good.",
+              "Hey Mark! Coffee is definitely needed today. How about you?",
+              "Doing well! Did you get a chance to work on your music projects?"
+            ]
+          };
+        } else if (scenarioId === 'travel') {
+          return {
+            id: 'intent_name_travel',
+            en: `Good day, sir! My name is ${meta.name}, and I am the ${meta.role} here at the Royal Grand Hotel in London. How may I be of service to you today?`,
+            de: `Guten Tag, mein Herr! Mein Name ist ${meta.name} und ich bin der ${meta.role} hier im Royal Grand Hotel in London. Wie kann ich Ihnen heute behilflich sein?`,
+            suggestions: [
+              "Good day James! I would like to check into my room, please.",
+              "Hello James! Could you recommend a good English restaurant nearby?",
+              "Could you please tell me how to get to the Underground station?"
+            ]
+          };
+        } else {
+          return {
+            id: 'intent_name_generic',
+            en: `Hello Istvan! My name is ${meta.name}, and I am your ${meta.role}. It's a pleasure to speak with you! What would you like to discuss today?`,
+            de: `Hallo Istvan! Mein Name ist ${meta.name} und ich bin dein ${meta.role}. Es ist mir eine Freude mit dir zu sprechen! Worüber möchtest du heute sprechen?`,
+            suggestions: [
+              `Nice to meet you, ${meta.name}!`,
+              "I would like to practice my daily English conversation.",
+              "Could you explain an IT concept to me?"
+            ]
+          };
+        }
+      }
+
+      // 2. Asking "How are you? / How are you doing?"
+      if (/\b(how\s+are\s+you|how\s+r\s+u|how\s+is\s+it\s+going|how\s+are\s+things|how\s+do\s+you\s+do)\b/i.test(norm)) {
+        return {
+          id: 'intent_how_are_you',
+          en: `Good morning Istvan! I am doing very well, thank you for asking! How are you doing today, and are you ready for our ${meta.desc}?`,
+          de: `Guten Morgen Istvan! Mir geht es sehr gut, vielen Dank der Nachfrage! Wie geht es dir heute und bist du bereit für unser ${meta.desc}?`,
+          suggestions: [
+            "I am doing great, thank you! Ready to start.",
+            "A bit tired, but looking forward to today's tasks.",
+            "Good morning! What should we focus on first?"
+          ]
+        };
+      }
+
+      // 3. Simple greeting (Hello, Good morning, Hi) without technical update
+      if (/^\s*(good\s+morning|good\s+afternoon|good\s+day|hello|hi|hey)\s*[\!\.\,]*\s*$/i.test(norm)) {
+        return {
+          id: 'intent_greeting_simple',
+          en: `Good morning Istvan! Great to see you. How is your day going so far? Let's get started with our ${meta.desc}.`,
+          de: `Guten Morgen Istvan! Schön dich zu sehen. Wie läuft dein Tag bisher? Lass uns mit unserem ${meta.desc} starten.`,
+          suggestions: [
+            "Good morning! I am ready to give my update.",
+            "Hello! Everything is going smoothly today.",
+            "Good morning! What is the main priority for today?"
+          ]
+        };
+      }
+
+      // 4. Questions about the Partner's Job / Role ("What is your job?", "What do you do?")
+      if (/\b(what\s+do\s+you\s+do|what\s+is\s+your\s+job|what\s+is\s+your\s+role|what\s+are\s+you\s+doing)\b/i.test(norm)) {
+        if (scenarioId === 'standup') {
+          return {
+            id: 'intent_role_standup',
+            en: `As your Scrum Master, my job is to facilitate agile meetings, remove blockers for developers like you, and ensure our sprint stays on track. How can I support your tasks today?`,
+            de: `Als dein Scrum Master ist es meine Aufgabe, agile Meetings zu leiten, Hindernisse für Entwickler wie dich aus dem Weg zu räumen und den Sprint-Zeitplan zu sichern. Wie kann ich dich heute unterstützen?`,
+            suggestions: [
+              "I have a blocker with database credentials.",
+              "Everything is on track, no blockers today.",
+              "Could we review our sprint board together?"
+            ]
+          };
+        } else {
+          return {
+            id: 'intent_role_generic',
+            en: `I work as a ${meta.role}. In this session, my goal is to help you practice technical communication in English. How are you feeling about your progress?`,
+            de: `Ich arbeite als ${meta.role}. In dieser Sitzung ist es mein Ziel, dir beim Üben technischer englischer Kommunikation zu helfen. Wie fühlst du dich bei deinen Fortschritten?`,
+            suggestions: [
+              "I feel I am improving step by step.",
+              "Technical vocabulary is challenging, but I am learning.",
+              "Let's practice some more questions!"
+            ]
+          };
+        }
+      }
+
+      // 5. Questions about Standup / "What are we doing in this meeting?"
+      if (/\b(what\s+are\s+we\s+doing|what\s+is\s+this\s+meeting|what\s+is\s+standup|what\s+is\s+scrum|what\s+should\s+i\s+say|what\s+should\s+i\s+do|explain\s+standup)\b/i.test(norm)) {
+        return {
+          id: 'intent_explain_standup',
+          en: `In a Daily Standup, the team does a quick 15-minute sync. Every developer answers three simple questions: 1. What did you accomplish yesterday? 2. What will you do today? 3. Do you have any blockers? For example: 'Yesterday I worked on code, today I will test it, no blockers.' Give it a try!`,
+          de: `In einem Daily Standup stimmt sich das Team kurz 15 Minuten ab. Jeder Entwickler beantwortet drei einfache Fragen: 1. Was hast du gestern geschafft? 2. Was machst du heute? 3. Gibt es Blocker? Z.B.: 'Yesterday I worked on code, today I will test it, no blockers.' Probier es einfach aus!`,
+          suggestions: [
+            "Yesterday I fixed a bug, today I will write tests, no blockers.",
+            "Yesterday I worked on database queries, today I continue.",
+            "I am waiting for credentials, so I am currently blocked."
+          ]
+        };
+      }
+
+      // 6. Asking for Help / "I don't understand / Repeat please"
+      if (/\b(i\s+don'?t\s+understand|i\s+do\s+not\s+understand|can\s+you\s+help\s+me|help\s+me|what\s+did\s+you\s+say|repeat\s+please|could\s+you\s+repeat|i\s+am\s+confused|auf\s+deutsch)\b/i.test(norm)) {
+        return {
+          id: 'intent_help_needed',
+          en: `No worries at all, Istvan! Take your time. You can speak in simple words, or tap one of the suggested answers below. You can also ask me questions in German whenever you like! What would you like to say?`,
+          de: `Keine Sorge, Istvan! Lass dir Zeit. Du kannst in einfachen Worten sprechen oder unten auf die Antwortvorschläge tippen. Du kannst mich auch auf Deutsch fragen, wenn du möchtest! Was möchtest du sagen?`,
+          suggestions: [
+            "Yesterday I worked on my programming tasks.",
+            "Could you explain that in simpler words, please?",
+            "I am ready to try again in English."
+          ]
+        };
+      }
+
+      // 7. Asking about German Language ("Do you speak German?")
+      if (/\b(german|deutsch|speak\s+german|understand\s+german)\b/i.test(norm)) {
+        return {
+          id: 'intent_speak_german',
+          en: `Yes, absolutely! I understand both English and German. We can chat in English to train your speaking skills, and whenever you need an explanation, I will provide it in German. What would you like to practice?`,
+          de: `Ja, absolut! Ich verstehe sowohl Englisch als auch Deutsch. Wir können auf Englisch chatten, um deine Sprachpraxis zu trainieren, und wenn du eine Erklärung brauchst, gebe ich sie dir auf Deutsch. Was möchtest du üben?`,
+          suggestions: [
+            "Let's practice the daily standup in English.",
+            "Could you quiz me on English IT vocabulary?",
+            "I would like to practice job interview questions."
+          ]
+        };
+      }
+
+      // 8. Technical Questions ("What is SQL / Git / Python / Docker / Index?")
+      if (/\b(what\s+is|explain|tell\s+me\s+about)\b.*\b(sql|python|git|docker|api|database|bug|index|test|pipeline|linux)\b/i.test(norm)) {
+        if (norm.includes('sql')) {
+          return {
+            id: 'intent_tech_sql',
+            en: `SQL stands for Structured Query Language. It is the standard language for relational databases like PostgreSQL and MySQL to query, insert, and update data. Would you like to practice SQL queries?`,
+            de: `SQL steht für Structured Query Language. Es ist die Standardsprache für relationale Datenbanken wie PostgreSQL und MySQL, um Daten abzufragen, einzufügen und zu aktualisieren. Möchtest du SQL-Abfragen üben?`,
+            suggestions: [
+              "I use SELECT and JOIN queries frequently.",
+              "Indexes make SQL queries much faster.",
+              "Could you show me an example SQL query?"
+            ]
+          };
+        } else if (norm.includes('git')) {
+          return {
+            id: 'intent_tech_git',
+            en: `Git is a distributed version control system. It tracks changes in source code and allows developers to collaborate using branches, commits, and pull requests. Do you use Git every day?`,
+            de: `Git ist ein verteiltes Versionskontrollsystem. Es verfolgt Code-Änderungen und ermöglicht Entwicklern die Zusammenarbeit über Branches, Commits und Pull Requests. Nutzt du Git täglich?`,
+            suggestions: [
+              "I commit my changes regularly to git.",
+              "Pull requests are great for code reviews.",
+              "I recently resolved a merge conflict."
+            ]
+          };
+        } else if (norm.includes('python')) {
+          return {
+            id: 'intent_tech_python',
+            en: `Python is a high-level, interpreted programming language known for its clean, readable syntax and versatile libraries. It is widely used in backend development, automation, and AI. Have you written Python code?`,
+            de: `Python ist eine höhere, interpretierte Programmiersprache, die für ihre saubere, lesbare Syntax und vielseitigen Bibliotheken bekannt ist. Hast du schon Python-Code geschrieben?`,
+            suggestions: [
+              "Yes, I write Python scripts for automation.",
+              "Python syntax is very readable and beginner-friendly.",
+              "I use Python along with SQL for data processing."
+            ]
+          };
+        } else if (norm.includes('index')) {
+          return {
+            id: 'intent_tech_index',
+            en: `A database index is a data structure (like a B-Tree) that speeds up data retrieval operations on a table at the cost of additional storage and slower writes. Do you use indexes on primary keys?`,
+            de: `Ein Datenbank-Index ist eine Datenstruktur (wie ein B-Baum), die Abfragen auf einer Tabelle stark beschleunigt, auf Kosten von zusätzlichem Speicherplatz. Nutzt du Indizes auf Primärschlüsseln?`,
+            suggestions: [
+              "Yes, primary keys are indexed automatically.",
+              "Composite indexes speed up multi-column queries.",
+              "Too many indexes can slow down INSERT operations."
+            ]
+          };
+        } else {
+          return {
+            id: 'intent_tech_generic',
+            en: `In software engineering, understanding technical architecture and clean code principles is fundamental for your FIAE AP 1 qualification. Which technology do you want to explore next?`,
+            de: `In der Softwareentwicklung ist das Verständnis von technischer Architektur und Clean-Code-Prinzipien grundlegend für deine FIAE AP 1 Qualifikation. Welche Technologie möchtest du als Nächstes vertiefen?`,
+            suggestions: [
+              "I want to improve my database design skills.",
+              "I am focusing on automated unit testing.",
+              "Continuous integration pipelines are very interesting."
+            ]
+          };
+        }
+      }
+
+      // 9. Status: Off / Vacation / Weekend / Sick leave
+      if (/\b(vacation|holiday|day\s+off|weekend|sick|was\s+ill|was\s+off)\b/i.test(norm)) {
+        return {
+          id: 'intent_status_off',
+          en: `Welcome back, Istvan! I hope you had some good rest. What is your main priority to get started with today?`,
+          de: `Willkommen zurück, Istvan! Ich hoffe, du konntest dich gut erholen. Was ist deine wichtigste Aufgabe für den Einstieg heute?`,
+          suggestions: [
+            "Today I am catching up on unread emails and tickets.",
+            "I am starting work on the authentication module.",
+            "I have no blockers today."
+          ]
+        };
+      }
+
+      // 10. Status: No blockers
+      if (/\b(no\s+blocker|no\s+blockers|no\s+problem|everything\s+is\s+fine|all\s+good|no\s+issues)\b/i.test(norm)) {
+        return {
+          id: 'intent_no_blockers',
+          en: `That's fantastic news, Istvan! Having no blockers means smooth sailing. What feature or ticket are you tackling next?`,
+          de: `Das sind fantastische Neuigkeiten, Istvan! Keine Blocker bedeutet freie Bahn. Welches Feature oder Ticket gehst du als Nächstes an?`,
+          suggestions: [
+            "I will continue refactoring the backend service.",
+            "I will write unit tests for the API endpoints.",
+            "I plan to finish this user story by the end of the day."
+          ]
+        };
+      }
+
+      // 11. General direct question ending with '?'
+      if (rawInput.includes('?')) {
+        return {
+          id: 'intent_general_question',
+          en: `That is an interesting question, Istvan! In our ${meta.desc}, my goal is to guide you and answer your questions. Could you tell me a little bit more about what you have in mind?`,
+          de: `Das ist eine interessante Frage, Istvan! In unserem ${meta.desc} ist es mein Ziel, dich zu unterstützen und deine Fragen zu beantworten. Kannst du mir etwas mehr darüber erzählen?`,
+          suggestions: [
+            "I wanted to ask about our sprint priorities.",
+            "I was wondering about our deployment schedule.",
+            "Let's continue with our normal update."
+          ]
+        };
+      }
+
+      return null;
+    },
+
+    // Hauptfunktion: Erkennt direkte Fragen, Themen, Turn-Zähler und wählt treffsichere Antworten
     generateResponse(userInput, scenarioId) {
       this.state.turnCount++;
       const lower = userInput.toLowerCase();
       const scenario = this.scenarios[scenarioId] || this.scenarios.standup;
+      const meta = this.getPartnerMeta(scenarioId);
 
-      // 1. Thema anhand von Schlüsselwörtern ermitteln
+      // 1. ZUERST: Prüfen auf direkte Fragen & Gesprächsabsichten (Name, Begrüßung, Rolle, Hilfe, etc.)
+      const directReply = this.detectDirectIntent(userInput, scenarioId);
+      if (directReply) {
+        return directReply;
+      }
+
+      // 2. Falls keine direkte Frage: Thema anhand von Schlüsselwörtern ermitteln
       let topicList = [];
 
       if (lower.includes('database') || lower.includes('query') || lower.includes('sql') || lower.includes('index') || lower.includes('table') || lower.includes('timeout')) {
@@ -1740,7 +2085,7 @@ document.addEventListener('DOMContentLoaded', () => {
         topicList.push('blocker');
       }
 
-      // 2. Kandidaten aus dem Szenario sammeln
+      // 3. Kandidaten aus dem Szenario sammeln
       let candidates = [];
       for (const t of topicList) {
         if (scenario[t] && Array.isArray(scenario[t])) {
@@ -1748,34 +2093,56 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
 
-      // Falls keine spezifischen Themen zutreffen, Fallbacks nutzen
-      if (candidates.length === 0) {
-        const fallbackKeys = Object.keys(scenario);
-        for (const k of fallbackKeys) {
-          if (Array.isArray(scenario[k])) {
-            candidates.push(...scenario[k]);
-          }
+      // Falls spezifische Themen zutreffen, ausfiltern & wählen
+      if (candidates.length > 0) {
+        let unusedCandidates = candidates.filter(c => !this.state.usedResponseKeys.has(c.id));
+        if (unusedCandidates.length === 0) {
+          candidates.forEach(c => this.state.usedResponseKeys.delete(c.id));
+          unusedCandidates = candidates;
         }
+
+        let chosen = unusedCandidates[(this.state.turnCount - 1) % unusedCandidates.length] || unusedCandidates[0];
+        if (chosen && chosen.id) {
+          this.state.usedResponseKeys.add(chosen.id);
+        }
+        return chosen;
       }
 
-      // 3. Ausfiltern bereits benutzter Antworten (Anti-Wiederholungs-Garantie!)
-      let unusedCandidates = candidates.filter(c => !this.state.usedResponseKeys.has(c.id));
-
-      // Falls alle bereits verbraucht wurden, Pool für dieses Thema leeren und frisch wählen
-      if (unusedCandidates.length === 0) {
-        candidates.forEach(c => this.state.usedResponseKeys.delete(c.id));
-        unusedCandidates = candidates;
+      // 4. INTELLIGENTER KONVERSATIONS-FALLBACK (Kein blindes Ausgeben von Datenbankoptimierung mehr!)
+      if (scenarioId === 'standup') {
+        return {
+          id: 'standup_open_fallback_' + this.state.turnCount,
+          en: `Thanks for the update, Istvan! What are you planning to work on today, and do you foresee any blockers?`,
+          de: `Danke für dein Update, Istvan! Woran planst du heute zu arbeiten und siehst du irgendwelche Hindernisse (Blocker)?`,
+          suggestions: [
+            "Today I will implement the new API endpoints.",
+            "I plan to write automated unit tests for our service.",
+            "I have no blockers and everything is on track."
+          ]
+        };
+      } else if (scenarioId === 'interview') {
+        return {
+          id: 'interview_open_fallback_' + this.state.turnCount,
+          en: `Thank you for sharing that, Istvan. Could you tell me about a challenging technical problem you solved recently?`,
+          de: `Vielen Dank für deine Ausführung, Istvan. Könntest du mir von einem anspruchsvollen technischen Problem erzählen, das du kürzlich gelöst hast?`,
+          suggestions: [
+            "I resolved a performance issue in our SQL database.",
+            "I refactored legacy code to follow clean architecture principles.",
+            "I designed an automated continuous integration pipeline."
+          ]
+        };
+      } else {
+        return {
+          id: 'generic_open_fallback_' + this.state.turnCount,
+          en: `That sounds very interesting, Istvan! How would you like to continue our conversation in ${meta.desc}?`,
+          de: `Das klingt sehr interessant, Istvan! Wie möchtest du unser Gespräch in ${meta.desc} fortsetzen?`,
+          suggestions: [
+            "I would like to practice technical English terms.",
+            "Could we practice some more questions and answers?",
+            "Let's move on to the next topic."
+          ]
+        };
       }
-
-      // Nach Turn-Zähler auswählen für progressive Gesprächsführung
-      let chosen = unusedCandidates[(this.state.turnCount - 1) % unusedCandidates.length] || unusedCandidates[0];
-
-      // Antwort-ID als verwendet markieren
-      if (chosen && chosen.id) {
-        this.state.usedResponseKeys.add(chosen.id);
-      }
-
-      return chosen;
     }
   };
 
