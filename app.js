@@ -2,24 +2,37 @@
 // Hauptlogik: Englisch-LernApp mit Überspringen-Funktion (Skip)
 // ============================================================
 
-document.addEventListener('DOMContentLoaded', () => {
-
+function initApp() {
+  try {
   // --- STATE ---
   let currentCategory = 'all';
   let currentView = 'cards';
-  let filteredVocab = [...VOCAB_DATA];
+  let filteredVocab = (typeof VOCAB_DATA !== 'undefined' && Array.isArray(VOCAB_DATA)) ? [...VOCAB_DATA] : [];
   let currentCardIndex = 0;
   let isCardFlipped = false;
 
-  let filteredSpeech = [...SPEECH_DATA];
+  let filteredSpeech = (typeof SPEECH_DATA !== 'undefined' && Array.isArray(SPEECH_DATA)) ? [...SPEECH_DATA] : [];
   let currentSpeechIndex = 0;
 
-  let filteredCloze = [...CLOZE_DATA];
+  let filteredCloze = (typeof CLOZE_DATA !== 'undefined' && Array.isArray(CLOZE_DATA)) ? [...CLOZE_DATA] : [];
   let currentClozeIndex = 0;
 
-  // LocalStorage Persistenz
-  let masteredCards = JSON.parse(localStorage.getItem('fiae_mastered_cards') || '[]');
-  let userXP = parseInt(localStorage.getItem('fiae_user_xp') || '0', 10);
+  // LocalStorage Persistenz (Fehlersicher & Korruptionsgeschützt)
+  let masteredCards = [];
+  try {
+    const raw = localStorage.getItem('fiae_mastered_cards');
+    if (raw) masteredCards = JSON.parse(raw);
+    if (!Array.isArray(masteredCards)) masteredCards = [];
+  } catch (e) {
+    masteredCards = [];
+  }
+
+  let userXP = 0;
+  try {
+    userXP = parseInt(localStorage.getItem('fiae_user_xp') || '0', 10) || 0;
+  } catch (e) {
+    userXP = 0;
+  }
 
   // --- SOUND EFFECTS VIA WEB AUDIO API (MOBILE SAFE SINGLETON) ---
   let sharedAudioCtx = null;
@@ -215,25 +228,33 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Mobile Voice Caching & Preloading
+  // Mobile Voice Caching & Preloading (Try/Catch Geschützt)
   let cachedDeviceVoices = [];
   function updateVoicesCache() {
     if ('speechSynthesis' in window) {
-      const v = window.speechSynthesis.getVoices() || [];
-      if (v && v.length > 0) cachedDeviceVoices = v;
+      try {
+        const v = window.speechSynthesis.getVoices() || [];
+        if (v && v.length > 0) cachedDeviceVoices = v;
+      } catch (e) {
+        console.warn('Voice update error:', e);
+      }
     }
   }
 
   if ('speechSynthesis' in window) {
-    updateVoicesCache();
-    window.speechSynthesis.onvoiceschanged = () => {
+    try {
       updateVoicesCache();
-      const modal = document.getElementById('voicePickerModal');
-      const container = document.getElementById('voiceListContainer');
-      if (modal && modal.classList.contains('active') && container && typeof renderVoiceListItems === 'function') {
-        renderVoiceListItems(container);
-      }
-    };
+      window.speechSynthesis.onvoiceschanged = () => {
+        updateVoicesCache();
+        const modal = document.getElementById('voicePickerModal');
+        const container = document.getElementById('voiceListContainer');
+        if (modal && modal.classList.contains('active') && container && typeof renderVoiceListItems === 'function') {
+          renderVoiceListItems(container);
+        }
+      };
+    } catch (e) {
+      console.warn('speechSynthesis registration error:', e);
+    }
   }
 
   function getBestEnglishVoice() {
@@ -3963,9 +3984,9 @@ ${partnerReply.de}`;
     }
   }
 
-  // --- INITIAL RENDER ---
-  updateStatsBadges();
-  updateVoiceBadgeUI();
+  // --- INITIAL RENDER (FAIL-SAFE TRY/CATCH) ---
+  try { updateStatsBadges(); } catch (e) { console.warn('updateStatsBadges error:', e); }
+  try { updateVoiceBadgeUI(); } catch (e) { console.warn('updateVoiceBadgeUI error:', e); }
 
   const btnVoiceToggle = document.getElementById('btnVoiceToggle');
   if (btnVoiceToggle) {
@@ -3977,13 +3998,24 @@ ${partnerReply.de}`;
     btnVoiceTest.addEventListener('click', testCurrentVoice);
   }
 
-  renderCurrentCard();
-  renderCurrentSpeech();
-  renderCurrentCloze();
-  initDialogView();
-  initStoriesView();
-  initGrammarView();
-});
+  try { renderCurrentCard(); } catch (e) { console.warn('renderCurrentCard error:', e); }
+  try { renderCurrentSpeech(); } catch (e) { console.warn('renderCurrentSpeech error:', e); }
+  try { renderCurrentCloze(); } catch (e) { console.warn('renderCurrentCloze error:', e); }
+  try { initDialogView(); } catch (e) { console.warn('initDialogView error:', e); }
+  try { initStoriesView(); } catch (e) { console.warn('initStoriesView error:', e); }
+  try { initGrammarView(); } catch (e) { console.warn('initGrammarView error:', e); }
+
+  } catch (fatalErr) {
+    console.error('Fatal initialization error in initApp:', fatalErr);
+  }
+}
+
+// Dual Loading Guard: Führt initApp sofort aus, wenn DOM bereit ist, oder wartet auf DOMContentLoaded
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initApp);
+} else {
+  initApp();
+}
 
 // --- SERVICE WORKER REGISTRATION (OFFLINE SUPPORT) ---
 if ('serviceWorker' in navigator) {

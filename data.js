@@ -8,8 +8,7 @@ const CATEGORIES = {
   fiae: { id: 'fiae', name: 'FIAE AP 1 & IT', icon: '💻' },
   business: { id: 'business', name: 'Job & Business', icon: '💼' },
   conversation: { id: 'conversation', name: 'Smalltalk & Alltag', icon: '💬' },
-  travel: { id: 'travel',
-    gender: 'male', name: 'Urlaub & Reise', icon: '✈️' }
+  travel: { id: 'travel', name: 'Urlaub & Reise', icon: '✈️' }
 };
 
 const VOCAB_DATA = [
@@ -1947,6 +1946,7 @@ const DIALOG_SCENARIOS = {
   },
   travel: {
     id: 'travel',
+    gender: 'male',
     title: 'Hotel, London & Reisen',
     icon: '✈️',
     partnerName: 'James (Concierge)',
