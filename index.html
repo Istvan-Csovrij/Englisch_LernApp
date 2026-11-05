@@ -72,6 +72,15 @@
 
       <div class="stats-badges">
 
+        <!-- Weiche & Natürliche Stimme Schnellwähler -->
+        <button class="badge voice-badge" id="btnVoiceToggle" title="Stimme weicher / flüssiger einstellen (Tippen zum Umschalten)">
+          🌸 <span id="currentVoiceLabel">Weich</span>
+        </button>
+
+        <button class="badge voice-test-badge" id="btnVoiceTest" title="Stimme kurz testen & anhören">
+          🔊 Test
+        </button>
+
         <button class="badge install-badge" id="btnInstallApp" title="App auf Handy herunterladen & installieren">
 
           📲 <span>App herunterladen</span>
@@ -129,6 +138,8 @@
     <button class="nav-tab-btn" data-view="speech">🎙️ Aussprache-Coach & Sprechen</button>
 
     <button class="nav-tab-btn" data-view="cloze">✏️ Lückentext-Trainer</button>
+
+    <button class="nav-tab-btn" data-view="grammar">📖 Grammatik & Zeiten</button>
 
     <button class="nav-tab-btn" data-view="dialog">💬 Dialog & Satzkorrektur</button>
 
@@ -560,6 +571,86 @@
 
 
 
+    <!-- ================= 3B. GRAMMATIK & ZEITEN KOMPASS ================= -->
+
+    <section id="grammarView" class="view-section">
+
+      <div class="grammar-header-card">
+
+        <div class="grammar-header-top">
+
+          <div class="grammar-badge">📖 FIAE AP 1 & Business Grammatik</div>
+
+          <div class="grammar-stats-info" id="grammarTopicCount">9 Kapitel verfügbar</div>
+
+        </div>
+
+        <h2 class="grammar-main-title">Grammatik-Kompass & Zeiten-Trainer</h2>
+
+        <p class="grammar-main-desc">
+
+          Lerne die englischen Zeiten, Satzbau-Formeln (SVO, ASI, QuASI), unregelmäßige Verben und Business-Regeln – komplett mit <strong>Audio-Beispielen in weicher, natürlicher Aussprache</strong> und direkt verknüpften Übungen!
+
+        </p>
+
+
+
+        <!-- Search Bar -->
+
+        <div class="grammar-search-box">
+
+          <span class="grammar-search-icon">🔍</span>
+
+          <input type="text" id="grammarSearchInput" class="grammar-search-input" placeholder="Regel oder Zeit suchen (z.B. since, didn't, he/she/it, if, will, questions)...">
+
+          <button class="grammar-search-clear" id="btnGrammarSearchClear" title="Suche zurücksetzen">✕</button>
+
+        </div>
+
+
+
+        <!-- Topic Filter Pills Bar -->
+
+        <div class="grammar-filter-bar" id="grammarFilterBar">
+
+          <button class="grammar-filter-btn active" data-gcat="all">🌟 Alle (9)</button>
+
+          <button class="grammar-filter-btn" data-gcat="svo">⏰ Satzbau (SVO)</button>
+
+          <button class="grammar-filter-btn" data-gcat="present-simple">🟢 Present Simple</button>
+
+          <button class="grammar-filter-btn" data-gcat="questions">❓ Fragen (ASI)</button>
+
+          <button class="grammar-filter-btn" data-gcat="present-continuous">🔵 Continuous</button>
+
+          <button class="grammar-filter-btn" data-gcat="simple-past">🟠 Simple Past</button>
+
+          <button class="grammar-filter-btn" data-gcat="present-perfect">🟣 Present Perfect</button>
+
+          <button class="grammar-filter-btn" data-gcat="future">🟡 Zukunft</button>
+
+          <button class="grammar-filter-btn" data-gcat="conditionals">🔴 If-Sätze</button>
+
+          <button class="grammar-filter-btn" data-gcat="business">💼 Business</button>
+
+        </div>
+
+      </div>
+
+
+
+      <!-- Container where Grammar Cards are rendered dynamically -->
+
+      <div class="grammar-cards-container" id="grammarCardsContainer">
+
+        <!-- Rendered dynamically by app.js -->
+
+      </div>
+
+    </section>
+
+
+
     <!-- ================= 4. GLOSSARY & STATS VIEW ================= -->
 
     <section id="glossaryView" class="view-section">
@@ -940,6 +1031,14 @@
 
     </button>
 
+    <button class="bottom-tab-btn" data-view="grammar">
+
+      <span class="tab-icon">📖</span>
+
+      <span>Grammatik</span>
+
+    </button>
+
     <button class="bottom-tab-btn" data-view="dialog">
 
       <span class="tab-icon">💬</span>
@@ -1060,9 +1159,9 @@
 
   <!-- Scripts -->
 
-  <script src="data.js?v=20261104_v7"></script>
+  <script src="data.js?v=20261105_v8"></script>
 
-  <script src="app.js?v=20261104_v7"></script>
+  <script src="app.js?v=20261105_v8"></script>
 
 </body>
 

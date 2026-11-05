@@ -76,23 +76,99 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (e) {}
   }
 
-  // --- AUDIO & SPEECH SYNTHESIS (MOBILE SAFE WITH UTTERANCE RETENTION) ---
+  // --- AUDIO & SPEECH SYNTHESIS (SMOOTH & NATURAL VOICE ENGINE) ---
   window._activeUtterance = null;
+
+  const VOICE_PROFILES = {
+    soft: {
+      id: 'soft',
+      name: '🌸 Weich & Natürlich',
+      label: 'Weich',
+      desc: 'Sanfte Aussprache, warmes Lerntempo & natürliche Betonung',
+      rate: 0.90,
+      pitch: 1.03,
+      volume: 0.92
+    },
+    clear: {
+      id: 'clear',
+      name: '💼 Klar & Business',
+      label: 'Klar',
+      desc: 'Deutliche Business-Artikulation für IT & Vorstellungsgespräche',
+      rate: 0.96,
+      pitch: 1.00,
+      volume: 0.95
+    },
+    slow: {
+      id: 'slow',
+      name: '🐢 Ruhig & Lerntempo',
+      label: 'Ruhig',
+      desc: 'Entspanntes Lerntempo (0.82x) für Anfänger & Hörübungen',
+      rate: 0.82,
+      pitch: 1.02,
+      volume: 0.90
+    }
+  };
+
+  let activeVoiceProfileId = localStorage.getItem('englapp_voice_profile') || 'soft';
+
+  function getActiveVoiceProfile() {
+    return VOICE_PROFILES[activeVoiceProfileId] || VOICE_PROFILES.soft;
+  }
 
   function getBestEnglishVoice() {
     if (!('speechSynthesis' in window)) return null;
     try {
       const voices = window.speechSynthesis.getVoices() || [];
       if (!voices.length) return null;
-      return voices.find(v => v.lang && v.lang.toLowerCase().startsWith('en') && 
-        (v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Samantha') || v.name.includes('Siri') || v.name.includes('Daniel') || v.name.includes('Karen'))) ||
-        voices.find(v => v.lang && v.lang.toLowerCase().startsWith('en')) || null;
+
+      const enVoices = voices.filter(v => v.lang && v.lang.toLowerCase().startsWith('en'));
+      if (!enVoices.length) return voices[0] || null;
+
+      function scoreVoice(v) {
+        const name = (v.name || '').toLowerCase();
+        const uri = (v.voiceURI || '').toLowerCase();
+        let score = 0;
+
+        // 1. Prioritize Microsoft Natural / Neural / Online voices (ultra-soft & human)
+        if (name.includes('natural') || uri.includes('natural')) score += 120;
+        if (name.includes('online') || uri.includes('online')) score += 90;
+        if (name.includes('neural') || uri.includes('neural')) score += 100;
+        if (name.includes('enhanced') || uri.includes('enhanced')) score += 95;
+        if (name.includes('premium') || uri.includes('premium')) score += 95;
+
+        // 2. High-quality human voices
+        if (name.includes('jenny')) score += 80;
+        if (name.includes('aria')) score += 75;
+        if (name.includes('sonia')) score += 75;
+        if (name.includes('google us english') || name.includes('google uk english female')) score += 70;
+        if (name.includes('samantha')) score += 60;
+        if (name.includes('ava')) score += 60;
+        if (name.includes('karen') || name.includes('moira') || name.includes('serena')) score += 50;
+        if (name.includes('guy') || name.includes('ryan')) score += 40;
+
+        // 3. Female timbre bonus (perceived as warmer and less metallic than robotic voices)
+        if (name.includes('female') || name.includes('zira')) score += 20;
+
+        // 4. Heavily penalize harsh robotic desktop voices
+        if (name.includes('david desktop') || name.includes('mark desktop')) score -= 90;
+        if (name.includes('desktop')) score -= 45;
+        if (name.includes('espeak')) score -= 100;
+
+        // 5. English dialect preferences
+        if (v.lang === 'en-US' || v.lang === 'en_US') score += 10;
+        if (v.lang === 'en-GB' || v.lang === 'en_GB') score += 8;
+
+        return score;
+      }
+
+      const sorted = [...enVoices].sort((a, b) => scoreVoice(b) - scoreVoice(a));
+      return sorted[0] || enVoices[0];
     } catch (e) {
       return null;
     }
   }
 
-  function speakEnglish(text, rate = 1.0, onEndCallback = null) {
+  function speakEnglish(text, customRate = null, onEndCallback = null) {
     if (!('speechSynthesis' in window)) {
       showToast('Sprachausgabe im Browser nicht unterstützt.');
       return;
@@ -102,9 +178,14 @@ document.addEventListener('DOMContentLoaded', () => {
         window.speechSynthesis.cancel();
       }
 
+      const profile = getActiveVoiceProfile();
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'en-US';
-      utterance.rate = rate;
+
+      // Use custom rate if provided (e.g. from story speed button), otherwise profile default
+      utterance.rate = (typeof customRate === 'number' && customRate > 0) ? customRate : profile.rate;
+      utterance.pitch = profile.pitch;
+      utterance.volume = profile.volume;
 
       const voice = getBestEnglishVoice();
       if (voice) {
@@ -129,6 +210,34 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (err) {
       console.warn('speakEnglish error:', err);
     }
+  }
+
+  function updateVoiceBadgeUI() {
+    const profile = getActiveVoiceProfile();
+    const labelEl = document.getElementById('currentVoiceLabel');
+    if (labelEl) {
+      labelEl.textContent = profile.label;
+    }
+  }
+
+  function cycleVoiceProfile() {
+    const order = ['soft', 'clear', 'slow'];
+    const curIdx = order.indexOf(activeVoiceProfileId);
+    const nextIdx = (curIdx + 1) % order.length;
+    activeVoiceProfileId = order[nextIdx];
+    localStorage.setItem('englapp_voice_profile', activeVoiceProfileId);
+    updateVoiceBadgeUI();
+    const p = getActiveVoiceProfile();
+    showToast(`Stimme umgestellt auf: ${p.name}`);
+    testCurrentVoice();
+  }
+
+  function testCurrentVoice() {
+    const p = getActiveVoiceProfile();
+    const v = getBestEnglishVoice();
+    const vName = v ? v.name.split('-')[0].trim() : 'Standard';
+    showToast(`🔊 ${p.name} (${vName})`);
+    speakEnglish("Hello Istvan! Your English voice is now soft, smooth, and friendly. Let's practice English together!");
   }
 
   if ('speechSynthesis' in window) {
@@ -362,6 +471,8 @@ document.addEventListener('DOMContentLoaded', () => {
       initDialogView();
     } else if (viewName === 'stories') {
       initStoriesView();
+    } else if (viewName === 'grammar') {
+      initGrammarView();
     }
   }
 
@@ -955,14 +1066,14 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       // Regel G: Doppelte Vergangenheit: "didn't knew" -> "didn't know"
-      if (!hasError && /\b(didn't|did\s+not)\s+(knew|saw|worked|went|fixed|found)\b/i.test(lower)) {
+      if (!hasError && /\b(didn\'t|did\s+not)\s+(knew|saw|worked|went|fixed|found)\b/i.test(lower)) {
         hasError = true;
-        corrected = corrected.replace(/\bdid\s*n'?t\s+knew\b/i, "didn't know")
-                             .replace(/\bdid\s*n'?t\s+saw\b/i, "didn't see")
-                             .replace(/\bdid\s*n'?t\s+worked\b/i, "didn't work")
-                             .replace(/\bdid\s*n'?t\s+went\b/i, "didn't go")
-                             .replace(/\bdid\s*n'?t\s+fixed\b/i, "didn't fix")
-                             .replace(/\bdid\s*n'?t\s+found\b/i, "didn't find");
+        corrected = corrected.replace(/\bdid\s*n\'?t\s+knew\b/i, "didn't know")
+                             .replace(/\bdid\s*n\'?t\s+saw\b/i, "didn't see")
+                             .replace(/\bdid\s*n\'?t\s+worked\b/i, "didn't work")
+                             .replace(/\bdid\s*n\'?t\s+went\b/i, "didn't go")
+                             .replace(/\bdid\s*n\'?t\s+fixed\b/i, "didn't fix")
+                             .replace(/\bdid\s*n\'?t\s+found\b/i, "didn't find");
         explanation = '💡 <strong>Doppelte Vergangenheitsform:</strong> Nach <em>"didn\'t"</em> steht immer der einfache Infinitiv (z. B. <em>"I didn\'t know"</em>, nicht "didn\'t knew").';
       }
 
@@ -2333,13 +2444,225 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+
+  // ==========================================
+  // 📖 GRAMMAR & TENSES VIEW CONTROLLER
+  // ==========================================
+  let activeGrammarCategory = 'all';
+  let currentGrammarSearch = '';
+
+  function initGrammarView() {
+    const filterBar = document.getElementById('grammarFilterBar');
+    if (filterBar && !filterBar._initialized) {
+      filterBar._initialized = true;
+      filterBar.querySelectorAll('.grammar-filter-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          filterBar.querySelectorAll('.grammar-filter-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          activeGrammarCategory = btn.dataset.gcat || 'all';
+          renderGrammarCards();
+        });
+      });
+    }
+
+    const searchInput = document.getElementById('grammarSearchInput');
+    const searchClear = document.getElementById('btnGrammarSearchClear');
+    if (searchInput && !searchInput._initialized) {
+      searchInput._initialized = true;
+      searchInput.addEventListener('input', (e) => {
+        currentGrammarSearch = (e.target.value || '').trim().toLowerCase();
+        if (searchClear) {
+          searchClear.style.display = currentGrammarSearch ? 'block' : 'none';
+        }
+        renderGrammarCards();
+      });
+
+      if (searchClear) {
+        searchClear.addEventListener('click', () => {
+          searchInput.value = '';
+          currentGrammarSearch = '';
+          searchClear.style.display = 'none';
+          renderGrammarCards();
+        });
+      }
+    }
+
+    renderGrammarCards();
+  }
+
+  function renderGrammarCards() {
+    const container = document.getElementById('grammarCardsContainer');
+    const countEl = document.getElementById('grammarTopicCount');
+    if (!container || typeof GRAMMAR_TOPICS === 'undefined') return;
+
+    let topics = GRAMMAR_TOPICS;
+
+    // Filter by category
+    if (activeGrammarCategory !== 'all') {
+      topics = topics.filter(t => t.category === activeGrammarCategory);
+    }
+
+    // Filter by search query
+    if (currentGrammarSearch) {
+      const q = currentGrammarSearch;
+      topics = topics.filter(t => {
+        const textToMatch = [
+          t.title,
+          t.subtitle,
+          t.summary,
+          t.formula,
+          (t.signalWords || []).join(' '),
+          (t.rules || []).map(r => r.title + ' ' + r.detail).join(' '),
+          (t.examples || []).map(ex => ex.en + ' ' + ex.de).join(' '),
+          (t.pitfalls || []).map(p => p.wrong + ' ' + p.right + ' ' + p.tip).join(' ')
+        ].join(' ').toLowerCase();
+        return textToMatch.includes(q);
+      });
+    }
+
+    if (countEl) {
+      countEl.textContent = `${topics.length} von ${GRAMMAR_TOPICS.length} Kapitel`;
+    }
+
+    if (!topics.length) {
+      container.innerHTML = `
+        <div class="empty-state-card" style="text-align: center; padding: 40px 20px; color: #94a3b8;">
+          <div style="font-size: 40px; margin-bottom: 12px;">🔍</div>
+          <h3>Keine Grammatik-Regel gefunden</h3>
+          <p>Zu deinem Suchbegriff "${escapeHtml(currentGrammarSearch)}" gibt es leider keinen Treffer. Probiere z.B. <em>since</em>, <em>didn't</em>, <em>SVO</em> oder <em>if</em>.</p>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = topics.map(topic => `
+      <div class="grammar-card" data-topic-id="${topic.id}">
+        <div class="grammar-card-header">
+          <div class="grammar-card-icon-title">
+            <span class="grammar-topic-icon">${topic.icon}</span>
+            <div>
+              <h3 class="grammar-topic-title">${topic.title}</h3>
+              <span class="grammar-topic-subtitle">${topic.subtitle}</span>
+            </div>
+          </div>
+          <span class="grammar-level-pill">${topic.tag}</span>
+        </div>
+
+        <div class="grammar-formula-box">
+          <span class="grammar-formula-label">📐 GOLDENE FORMEL:</span>
+          <code class="grammar-formula-code">${escapeHtml(topic.formula)}</code>
+        </div>
+
+        <p class="grammar-summary-text">${topic.summary}</p>
+
+        <div class="grammar-rules-list">
+          ${topic.rules.map(r => `
+            <div class="grammar-rule-item">
+              <strong>${escapeHtml(r.title)}:</strong> ${escapeHtml(r.detail)}
+            </div>
+          `).join('')}
+        </div>
+
+        <div class="grammar-signals-row">
+          <span class="grammar-signals-label">⚡ Signalwörter:</span>
+          <div class="grammar-signals-chips">
+            ${topic.signalWords.map(sw => `<span class="signal-chip">${escapeHtml(sw)}</span>`).join('')}
+          </div>
+        </div>
+
+        <div class="grammar-examples-section">
+          <div class="grammar-examples-header">
+            <span>🎧 Hörbeispiele (mit weicher Stimme anhören):</span>
+          </div>
+          <div class="grammar-examples-list">
+            ${topic.examples.map(ex => `
+              <div class="grammar-example-row">
+                <div class="grammar-example-text">
+                  <div class="example-en">${escapeHtml(ex.en)}</div>
+                  <div class="example-de">${escapeHtml(ex.de)}</div>
+                </div>
+                <button class="grammar-audio-btn" data-audio-en="${escapeHtml(ex.en)}" title="Diesen Beispielsatz anhören">
+                  🔊 Anhören
+                </button>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <div class="grammar-pitfalls-box">
+          <div class="grammar-pitfalls-title">⚠️ Typische Fehler & Fallen vermeiden:</div>
+          ${topic.pitfalls.map(p => `
+            <div class="pitfall-item">
+              <div class="pitfall-wrong">❌ <span>${escapeHtml(p.wrong)}</span></div>
+              <div class="pitfall-right">✅ <span>${escapeHtml(p.right)}</span></div>
+              <div class="pitfall-tip">💡 ${escapeHtml(p.tip)}</div>
+            </div>
+          `).join('')}
+        </div>
+
+        <div class="grammar-card-footer">
+          <button class="btn-grammar-practice" data-cloze-target="${topic.clozeId}">
+            ✏️ Diese Regel jetzt im Lückentext üben (+10 XP) ➡
+          </button>
+        </div>
+      </div>
+    `).join('');
+
+    // Attach audio click listeners
+    container.querySelectorAll('.grammar-audio-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const sentence = btn.dataset.audioEn;
+        if (sentence) {
+          btn.style.transform = 'scale(0.96)';
+          setTimeout(() => btn.style.transform = '', 200);
+          speakEnglish(sentence);
+        }
+      });
+    });
+
+    // Attach practice click listeners
+    container.querySelectorAll('.btn-grammar-practice').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const clozeId = btn.dataset.clozeTarget;
+        jumpToGrammarCloze(clozeId);
+      });
+    });
+  }
+
+  function jumpToGrammarCloze(clozeId) {
+    if (!clozeId) return;
+    switchView('cloze');
+    const idx = filteredCloze.findIndex(c => c.id === clozeId);
+    if (idx !== -1) {
+      currentClozeIndex = idx;
+      renderCurrentCloze();
+      showToast('🎯 Starte passende Grammatik-Übung!');
+    } else {
+      showToast('Übung im aktuellen Filter nicht aktiv.');
+    }
+  }
+
   // --- INITIAL RENDER ---
   updateStatsBadges();
+  updateVoiceBadgeUI();
+
+  const btnVoiceToggle = document.getElementById('btnVoiceToggle');
+  if (btnVoiceToggle) {
+    btnVoiceToggle.addEventListener('click', cycleVoiceProfile);
+  }
+
+  const btnVoiceTest = document.getElementById('btnVoiceTest');
+  if (btnVoiceTest) {
+    btnVoiceTest.addEventListener('click', testCurrentVoice);
+  }
+
   renderCurrentCard();
   renderCurrentSpeech();
   renderCurrentCloze();
   initDialogView();
   initStoriesView();
+  initGrammarView();
 });
 
 // --- SERVICE WORKER REGISTRATION (OFFLINE SUPPORT) ---

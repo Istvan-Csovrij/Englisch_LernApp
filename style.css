@@ -2196,3 +2196,523 @@ button, .nav-icon-btn, .action-btn, .cat-btn, .card-audio-btn, .card-mic-btn {
     max-height: 380px;
   }
 }
+
+
+/* ==========================================================================
+   📖 GRAMMAR COMPASS & TENSES TRAINER (ZEITEN & GRAMMATIK)
+   ========================================================================== */
+.voice-badge {
+  background: rgba(236, 72, 153, 0.14);
+  border: 1px solid rgba(244, 114, 182, 0.38);
+  color: #f472b6;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+}
+.voice-badge:hover, .voice-badge:active {
+  background: rgba(236, 72, 153, 0.28);
+  transform: translateY(-1px);
+  border-color: #f472b6;
+}
+
+.voice-test-badge {
+  background: rgba(168, 85, 247, 0.14);
+  border: 1px solid rgba(192, 132, 252, 0.38);
+  color: #c084fc;
+  font-size: 0.80rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+}
+.voice-test-badge:hover, .voice-test-badge:active {
+  background: rgba(168, 85, 247, 0.28);
+  transform: translateY(-1px);
+  border-color: #c084fc;
+}
+
+/* Grammar View Header Card */
+.grammar-header-card {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.85) 0%, rgba(15, 23, 42, 0.95) 100%);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 0 15px rgba(99, 102, 241, 0.15);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 24px;
+  position: relative;
+  overflow: hidden;
+}
+.grammar-header-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #6366f1, #a855f7, #ec4899, #3b82f6);
+}
+
+.grammar-header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.grammar-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(99, 102, 241, 0.18);
+  color: #a5b4fc;
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  border: 1px solid rgba(99, 102, 241, 0.35);
+}
+.grammar-stats-info {
+  font-size: 0.82rem;
+  color: #94a3b8;
+  font-weight: 600;
+}
+.grammar-main-title {
+  font-size: 1.55rem;
+  font-weight: 800;
+  color: #f8fafc;
+  margin: 0 0 8px 0;
+  background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.grammar-main-desc {
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: #cbd5e1;
+  margin: 0 0 18px 0;
+}
+.grammar-main-desc strong {
+  color: #38bdf8;
+}
+
+/* Grammar Search Box */
+.grammar-search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.grammar-search-icon {
+  position: absolute;
+  left: 14px;
+  font-size: 15px;
+  color: #94a3b8;
+  pointer-events: none;
+}
+.grammar-search-input {
+  width: 100%;
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 12px;
+  padding: 10px 40px 10px 38px;
+  color: #f8fafc;
+  font-size: 0.90rem;
+  transition: all 0.2s ease;
+  outline: none;
+}
+.grammar-search-input:focus {
+  border-color: #818cf8;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+  background: rgba(15, 23, 42, 0.95);
+}
+.grammar-search-clear {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 4px;
+  display: none;
+}
+.grammar-search-clear:hover {
+  color: #f8fafc;
+}
+
+/* Grammar Filter Bar */
+.grammar-filter-bar {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+}
+.grammar-filter-bar::-webkit-scrollbar {
+  height: 4px;
+}
+.grammar-filter-bar::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.25);
+  border-radius: 4px;
+}
+.grammar-filter-btn {
+  white-space: nowrap;
+  background: rgba(30, 41, 59, 0.8);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  color: #94a3b8;
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.grammar-filter-btn:hover {
+  color: #f8fafc;
+  border-color: rgba(148, 163, 184, 0.45);
+  background: rgba(51, 65, 85, 0.8);
+}
+.grammar-filter-btn.active {
+  background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+  color: #ffffff;
+  border-color: #818cf8;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.35);
+}
+
+/* Grammar Cards Container */
+.grammar-cards-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin-bottom: 40px;
+}
+
+/* Individual Grammar Card */
+.grammar-card {
+  background: rgba(30, 41, 59, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 16px;
+  padding: 22px;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+}
+.grammar-card:hover {
+  border-color: rgba(99, 102, 241, 0.4);
+  box-shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.4);
+}
+
+.grammar-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.grammar-card-icon-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.grammar-topic-icon {
+  font-size: 28px;
+  background: rgba(15, 23, 42, 0.6);
+  padding: 8px;
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 46px;
+  height: 46px;
+}
+.grammar-topic-title {
+  font-size: 1.22rem;
+  font-weight: 700;
+  color: #f8fafc;
+  margin: 0 0 2px 0;
+}
+.grammar-topic-subtitle {
+  font-size: 0.84rem;
+  color: #94a3b8;
+}
+.grammar-level-pill {
+  background: rgba(14, 165, 233, 0.14);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  color: #38bdf8;
+  font-size: 0.74rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  white-space: nowrap;
+}
+
+/* Formula Box */
+.grammar-formula-box {
+  background: #0f172a;
+  border: 1px solid rgba(99, 102, 241, 0.35);
+  border-left: 4px solid #6366f1;
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.grammar-formula-label {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #a5b4fc;
+}
+.grammar-formula-code {
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 0.90rem;
+  color: #34d399;
+  line-height: 1.45;
+  word-break: break-word;
+}
+
+/* Summary text */
+.grammar-summary-text {
+  font-size: 0.92rem;
+  color: #e2e8f0;
+  line-height: 1.55;
+  margin: 0 0 16px 0;
+}
+
+/* Rules List */
+.grammar-rules-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+.grammar-rule-item {
+  background: rgba(15, 23, 42, 0.5);
+  border-left: 3px solid #38bdf8;
+  border-radius: 0 8px 8px 0;
+  padding: 10px 14px;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: #cbd5e1;
+}
+.grammar-rule-item strong {
+  color: #f1f5f9;
+}
+
+/* Signal Words */
+.grammar-signals-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+.grammar-signals-label {
+  font-size: 0.80rem;
+  font-weight: 700;
+  color: #94a3b8;
+}
+.grammar-signals-chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.signal-chip {
+  background: rgba(168, 85, 247, 0.15);
+  border: 1px solid rgba(192, 132, 252, 0.3);
+  color: #d8b4fe;
+  font-size: 0.76rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+/* Examples Section */
+.grammar-examples-section {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 18px;
+}
+.grammar-examples-header {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #38bdf8;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.grammar-examples-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.grammar-example-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  border-radius: 8px;
+  padding: 10px 14px;
+  gap: 12px;
+}
+.grammar-example-text {
+  flex: 1;
+}
+.example-en {
+  font-size: 0.94rem;
+  font-weight: 600;
+  color: #f8fafc;
+  margin-bottom: 3px;
+}
+.example-de {
+  font-size: 0.82rem;
+  color: #94a3b8;
+}
+.grammar-audio-btn {
+  background: linear-gradient(135deg, rgba(236, 72, 153, 0.2) 0%, rgba(168, 85, 247, 0.2) 100%);
+  border: 1px solid rgba(244, 114, 182, 0.35);
+  color: #f472b6;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.2s ease;
+}
+.grammar-audio-btn:hover, .grammar-audio-btn:active {
+  background: linear-gradient(135deg, rgba(236, 72, 153, 0.35) 0%, rgba(168, 85, 247, 0.35) 100%);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+/* Pitfalls Callout Box */
+.grammar-pitfalls-box {
+  background: rgba(69, 10, 10, 0.35);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 18px;
+}
+.grammar-pitfalls-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #fca5a5;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.pitfall-item {
+  background: rgba(15, 23, 42, 0.65);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+.pitfall-item:last-child {
+  margin-bottom: 0;
+}
+.pitfall-wrong {
+  color: #f87171;
+  font-weight: 600;
+  margin-bottom: 3px;
+}
+.pitfall-right {
+  color: #4ade80;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.pitfall-tip {
+  color: #cbd5e1;
+  font-size: 0.80rem;
+}
+
+/* Practice Jump Button */
+.grammar-card-footer {
+  display: flex;
+  justify-content: flex-end;
+}
+.btn-grammar-practice {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border: 1px solid #34d399;
+  color: #ffffff;
+  font-size: 0.86rem;
+  font-weight: 700;
+  padding: 10px 18px;
+  border-radius: 10px;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  justify-content: center;
+}
+.btn-grammar-practice:hover, .btn-grammar-practice:active {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(16, 185, 129, 0.45);
+}
+
+/* Mobile bottom-nav tuning for 7 tabs */
+@media (max-width: 640px) {
+  .bottom-nav {
+    padding: 3px 2px 5px;
+    gap: 0;
+    justify-content: space-around;
+  }
+  .bottom-tab-btn {
+    font-size: 0.58rem;
+    padding: 3px 1px;
+    min-width: 38px;
+    flex: 1 1 0;
+    gap: 1px;
+  }
+  .bottom-tab-btn .tab-icon {
+    font-size: 15px;
+  }
+  .grammar-header-card {
+    padding: 16px;
+  }
+  .grammar-main-title {
+    font-size: 1.25rem;
+  }
+  .grammar-card {
+    padding: 16px;
+  }
+  .grammar-example-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .grammar-audio-btn {
+    align-self: flex-end;
+  }
+}

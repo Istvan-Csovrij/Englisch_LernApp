@@ -4,6 +4,7 @@
 
 const CATEGORIES = {
   all: { id: 'all', name: 'Alle Themen', icon: '🌐' },
+  grammar: { id: 'grammar', name: 'Grammatik & Zeiten', icon: '📖' },
   fiae: { id: 'fiae', name: 'FIAE AP 1 & IT', icon: '💻' },
   business: { id: 'business', name: 'Job & Business', icon: '💼' },
   conversation: { id: 'conversation', name: 'Smalltalk & Alltag', icon: '💬' },
@@ -404,6 +405,106 @@ const VOCAB_DATA = [
     exampleDe: 'Eine saubere Reihenfolge beim Sperren ist entscheidend, um Datenbank-Deadlocks bei nebenläufigen Zugriffen zu vermeiden.',
     svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>`
   }
+,
+  {
+    "id": "biz-11",
+    "category": "business",
+    "categoryName": "Job & Business",
+    "english": "Deliverable",
+    "phonetic": "di-li-ver-e-bl",
+    "german": "Projektergebnis / Liefergegenstand",
+    "definition": "Ein greifbares oder immaterielles Ergebnis, das im Rahmen eines Projekts vertraglich bereitgestellt werden muss.",
+    "exampleEn": "The documentation and unit test suite are essential project deliverables.",
+    "exampleDe": "Die Dokumentation und die Unit-Test-Suite sind wesentliche Projektergebnisse."
+  },
+  {
+    "id": "biz-12",
+    "category": "business",
+    "categoryName": "Job & Business",
+    "english": "Escalation",
+    "phonetic": "es-ka-ley-shun",
+    "german": "Eskalation / Problemweiterleitung",
+    "definition": "Die geordnete Übergabe eines ungelösten Problems an eine höhere Management- oder Fachebene.",
+    "exampleEn": "If the critical database outage continues, an immediate escalation to senior management is required.",
+    "exampleDe": "Wenn der kritische Datenbankausfall anhält, ist eine sofortige Eskalation an das Senior-Management erforderlich."
+  },
+  {
+    "id": "biz-13",
+    "category": "business",
+    "categoryName": "Job & Business",
+    "english": "Attachment",
+    "phonetic": "e-tätsh-ment",
+    "german": "Dateianhang (E-Mail / Ticket)",
+    "definition": "Eine elektronische Datei, die einer E-Mail oder einem Ticketsystem beigefügt wird.",
+    "exampleEn": "Please find the revised system architecture diagram in the email attachment.",
+    "exampleDe": "Im E-Mail-Anhang finden Sie das überarbeitete Systemarchitekturdiagramm."
+  },
+  {
+    "id": "biz-14",
+    "category": "business",
+    "categoryName": "Job & Business",
+    "english": "Stakeholder",
+    "phonetic": "steyk-hol-der",
+    "german": "Projektbeteiligter / Interessengruppe",
+    "definition": "Person oder Gruppe mit einem berechtigten Interesse am Verlauf oder Ergebnis eines Projekts.",
+    "exampleEn": "We scheduled a demo meeting to present the sprint progress to all key stakeholders.",
+    "exampleDe": "Wir haben ein Demo-Meeting angesetzt, um allen wichtigen Stakeholdern den Sprint-Fortschritt zu präsentieren."
+  },
+  {
+    "id": "biz-15",
+    "category": "business",
+    "categoryName": "Job & Business",
+    "english": "Workaround",
+    "phonetic": "wörk-e-raund",
+    "german": "Notlösung / Behelfsmethode",
+    "definition": "Eine vorübergehende Umgehung eines Fehlers, bis ein dauerhafter Patch verfügbar ist.",
+    "exampleEn": "We implemented a temporary workaround to keep the checkout service running.",
+    "exampleDe": "Wir haben eine vorübergehende Notlösung implementiert, um den Checkout-Dienst am Laufen zu halten."
+  },
+  {
+    "id": "fiae-11",
+    "category": "fiae",
+    "categoryName": "FIAE AP 1 & IT",
+    "english": "Refactoring",
+    "phonetic": "ri-fäk-te-ring",
+    "german": "Code-Überarbeitung / Refaktorisierung",
+    "definition": "Strukturverbesserung von Quellcode ohne Veränderung des extern beobachtbaren Verhaltens.",
+    "exampleEn": "Refactoring the legacy backend module improved readability and execution speed.",
+    "exampleDe": "Die Refaktorisierung des veralteten Backend-Moduls verbesserte die Lesbarkeit und Ausführungsgeschwindigkeit."
+  },
+  {
+    "id": "fiae-12",
+    "category": "fiae",
+    "categoryName": "FIAE AP 1 & IT",
+    "english": "Redundancy",
+    "phonetic": "ri-dan-den-si",
+    "german": "Redundanz / Ausfallsicherheit",
+    "definition": "Mehrfaches Vorhandensein funktionsgleicher Ressourcen zum Schutz vor Ausfällen.",
+    "exampleEn": "Hardware redundancy prevents server downtime if one power supply fails.",
+    "exampleDe": "Hardware-Redundanz verhindert Server-Ausfallzeiten, wenn ein Netzteil ausfällt."
+  },
+  {
+    "id": "fiae-13",
+    "category": "fiae",
+    "categoryName": "FIAE AP 1 & IT",
+    "english": "Continuous Integration",
+    "phonetic": "kon-ti-nju-es in-te-grey-shun",
+    "german": "Kontinuierliche Integration (CI)",
+    "definition": "Automatisiertes Zusammenführen und Testen von Codeänderungen in einem gemeinsamen Repository.",
+    "exampleEn": "Our continuous integration pipeline runs automated tests on every pull request.",
+    "exampleDe": "Unsere Continuous-Integration-Pipeline führt bei jedem Pull Request automatisierte Tests durch."
+  },
+  {
+    "id": "fiae-14",
+    "category": "fiae",
+    "categoryName": "FIAE AP 1 & IT",
+    "english": "Deployment",
+    "phonetic": "di-ploy-ment",
+    "german": "Bereitstellung / Auslieferung",
+    "definition": "Das Verteilen, Installieren und Aktivieren einer Softwareanwendung in einer Zielumgebung.",
+    "exampleEn": "The automated production deployment was completed without any downtime.",
+    "exampleDe": "Das automatisierte Produktions-Deployment wurde ohne Ausfallzeit abgeschlossen."
+  }
 ];
 
 const SPEECH_DATA = [
@@ -478,6 +579,43 @@ const SPEECH_DATA = [
     sentenceEn: 'Could we please have two glasses of water and the menu?',
     sentenceDe: 'Könnten wir bitte zwei Gläser Wasser und die Speisekarte haben?',
     phonetic: 'kud wi plies häv tu glä-ses ow woh-ter änd thö men-yu?'
+  }
+,
+  {
+    "id": "sp-9",
+    "category": "business",
+    "categoryName": "Job & Business",
+    "instruction": "Höre zu und sprich den Satz laut nach:",
+    "sentenceEn": "Could you please send me the updated project timeline by this afternoon?",
+    "sentenceDe": "Könnten Sie mir bitte bis heute Nachmittag den aktualisierten Projektzeitplan zusenden?",
+    "phonetic": "kud ju plis send mi thi ap-dey-ted pro-dshekt taim-lain bai this af-ter-nun?"
+  },
+  {
+    "id": "sp-10",
+    "category": "grammar",
+    "categoryName": "Grammatik & Zeiten",
+    "instruction": "Höre zu und sprich den Satz laut nach:",
+    "sentenceEn": "I have worked with relational databases and SQL for three years.",
+    "sentenceDe": "Ich arbeite seit drei Jahren mit relationalen Datenbanken und SQL.",
+    "phonetic": "ai häv wörkt with ri-ley-shun-el dey-te-bey-ses änd es-kju-el for thri jiars."
+  },
+  {
+    "id": "sp-11",
+    "category": "grammar",
+    "categoryName": "Grammatik & Zeiten",
+    "instruction": "Höre zu und sprich den Satz laut nach:",
+    "sentenceEn": "Did you review the pull request before merging it into main?",
+    "sentenceDe": "Hast du den Pull Request überprüft, bevor du ihn in Main gemergt hast?",
+    "phonetic": "did ju ri-vju thö pul ri-kwest bi-for mördsh-ing it in-tu meyn?"
+  },
+  {
+    "id": "sp-12",
+    "category": "business",
+    "categoryName": "Job & Business",
+    "instruction": "Höre zu und sprich den Satz laut nach:",
+    "sentenceEn": "I look forward to hearing from you and discussing the technical details.",
+    "sentenceDe": "Ich freue mich darauf, von Ihnen zu hören und die technischen Details zu besprechen.",
+    "phonetic": "ai luk for-ward tu hi-ring from ju änd dis-ka-sing thö tek-ni-kl di-teyls."
   }
 ];
 
@@ -577,6 +715,347 @@ const CLOZE_DATA = [
     options: ['bill', 'luggage', 'passport', 'keyboard'],
     hint: 'Bedeutet "die Rechnung" im Restaurant.',
     explanation: '"bill" (britisch) oder "check" (amerikanisch) ist die Restaurant-Rechnung.'
+  }
+,
+  {
+    "id": "cl-9",
+    "category": "grammar",
+    "categoryName": "Grammatik & Zeiten",
+    "question": "Welches Wort vervollständigt den Satz im Present Simple (He/She/It-Regel)?",
+    "sentenceBefore": "Our lead developer always",
+    "sentenceAfter": "the code before pushing to production.",
+    "correctAnswer": "tests",
+    "options": [
+      "tests",
+      "test",
+      "is testing",
+      "tested"
+    ],
+    "hint": "Regel aus Zusammenfassung Tenses: Bei he/she/it muss ein -s ans Verb!",
+    "explanation": "Subjekt 'Our lead developer' ist 3. Person Singular (he/she). Im Present Simple für regelmäßige Routinen ('always') lautet die Form 'tests'."
+  },
+  {
+    "id": "cl-10",
+    "category": "grammar",
+    "categoryName": "Grammatik & Zeiten",
+    "question": "Welches Hilfsverb gehört in die Verneinung im Present Simple?",
+    "sentenceBefore": "She",
+    "sentenceAfter": "like working with outdated legacy software.",
+    "correctAnswer": "doesn't",
+    "options": [
+      "doesn't",
+      "don't",
+      "isn't",
+      "haven't"
+    ],
+    "hint": "3. Person Singular he/she/it wird mit 'does not' / 'doesn't' verneint.",
+    "explanation": "Bei he/she/it wird die Verneinung mit 'does not' bzw. 'doesn't' + Infinitiv gebildet: 'She doesn't like...'."
+  },
+  {
+    "id": "cl-11",
+    "category": "grammar",
+    "categoryName": "Grammatik & Zeiten",
+    "question": "Welches Hilfsverb bildet die Frage nach dem ASI-Prinzip (Auxiliary + Subject + Infinitive)?",
+    "sentenceBefore": "",
+    "sentenceAfter": "you understand how RESTful API endpoints communicate?",
+    "correctAnswer": "Do",
+    "options": [
+      "Do",
+      "Are",
+      "Have",
+      "Is"
+    ],
+    "hint": "ASI-Formel für geschlossene Ja/Nein-Fragen an 'you': Do + you + understand.",
+    "explanation": "Nach dem ASI-Prinzip (Auxiliary - Subject - Infinitive) lautet die Frage: 'Do you understand...?'. Niemals 'Understand you...?'!"
+  },
+  {
+    "id": "cl-12",
+    "category": "grammar",
+    "categoryName": "Grammatik & Zeiten",
+    "question": "Welches Hilfsverb gehört in die W-Frage nach dem QuASI-Prinzip?",
+    "sentenceBefore": "Where",
+    "sentenceAfter": "he store the encryption keys for the database?",
+    "correctAnswer": "does",
+    "options": [
+      "does",
+      "do",
+      "is",
+      "has"
+    ],
+    "hint": "QuASI: Question word (Where) + Auxiliary (does für he) + Subject (he) + Infinitive (store).",
+    "explanation": "QuASI-Prinzip für he/she/it: Fragewort (Where) + does + he + Infinitiv (store)."
+  },
+  {
+    "id": "cl-13",
+    "category": "grammar",
+    "categoryName": "Grammatik & Zeiten",
+    "question": "Welche Form des Present Continuous drückt aus, was GENAU JETZT passiert?",
+    "sentenceBefore": "The DevOps engineer",
+    "sentenceAfter": "the server update right now.",
+    "correctAnswer": "is deploying",
+    "options": [
+      "is deploying",
+      "deploys",
+      "deployed",
+      "deploy"
+    ],
+    "hint": "Signalwort 'right now': am/is/are + Verb mit -ing.",
+    "explanation": "Handlungen, die im Moment des Sprechens ablaufen ('right now'), verlangen das Present Continuous: 'is deploying'."
+  },
+  {
+    "id": "cl-14",
+    "category": "grammar",
+    "categoryName": "Grammatik & Zeiten",
+    "question": "Welche Form beachtet die Konsonantenverdopplung beim Present Continuous?",
+    "sentenceBefore": "Look at the terminal! The test suite is",
+    "sentenceAfter": "very smoothly.",
+    "correctAnswer": "running",
+    "options": [
+      "running",
+      "runing",
+      "runed",
+      "ran"
+    ],
+    "hint": "Bei kurzem, betonten Vokal vor dem Endkonsonanten (r-u-n) wird der Konsonant verdoppelt!",
+    "explanation": "Verben wie run, stop, swim verdoppeln den Endkonsonanten vor -ing: run > running."
+  },
+  {
+    "id": "cl-15",
+    "category": "grammar",
+    "categoryName": "Grammatik & Zeiten",
+    "question": "Welche unregelmäßige Simple-Past-Form ist korrekt für 'go'?",
+    "sentenceBefore": "Yesterday after the standup meeting, the team",
+    "sentenceAfter": "to the server room.",
+    "correctAnswer": "went",
+    "options": [
+      "went",
+      "goed",
+      "gone",
+      "goes"
+    ],
+    "hint": "Unregelmäßige Verben: 1. go, 2. went, 3. gone.",
+    "explanation": "Das Simple Past (2. Form) von 'go' ist unregelmäßig und lautet 'went'."
+  },
+  {
+    "id": "cl-16",
+    "category": "grammar",
+    "categoryName": "Grammatik & Zeiten",
+    "question": "Goldene Regel bei didn't: Welches Verb folgt nach didn't?",
+    "sentenceBefore": "We checked the firewall logs, but we didn't",
+    "sentenceAfter": "any suspicious network traffic.",
+    "correctAnswer": "see",
+    "options": [
+      "see",
+      "saw",
+      "seen",
+      "seeing"
+    ],
+    "hint": "WICHTIGSTE ENGLISCH-REGEL: Nach 'didn't' steht IMMER der reine Infinitiv!",
+    "explanation": "Weil 'didn't' bereits die Vergangenheitsform trägt, MUSS das folgende Verb im reinen Infinitiv stehen: 'didn't see' (NIEMALS 'didn't saw')."
+  },
+  {
+    "id": "cl-17",
+    "category": "grammar",
+    "categoryName": "Grammatik & Zeiten",
+    "question": "Welche unregelmäßige Simple-Past-Form ist korrekt für 'write'?",
+    "sentenceBefore": "Last week, Istvan",
+    "sentenceAfter": "a Python script to automate the backup.",
+    "correctAnswer": "wrote",
+    "options": [
+      "wrote",
+      "writed",
+      "written",
+      "writes"
+    ],
+    "hint": "Unregelmäßige 2. Form von write: write > wrote > written.",
+    "explanation": "Das Simple Past von write heißt 'wrote' (abgeschlossene Handlung mit Signalwort 'Last week')."
+  },
+  {
+    "id": "cl-18",
+    "category": "grammar",
+    "categoryName": "Grammatik & Zeiten",
+    "question": "Since oder For? Welches Wort steht vor einer Zeitdauer / Menge von Jahren?",
+    "sentenceBefore": "I have lived in Germany",
+    "sentenceAfter": "five years.",
+    "correctAnswer": "for",
+    "options": [
+      "for",
+      "since",
+      "during",
+      "from"
+    ],
+    "hint": "FOR wird mit Zahlen und Zeitspannen genutzt (for 5 years). SINCE nur bei Zeitpunkten!",
+    "explanation": "'For' beschreibt Zeitmengen und Dauern ('for five years'). 'Since' beschreibt feste Startzeitpunkte ('since 2019')."
+  },
+  {
+    "id": "cl-19",
+    "category": "grammar",
+    "categoryName": "Grammatik & Zeiten",
+    "question": "Since oder For? Welches Wort steht vor einem konkreten Kalenderjahr / Startzeitpunkt?",
+    "sentenceBefore": "She has worked as an IT specialist at this company",
+    "sentenceAfter": "2021.",
+    "correctAnswer": "since",
+    "options": [
+      "since",
+      "for",
+      "ago",
+      "until"
+    ],
+    "hint": "2021 ist ein fester Zeitpunkt auf der Zeitachse: hier MUSS 'since' stehen!",
+    "explanation": "'Since' markiert den festen Anfangszeitpunkt in der Vergangenheit ('since 2021', 'since Monday')."
+  },
+  {
+    "id": "cl-20",
+    "category": "grammar",
+    "categoryName": "Grammatik & Zeiten",
+    "question": "Welche Form des Present Perfect verbindet Vergangenheit und Gegenwart?",
+    "sentenceBefore": "We",
+    "sentenceAfter": "already resolved the bug, so you can test it now.",
+    "correctAnswer": "have",
+    "options": [
+      "have",
+      "had",
+      "are",
+      "did"
+    ],
+    "hint": "Present Perfect = have/has + 3. Form (resolved).",
+    "explanation": "Für 'we' wird im Present Perfect 'have' verwendet: 'We have already resolved the bug'."
+  },
+  {
+    "id": "cl-21",
+    "category": "grammar",
+    "categoryName": "Grammatik & Zeiten",
+    "question": "Wann nutzen wir das will-future? Für spontane Entschlüsse oder Vorhersagen!",
+    "sentenceBefore": "The customer is calling right now. Don't worry, I",
+    "sentenceAfter": "answer the phone.",
+    "correctAnswer": "will",
+    "options": [
+      "will",
+      "going to",
+      "am",
+      "have"
+    ],
+    "hint": "Spontaner Entschluss im Moment des Sprechens verlangt das Will-Future!",
+    "explanation": "Spontane Reaktionen ('Ich gehe ran!') werden mit will + Infinitiv gebildet: 'I will answer the phone'."
+  },
+  {
+    "id": "cl-22",
+    "category": "grammar",
+    "categoryName": "Grammatik & Zeiten",
+    "question": "Wann nutzen wir going-to? Wenn die Zukunft in der Gegenwart schon sichtbar ist!",
+    "sentenceBefore": "Look at the error counter spiking! The server is",
+    "sentenceAfter": "to crash.",
+    "correctAnswer": "going",
+    "options": [
+      "going",
+      "will",
+      "about",
+      "must"
+    ],
+    "hint": "Sichtbares Vorzeichen in der Gegenwart: is going to + Infinitiv.",
+    "explanation": "Wenn ein Ereignis durch gegenwärtige Anzeichen unmittelbar bevorsteht, nutzt man 'going to': 'The server is going to crash'."
+  },
+  {
+    "id": "cl-23",
+    "category": "grammar",
+    "categoryName": "Grammatik & Zeiten",
+    "question": "If-Clause Type 1: Reale Bedingung in der Zukunft. Welches Verb steht im If-Teilsatz?",
+    "sentenceBefore": "If the CI/CD pipeline",
+    "sentenceAfter": "successfully, we will deploy the app.",
+    "correctAnswer": "finishes",
+    "options": [
+      "finishes",
+      "will finish",
+      "finished",
+      "would finish"
+    ],
+    "hint": "Merke: Niemals 'will' im If-Satz! Im If-Satz steht das Present Simple!",
+    "explanation": "Im Konditionalsatz Typ 1 steht im If-Satz das Present Simple ('finishes') und im Hauptsatz das Will-Future ('will deploy')."
+  },
+  {
+    "id": "cl-24",
+    "category": "grammar",
+    "categoryName": "Grammatik & Zeiten",
+    "question": "If-Clause Type 2: Hypothetische Bedingung. Welche Form steht im If-Teil?",
+    "sentenceBefore": "If I",
+    "sentenceAfter": "more RAM on my development machine, I would run three Docker containers simultaneously.",
+    "correctAnswer": "had",
+    "options": [
+      "had",
+      "have",
+      "would have",
+      "will have"
+    ],
+    "hint": "Typ 2 (hypothetisch): If + Simple Past (had), Folge mit would + Infinitiv.",
+    "explanation": "Hypothetische Situationen verlangen im If-Satz das Simple Past ('had') und im Folgesatz 'would run'."
+  },
+  {
+    "id": "cl-25",
+    "category": "business",
+    "categoryName": "Job & Business",
+    "question": "Welches Wort vervollständigt die typische englische E-Mail-Formel für Anhänge?",
+    "sentenceBefore": "Please find",
+    "sentenceAfter": "the technical requirements and sprint backlog.",
+    "correctAnswer": "attached",
+    "options": [
+      "attached",
+      "attaching",
+      "enclosed",
+      "appended"
+    ],
+    "hint": "Aus Dr. Higgins-Welters Business English: 'Please find attached...'.",
+    "explanation": "Die Standardformel für E-Mail-Anhänge lautet: 'Please find attached [the document]'."
+  },
+  {
+    "id": "cl-26",
+    "category": "business",
+    "categoryName": "Job & Business",
+    "question": "Welche Form folgt auf die Redewendung 'I look forward to...'?",
+    "sentenceBefore": "I look forward to",
+    "sentenceAfter": "from you regarding our interview appointment.",
+    "correctAnswer": "hearing",
+    "options": [
+      "hearing",
+      "hear",
+      "heard",
+      "be heard"
+    ],
+    "hint": "Nach der Präposition 'to' in dieser festen Redewendung MUSS das Gerundium mit -ing stehen!",
+    "explanation": "Nach 'look forward to' folgt zwingend die -ing-Form: 'I look forward to hearing from you'. Sehr häufige IHK-Prüfungsfalle!"
+  },
+  {
+    "id": "cl-27",
+    "category": "business",
+    "categoryName": "Job & Business",
+    "question": "Wie formuliert man eine Bitte im Geschäftsenglisch professionell und höflich?",
+    "sentenceBefore": "",
+    "sentenceAfter": "you please provide the API documentation for our external partner?",
+    "correctAnswer": "Could",
+    "options": [
+      "Could",
+      "Must",
+      "Should",
+      "Shall"
+    ],
+    "hint": "Höflichkeitsformel mit Modalverb: Could you please...?",
+    "explanation": "'Could you please...' ist die höfliche, professionelle Standardform für Bitten im Business English."
+  },
+  {
+    "id": "cl-28",
+    "category": "grammar",
+    "categoryName": "Grammatik & Zeiten",
+    "question": "Welches Wort ordnet das Adverb der Häufigkeit im SVO-Satzbau richtig ein?",
+    "sentenceBefore": "I",
+    "sentenceAfter": "check the Git commit log before writing new code.",
+    "correctAnswer": "always",
+    "options": [
+      "always",
+      "yesterday",
+      "now",
+      "since"
+    ],
+    "hint": "Häufigkeitsadverbien wie always, usually, often stehen direkt VOR dem Hauptverb!",
+    "explanation": "Adverbien der Häufigkeit (always, often, usually) stehen im SVO-Satzbau direkt vor dem Vollverb ('I always check...')."
   }
 ];
 
@@ -1064,3 +1543,612 @@ const DIALOG_SCENARIOS = {
     contextKeywords: []
   }
 };
+
+
+// ==========================================
+// 📖 GRAMMAR & TENSES COMPASS (GRAMMATIK-KOMPASS)
+// ==========================================
+const GRAMMAR_TOPICS = [
+  {
+    "id": "svo",
+    "category": "svo",
+    "icon": "⏰",
+    "title": "SVO-Formel & Satzbau",
+    "subtitle": "Subject - Verb - Object & Wortstellung",
+    "tag": "Grundregel • A1-B2",
+    "formula": "[Subject (Wer?)] + [Verb (Macht was?)] + [Object (Womit?)] + [Place (Wo?)] + [Time (Wann?)]",
+    "summary": "Im Englischen ist die Satzstellung streng festgelegt: Erst kommt das Subjekt, dann das Verb, dann das Objekt. Ortsangaben stehen immer VOR Zeitangaben (Place before Time)!",
+    "rules": [
+      {
+        "title": "1. Die SVO-Reihenfolge",
+        "detail": "Im Gegensatz zum Deutschen darf das Prädikat nicht ans Satzende rutschen. 'John fixed the computer' (John = Subject, fixed = Verb, the computer = Object)."
+      },
+      {
+        "title": "2. Ortsangabe vor Zeitangabe (Place before Time)",
+        "detail": "Ort kommt immer vor Zeit: 'I worked at the office yesterday' (NICHT: 'I worked yesterday at the office')."
+      },
+      {
+        "title": "3. Adverbien der Häufigkeit (Frequency Adverbs)",
+        "detail": "Wörter wie always, usually, often, sometimes, never stehen VOR dem Hauptverb ('I always test my code'), aber NACH dem Hilfsverb 'to be' ('The server is always online')."
+      }
+    ],
+    "signalWords": [
+      "always",
+      "usually",
+      "often",
+      "sometimes",
+      "never",
+      "yesterday",
+      "tomorrow"
+    ],
+    "examples": [
+      {
+        "en": "John resolved the critical bug in the database yesterday.",
+        "de": "John hat den kritischen Fehler in der Datenbank gestern behoben."
+      },
+      {
+        "en": "I always write automated unit tests before deploying.",
+        "de": "Ich schreibe vor dem Ausrollen immer automatisierte Unit-Tests."
+      },
+      {
+        "en": "Our production database is always secure and reliable.",
+        "de": "Unsere Produktionsdatenbank ist immer sicher und zuverlässig."
+      },
+      {
+        "en": "We discuss the project requirements at the office every Monday.",
+        "de": "Wir besprechen die Projektanforderungen jeden Montag im Büro."
+      }
+    ],
+    "pitfalls": [
+      {
+        "wrong": "Yesterday restarted I the server.",
+        "right": "Yesterday, I restarted the server. (Oder: I restarted the server yesterday.)",
+        "tip": "Im Englischen niemals Verb und Subjekt wie im Deutschen vertauschen!"
+      },
+      {
+        "wrong": "I test always my code before commit.",
+        "right": "I always test my code before commit.",
+        "tip": "Häufigkeitsadverbien (always, usually) gehören direkt VOR das Hauptverb!"
+      }
+    ],
+    "clozeId": "cl-28"
+  },
+  {
+    "id": "present-simple",
+    "category": "present-simple",
+    "icon": "🟢",
+    "title": "Present Simple & He/She/It -s",
+    "subtitle": "Routinen, Gewohnheiten & Fakten",
+    "tag": "Gegenwart • A1-B1",
+    "formula": "Bejahung: [Subject] + [Infinitive] (+s bei he/she/it) | Verneinung: [Subject] + [don't / doesn't] + [Infinitive]",
+    "summary": "Wird genutzt für tägliche Gewohnheiten ('I drink coffee'), regelmäßige Aktionen, Fakten ('Water boils at 100°C') und feste Fahrpläne ('The train arrives at 9 PM').",
+    "rules": [
+      {
+        "title": "1. He / She / It - das 's' muss mit!",
+        "detail": "In der 3. Person Singular erhält das Verb ein -s: work > works, test > tests, run > runs."
+      },
+      {
+        "title": "2. Endungen auf -s, -sh, -ch, -x",
+        "detail": "Endet das Verb auf Zischlaute, hängt man -es an: pass > passes, wash > washes, teach > teaches, fix > fixes."
+      },
+      {
+        "title": "3. Konsonant + y wird zu -ies",
+        "detail": "fly > flies, study > studies. Aber nach Vokal bleibt das y: say > says, play > plays."
+      },
+      {
+        "title": "4. Wichtige Ausnahmen",
+        "detail": "go > goes, do > does, have > has."
+      },
+      {
+        "title": "5. Verneinung mit do not / does not",
+        "detail": "Bei Verneinung entfällt das -s am Hauptverb, da 'doesn't' es bereits trägt: 'He doesn't work' (NICHT: 'doesn't works')."
+      }
+    ],
+    "signalWords": [
+      "always",
+      "every day",
+      "regularly",
+      "usually",
+      "normally",
+      "often",
+      "seldom",
+      "never"
+    ],
+    "examples": [
+      {
+        "en": "I live in Germany and work as a software development apprentice.",
+        "de": "Ich lebe in Deutschland und arbeite als Fachinformatiker-Azubi."
+      },
+      {
+        "en": "He debugs the backend application every morning.",
+        "de": "Er debuggt die Backend-Anwendung jeden Morgen."
+      },
+      {
+        "en": "She fixes the memory leak very quickly.",
+        "de": "Sie behebt das Speicherleck sehr schnell."
+      },
+      {
+        "en": "Our IT team does not deploy software on Friday afternoons.",
+        "de": "Unser IT-Team rollt Freitagnachmittag keine Software aus."
+      }
+    ],
+    "pitfalls": [
+      {
+        "wrong": "He work in Berlin.",
+        "right": "He works in Berlin.",
+        "tip": "3. Person Singular (he/she/it) benötigt zwingend das -s!"
+      },
+      {
+        "wrong": "She doesn't likes slow internet.",
+        "right": "She doesn't like slow internet.",
+        "tip": "Nach does / doesn't folgt immer der reine Infinitiv ohne -s!"
+      }
+    ],
+    "clozeId": "cl-9"
+  },
+  {
+    "id": "asi-quasi",
+    "category": "questions",
+    "icon": "❓",
+    "title": "Fragen bilden: ASI & QuASI",
+    "subtitle": "Die Formel für englische Fragen",
+    "tag": "Fragesatzbau • A1-B2",
+    "formula": "ASI: [Auxiliary (Do/Does/Did)] + [Subject] + [Infinitive] | QuASI: [Question word] + [ASI]",
+    "summary": "Im Englischen bildet man Fragen mit Hilfsverben (Auxiliary Verbs). Man darf niemals einfach Subjekt und Hauptverb wie im Deutschen vertauschen ('Work you here?' ist falsch!).",
+    "rules": [
+      {
+        "title": "1. ASI-Prinzip für Ja/Nein-Fragen (Closed Questions)",
+        "detail": "A = Auxiliary (Do / Does / Did), S = Subject (you / he / she / they), I = Infinitive. Beispiel: Do (A) + you (S) + code (I) + in Python?"
+      },
+      {
+        "title": "2. QuASI-Prinzip für W-Fragen (Open Questions)",
+        "detail": "Qu = Question word (What, Where, When, Why, How), A = Auxiliary, S = Subject, I = Infinitive. Beispiel: Where (Qu) + does (A) + she (S) + work (I)?"
+      },
+      {
+        "title": "3. Fragen in der Vergangenheit mit DID",
+        "detail": "In der Vergangenheit wird 'Did' als Hilfsverb verwendet, und das Hauptverb bleibt IMMER im reinen Infinitiv: 'Did you test the app?' (NICHT: 'Did you tested?')."
+      }
+    ],
+    "signalWords": [
+      "Do...?",
+      "Does...?",
+      "Did...?",
+      "Where",
+      "What",
+      "When",
+      "Why",
+      "How",
+      "Which"
+    ],
+    "examples": [
+      {
+        "en": "Do you speak English in your daily scrum meetings?",
+        "de": "Sprichst du Englisch in deinen täglichen Scrum-Meetings?"
+      },
+      {
+        "en": "Does your company use agile software development?",
+        "de": "Nutzt dein Unternehmen agile Softwareentwicklung?"
+      },
+      {
+        "en": "Where do you host the cloud database backups?",
+        "de": "Wo hostet ihr die Cloud-Datenbank-Backups?"
+      },
+      {
+        "en": "Did you commit your bugfix to the main branch?",
+        "de": "Hast du deinen Bugfix auf den Main-Branch committet?"
+      }
+    ],
+    "pitfalls": [
+      {
+        "wrong": "Understand you this programming concept?",
+        "right": "Do you understand this programming concept?",
+        "tip": "Fragen immer mit Hilfsverb (Do/Does) bilden!"
+      },
+      {
+        "wrong": "Did you solved the problem yesterday?",
+        "right": "Did you solve the problem yesterday?",
+        "tip": "Nach 'Did' steht das Hauptverb ausnahmslos im Infinitiv!"
+      }
+    ],
+    "clozeId": "cl-11"
+  },
+  {
+    "id": "present-continuous",
+    "category": "present-continuous",
+    "icon": "🔵",
+    "title": "Present Continuous (am/is/are + -ing)",
+    "subtitle": "Handlungen genau JETZT in diesem Moment",
+    "tag": "Verlaufsform • A1-B1",
+    "formula": "[Subject] + [am / is / are] + [Verb + ing]",
+    "summary": "Zeigt an, dass eine Handlung genau jetzt im Moment des Sprechens abläuft ('I am coding right now') oder ein vorübergehender aktueller Zustand ist ('I am staying at a hotel this week').",
+    "rules": [
+      {
+        "title": "1. Bildung mit to be + -ing",
+        "detail": "I am working, you are working, he/she/it is working, we are working, they are working."
+      },
+      {
+        "title": "2. Konsonantenverdopplung (Doubling)",
+        "detail": "Bei kurzem, betontem Vokal vor dem Endkonsonanten wird dieser verdoppelt: run > running, stop > stopping, swim > swimming, plan > planning."
+      },
+      {
+        "title": "3. Stummes -e entfällt",
+        "detail": "Verben auf -e verlieren das e vor -ing: write > writing, configure > configuring, code > coding."
+      },
+      {
+        "title": "4. Zustandsverben (Stative Verbs) ohne -ing",
+        "detail": "Verben des Wissens, Fühlens und Besitzens stehen fast nie im Continuous: know, understand, believe, like, have (Besitz), need. Richtig: 'I know the answer' (NICHT: 'I am knowing')."
+      }
+    ],
+    "signalWords": [
+      "now",
+      "at the moment",
+      "right now",
+      "currently",
+      "Look!",
+      "Listen!",
+      "today",
+      "this week"
+    ],
+    "examples": [
+      {
+        "en": "I am currently developing a responsive learning application.",
+        "de": "Ich entwickle derzeit eine responsive Lernanwendung."
+      },
+      {
+        "en": "The DevOps engineer is deploying the latest patch right now.",
+        "de": "Der DevOps-Ingenieur rollt das neueste Patch genau jetzt aus."
+      },
+      {
+        "en": "We are analyzing the database logs to find the error.",
+        "de": "Wir analysieren die Datenbank-Logs, um den Fehler zu finden."
+      },
+      {
+        "en": "Listen! The alarm is ringing in the server room.",
+        "de": "Hör mal! Der Alarm klingelt im Serverraum."
+      }
+    ],
+    "pitfalls": [
+      {
+        "wrong": "I coding the new feature right now.",
+        "right": "I am coding the new feature right now.",
+        "tip": "Das Hilfsverb 'am/is/are' darf niemals weggelassen werden!"
+      },
+      {
+        "wrong": "I am understanding the task now.",
+        "right": "I understand the task now.",
+        "tip": "Zustandsverben wie understand, know, like stehen nicht in der -ing-Form!"
+      }
+    ],
+    "clozeId": "cl-13"
+  },
+  {
+    "id": "simple-past",
+    "category": "simple-past",
+    "icon": "🟠",
+    "title": "Simple Past & Unregelmäßige Verben",
+    "subtitle": "Abgeschlossene Vergangenheit",
+    "tag": "Vergangenheit • A1-B2",
+    "formula": "Regulär: [Verb + ed] | Irregulär: 2. Verbform | Verneinung: [didn't] + [Infinitive]",
+    "summary": "Wird genutzt für Aktionen, die in der Vergangenheit stattfanden und komplett vorbei sind. Meist steht eine konkrete Zeitangabe dabei (yesterday, last year, 2 hours ago).",
+    "rules": [
+      {
+        "title": "1. Reguläre Verben (+ed)",
+        "detail": "work > worked, install > installed, check > checked. Bei kurzem Vokal: stop > stopped. Bei Konsonant + y: study > studied."
+      },
+      {
+        "title": "2. Die wichtigsten unregelmäßigen Verben (2. Form)",
+        "detail": "go > went, see > saw, write > wrote, buy > bought, make > made, find > found, build > built, run > ran, think > thought."
+      },
+      {
+        "title": "3. Goldene Regel bei didn't & did",
+        "detail": "In der Verneinung und Frage steht nach 'didn't' bzw. 'did' IMMER der reine Infinitiv: 'I didn't see' (NIEMALS: 'didn't saw'!)."
+      }
+    ],
+    "signalWords": [
+      "yesterday",
+      "last week",
+      "last month",
+      "in 2022",
+      "... ago",
+      "two days ago",
+      "when I was"
+    ],
+    "examples": [
+      {
+        "en": "Yesterday, I resolved the merge conflict in our repository.",
+        "de": "Gestern habe ich den Merge-Konflikt in unserem Repository gelöst."
+      },
+      {
+        "en": "Our lead developer wrote clean, modular code for the project.",
+        "de": "Unser leitender Entwickler schrieb sauberen, modularen Code für das Projekt."
+      },
+      {
+        "en": "The database crashed two hours ago, but we recovered it.",
+        "de": "Die Datenbank stürzte vor zwei Stunden ab, aber wir haben sie wiederhergestellt."
+      },
+      {
+        "en": "We didn't see any error messages in the server logs.",
+        "de": "Wir sahen keine Fehlermeldungen in den Server-Logs."
+      }
+    ],
+    "pitfalls": [
+      {
+        "wrong": "I didn't went to the office yesterday.",
+        "right": "I didn't go to the office yesterday.",
+        "tip": "Nach didn't immer den reinen Infinitiv verwenden!"
+      },
+      {
+        "wrong": "Did you saw the new pull request?",
+        "right": "Did you see the new pull request?",
+        "tip": "Auch in Fragen mit 'Did' steht das Verb im Infinitiv!"
+      }
+    ],
+    "clozeId": "cl-16"
+  },
+  {
+    "id": "present-perfect",
+    "category": "present-perfect",
+    "icon": "🟣",
+    "title": "Present Perfect & Since vs. For",
+    "subtitle": "Brücke von der Vergangenheit zur Gegenwart",
+    "tag": "Perfekt • A2-B2",
+    "formula": "[Subject] + [have / has] + [3. Form (Past Participle)] | For = Dauer | Since = Zeitpunkt",
+    "summary": "Verbindet Vergangenheit mit Gegenwart: für Handlungen, die in der Vergangenheit begannen und bis heute andauern, oder deren Ergebnis JETZT noch wichtig ist.",
+    "rules": [
+      {
+        "title": "1. Bildung mit have / has + 3. Verbform",
+        "detail": "have/has + Partizip Perfekt: regular (worked, tested), irregular (seen, written, done, gone, built)."
+      },
+      {
+        "title": "2. FOR: Für Zeitspannen & Mengen (Quantity of time)",
+        "detail": "Wird mit Zahlen und Dauern genutzt: for 3 years, for two hours, for five minutes, for a long time."
+      },
+      {
+        "title": "3. SINCE: Für feste Startzeitpunkte (Point in time)",
+        "detail": "Wird mit Kalenderdaten, Tagen und Uhrzeiten genutzt: since 2020, since Monday, since 9:00 AM, since last month."
+      },
+      {
+        "title": "4. Falscher Freund 'Seit'",
+        "detail": "Im Deutschen sagt man Präsens ('Ich lebe seit 3 Jahren hier'). Im Englischen MUSS das Present Perfect stehen: 'I have lived here for 3 years' (NICHT: 'I live here since 3 years')."
+      }
+    ],
+    "signalWords": [
+      "for",
+      "since",
+      "already",
+      "just",
+      "yet",
+      "ever",
+      "never",
+      "so far",
+      "recently"
+    ],
+    "examples": [
+      {
+        "en": "I have worked as an IT apprentice for two years.",
+        "de": "Ich arbeite seit zwei Jahren als IT-Auszubildender."
+      },
+      {
+        "en": "She has lived in Berlin since 2019.",
+        "de": "Sie lebt seit 2019 in Berlin."
+      },
+      {
+        "en": "We have already deployed the hotfix to production.",
+        "de": "Wir haben den Hotfix bereits auf Production ausgerollt."
+      },
+      {
+        "en": "Have you ever configured an automated CI/CD pipeline?",
+        "de": "Hast du jemals eine automatisierte CI/CD-Pipeline konfiguriert?"
+      }
+    ],
+    "pitfalls": [
+      {
+        "wrong": "I work here since 5 years.",
+        "right": "I have worked here for 5 years.",
+        "tip": "Seit + Dauer = have worked + for!"
+      },
+      {
+        "wrong": "He has went to the server room.",
+        "right": "He has gone to the server room.",
+        "tip": "Im Present Perfect immer die 3. Form (gone) nutzen, nicht die 2. Form (went)!"
+      }
+    ],
+    "clozeId": "cl-18"
+  },
+  {
+    "id": "future",
+    "category": "future",
+    "icon": "🟡",
+    "title": "Zukunft: Will vs. Going To vs. Present",
+    "subtitle": "Spontane Entschlüsse vs. feste Pläne",
+    "tag": "Zukunft • A2-B2",
+    "formula": "Will: [will] + [Infinitive] | Going to: [am/is/are] + [going to] + [Infinitive]",
+    "summary": "Im Englischen gibt es mehrere Zukunftsformen. Je nachdem, ob es eine spontane Idee, eine Vermutung, ein fester Plan oder ein Fahrplan ist, wählt man eine andere Form.",
+    "rules": [
+      {
+        "title": "1. Will-Future: Spontan, Vermutung & Versprechen",
+        "detail": "Für spontane Entschlüsse im Moment des Sprechens ('The phone rings – I will answer it') und Meinungen ('I think it will work')."
+      },
+      {
+        "title": "2. Going-To-Future: Feste Pläne & sichtbare Vorzeichen",
+        "detail": "Für bereits geplante Vorhaben ('I am going to study IT') oder wenn man die Zukunft in der Gegenwart schon sieht ('Look at the clouds, it is going to rain')."
+      },
+      {
+        "title": "3. Present Continuous für feste Verabredungen",
+        "detail": "Für Termine mit anderen Personen oder im Kalender: 'We are meeting the customer tomorrow at 10 AM'."
+      },
+      {
+        "title": "4. Present Simple für offizielle Fahrpläne",
+        "detail": "Für feste Programme und Fahrpläne: 'The train leaves at 08:30 AM'."
+      }
+    ],
+    "signalWords": [
+      "tomorrow",
+      "next week",
+      "in the future",
+      "I think",
+      "I hope",
+      "probably",
+      "soon"
+    ],
+    "examples": [
+      {
+        "en": "Don't worry about the server issue, I will fix it right away.",
+        "de": "Keine Sorge wegen des Serverproblems, ich werde es sofort beheben (spontan)."
+      },
+      {
+        "en": "Look at the high CPU load! The server is going to crash.",
+        "de": "Schau dir die hohe CPU-Last an! Der Server wird gleich abstürzen (sichtbares Vorzeichen)."
+      },
+      {
+        "en": "We are going to migrate our database to the cloud next month.",
+        "de": "Wir haben vor, unsere Datenbank nächsten Monat in die Cloud zu migrieren (fester Plan)."
+      },
+      {
+        "en": "I will definitely pass my IHK FIAE AP 1 exam.",
+        "de": "Ich werde meine IHK FIAE AP 1 Prüfung definitiv bestehen (Überzeugung)."
+      }
+    ],
+    "pitfalls": [
+      {
+        "wrong": "Look at the smoke, the engine will overheat.",
+        "right": "Look at the smoke, the engine is going to overheat.",
+        "tip": "Bei unmittelbaren sichtbaren Beweisen in der Gegenwart: going to!"
+      },
+      {
+        "wrong": "I will meet the doctor tomorrow at 3 PM.",
+        "right": "I am seeing the doctor tomorrow at 3 PM.",
+        "tip": "Feste persönliche Termine mit Uhrzeit = Present Continuous!"
+      }
+    ],
+    "clozeId": "cl-22"
+  },
+  {
+    "id": "conditionals",
+    "category": "conditionals",
+    "icon": "🔴",
+    "title": "If-Clauses (Bedingungssätze für IT)",
+    "subtitle": "Type 1 & Type 2 für Logik & Softwaretests",
+    "tag": "Bedingungssätze • B1-B2",
+    "formula": "Type 1: If + [Present Simple], will + [Infinitive] | Type 2: If + [Simple Past], would + [Infinitive]",
+    "summary": "Bedingungssätze (If-Clauses) sind essenziell für die Softwareentwicklung (If-Else-Logik). Es gibt zwei Haupttypen für reale und hypothetische Bedingungen.",
+    "rules": [
+      {
+        "title": "1. Type 1: Reale, wahrscheinliche Bedingungen",
+        "detail": "Bedingung im Present Simple, Folge mit will + Infinitiv: 'If the tests pass, the pipeline will deploy automatically'."
+      },
+      {
+        "title": "2. Kein 'will' im If-Teilsatz!",
+        "detail": "Merke: 'If und will machen das Englische schrill'. Niemals will im If-Satz verwenden! Richtig: 'If it crashes...', NICHT: 'If it will crash...'."
+      },
+      {
+        "title": "3. Type 2: Hypothetische, unwahrscheinliche Situationen",
+        "detail": "Bedingung im Simple Past, Folge mit would + Infinitiv: 'If I had more RAM, I would run five virtual machines'."
+      }
+    ],
+    "signalWords": [
+      "if",
+      "unless (außer wenn)",
+      "as soon as",
+      "provided that",
+      "in case"
+    ],
+    "examples": [
+      {
+        "en": "If you find a security bug, the company will reward you.",
+        "de": "Wenn du eine Sicherheitslücke findest, wird dich das Unternehmen belohnen."
+      },
+      {
+        "en": "The deployment will succeed if all unit tests pass.",
+        "de": "Das Deployment wird erfolgreich sein, wenn alle Unit-Tests bestehen."
+      },
+      {
+        "en": "If I had the root password, I would reconfigure the server now.",
+        "de": "Wenn ich das Root-Passwort hätte, würde ich den Server jetzt neu konfigurieren."
+      },
+      {
+        "en": "What would you do if the production database went offline?",
+        "de": "Was würdest du tun, wenn die Produktionsdatenbank offline gehen würde?"
+      }
+    ],
+    "pitfalls": [
+      {
+        "wrong": "If you will push to main, the CI will start.",
+        "right": "If you push to main, the CI will start.",
+        "tip": "Im If-Satz Typ 1 steht immer das Present Simple, niemals will!"
+      },
+      {
+        "wrong": "If I would have more time, I would write tests.",
+        "right": "If I had more time, I would write tests.",
+        "tip": "Im If-Satz Typ 2 steht das Simple Past (had), niemals would have!"
+      }
+    ],
+    "clozeId": "cl-23"
+  },
+  {
+    "id": "business",
+    "category": "business",
+    "icon": "💼",
+    "title": "Business English & Höfliche Kommunikation",
+    "subtitle": "Aus Dr. Higgins-Welters Unterricht & Oxford Course",
+    "tag": "Business • B1-B2",
+    "formula": "Höflichkeit: [Could / Would you please] + [Infinitive] | E-Mail: [Please find attached] & [I look forward to hearing]",
+    "summary": "Im Geschäftsleben wirkt die wörtliche Übersetzung deutscher Sätze oft herrisch oder unhöflich. Englische Fachkräfte nutzen Höflichkeitsformen (Modalverben) und feste E-Mail-Muster.",
+    "rules": [
+      {
+        "title": "1. Höfliche Bitten mit Could & Would",
+        "detail": "Statt direktem Imperativ ('Give me the report'): 'Could you please provide me with the latest report?' oder 'Would you mind reviewing this PR?'."
+      },
+      {
+        "title": "2. E-Mail-Anhänge ankündigen",
+        "detail": "Feste Formel: 'Please find attached the updated specification document' (NICHT: 'Attached you find')."
+      },
+      {
+        "title": "3. Die Look-Forward-To-Regel",
+        "detail": "Nach 'I look forward to' folgt zwingend die -ing-Form (Gerundium): 'I look forward to hearing from you' (Häufigste Prüfungsfalle!)."
+      },
+      {
+        "title": "4. Fristen professionell setzen mit BY",
+        "detail": "Für Fristen und Deadlines verwendet man 'by': 'Please send the file by Friday 5 PM' ('until' bedeutet bis zu dem Zeitpunkt durchgehend)."
+      }
+    ],
+    "signalWords": [
+      "Could you please...",
+      "Please find attached...",
+      "I look forward to...",
+      "Kind regards",
+      "By tomorrow"
+    ],
+    "examples": [
+      {
+        "en": "Could you please review my pull request when you have a moment?",
+        "de": "Könntest du bitte meinen Pull Request überprüfen, wenn du einen Moment Zeit hast?"
+      },
+      {
+        "en": "Please find attached the latest architecture diagram for your review.",
+        "de": "Im Anhang finden Sie das neueste Architekturdiagramm zu Ihrer Durchsicht."
+      },
+      {
+        "en": "I look forward to discussing the system requirements in our next sprint.",
+        "de": "Ich freue mich darauf, die Systemanforderungen in unserem nächsten Sprint zu besprechen."
+      },
+      {
+        "en": "Would it be possible to reschedule our standup meeting to 11 AM?",
+        "de": "Wäre es möglich, unser Standup-Meeting auf 11:00 Uhr zu verschieben?"
+      }
+    ],
+    "pitfalls": [
+      {
+        "wrong": "I look forward to hear from you soon.",
+        "right": "I look forward to hearing from you soon.",
+        "tip": "Nach 'look forward to' steht immer das Gerundium mit -ing!"
+      },
+      {
+        "wrong": "Please send me the report until Friday.",
+        "right": "Please send me the report by Friday.",
+        "tip": "Deadlines und Fristen werden mit 'by' ausgedrückt, nicht mit 'until'!"
+      }
+    ],
+    "clozeId": "cl-26"
+  }
+];
