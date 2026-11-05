@@ -1468,8 +1468,8 @@ const DIALOG_SCENARIOS = {
     icon: '🌱',
     partnerName: 'Emma (Lernpartnerin & Tutorin)',
     partnerRole: 'Geduldige Englisch-Tutorin für Alltag & Smalltalk',
-    initialPrompt: 'Hello Istvan! Welcome! 😊 I am Emma, your friendly English tutor. In this chat, there is zero pressure: we can talk about anything you like—hobbies, everyday life, food, pets, or we can practice simple words and sentences together. What would you like to talk about today?',
-    initialPromptDe: 'Hallo Istvan! Willkommen! 😊 Ich bin Emma, deine freundliche Sprachbegleiterin. Hier gibt es null Leistungsdruck: Wir können über alles sprechen, was dir Spaß macht – Hobbys, Alltag, Essen, Haustiere oder einfach neue Wörter lernen. Worüber möchtest du heute sprechen?',
+    initialPrompt: 'Hello {name}! Welcome! 😊 I am Emma, your friendly English tutor. In this chat, there is zero pressure: we can talk about anything you like—hobbies, everyday life, food, pets, or we can practice simple words and sentences together. What would you like to talk about today?',
+    initialPromptDe: 'Hallo {name}! Willkommen! 😊 Ich bin Emma, deine freundliche Sprachbegleiterin. Hier gibt es null Leistungsdruck: Wir können über alles sprechen, was dir Spaß macht – Hobbys, Alltag, Essen, Haustiere oder einfach neue Wörter lernen. Worüber möchtest du heute sprechen?',
     contextKeywords: ['hello', 'hi', 'chat', 'talk', 'beginner', 'learn', 'words', 'hobby', 'music', 'food', 'weather', 'old', 'age', 'live', 'from', 'pet', 'dog', 'cat', 'help', 'simple', 'easy', 'question']
   },
   quiz: {
@@ -1478,8 +1478,8 @@ const DIALOG_SCENARIOS = {
     icon: '🎯',
     partnerName: 'Prof. Miller (Vokabel-Coach)',
     partnerRole: 'Interaktiver Vokabel- & Fachbegriff-Prüfer',
-    initialPrompt: 'Hallo Istvan! 🎯 In diesem Modus teste ich deinen Wortschatz. Ich nenne dir englische Fachbegriffe und du schreibst oder sprichst mir die deutsche Bedeutung! Los geht\'s mit deinem ersten Begriff:',
-    initialPromptDe: 'Hallo Istvan! 🎯 In diesem Modus teste ich deinen Wortschatz. Ich nenne dir englische Fachbegriffe und du schreibst oder sprichst mir die deutsche Bedeutung! Los geht\'s mit deinem ersten Begriff:',
+    initialPrompt: 'Hallo {name}! 🎯 In diesem Modus teste ich deinen Wortschatz. Ich nenne dir englische Fachbegriffe und du schreibst oder sprichst mir die deutsche Bedeutung! Los geht\'s mit deinem ersten Begriff:',
+    initialPromptDe: 'Hallo {name}! 🎯 In diesem Modus teste ich deinen Wortschatz. Ich nenne dir englische Fachbegriffe und du schreibst oder sprichst mir die deutsche Bedeutung! Los geht\'s mit deinem ersten Begriff:',
     contextKeywords: ['bereit', 'ready', 'ja', 'start', 'los', 'yes', 'abfragen', 'quiz', 'vokabeln', 'wörter', 'deutsch']
   },
   standup: {
@@ -1488,8 +1488,8 @@ const DIALOG_SCENARIOS = {
     icon: '💻',
     partnerName: 'Sarah (Scrum Master)',
     partnerRole: 'Scrum Master & Agile Coach',
-    initialPrompt: 'Good morning Istvan! Welcome to today\'s daily standup. What did you accomplish yesterday, what is your plan for today, and do you have any blockers?',
-    initialPromptDe: 'Guten Morgen Istvan! Willkommen zum heutigen Daily Standup. Was hast du gestern geschafft, was planst du für heute und hast du Hindernisse (Blocker)?',
+    initialPrompt: 'Good morning {name}! Welcome to today\'s daily standup. What did you accomplish yesterday, what is your plan for today, and do you have any blockers?',
+    initialPromptDe: 'Guten Morgen {name}! Willkommen zum heutigen Daily Standup. Was hast du gestern geschafft, was planst du für heute und hast du Hindernisse (Blocker)?',
     contextKeywords: ['yesterday', 'today', 'ticket', 'bug', 'database', 'worked', 'working', 'blocked', 'finish', 'sql', 'query', 'code', 'test', 'api', 'pr', 'review']
   },
   interview: {
@@ -1498,8 +1498,8 @@ const DIALOG_SCENARIOS = {
     icon: '👔',
     partnerName: 'Mr. Davis (Tech Lead)',
     partnerRole: 'Lead Architect & Interviewer',
-    initialPrompt: 'Hello Istvan, thank you for coming in today! Could you tell me a little bit about yourself and what projects you enjoyed most during your development training?',
-    initialPromptDe: 'Hallo Istvan, vielen Dank für Ihr Erscheinen heute! Können Sie mir ein wenig über sich erzählen und welche Projekte Ihnen während Ihrer Entwicklerausbildung am meisten Spaß gemacht haben?',
+    initialPrompt: 'Hello {name}, thank you for coming in today! Could you tell me a little bit about yourself and what projects you enjoyed most during your development training?',
+    initialPromptDe: 'Hallo {name}, vielen Dank für Ihr Erscheinen heute! Können Sie mir ein wenig über sich erzählen und welche Projekte Ihnen während Ihrer Entwicklerausbildung am meisten Spaß gemacht haben?',
     contextKeywords: ['experience', 'programming', 'developer', 'company', 'learn', 'java', 'python', 'sql', 'team', 'skills', 'because', 'project', 'architecture', 'clean code', 'database']
   },
   support: {
@@ -1508,8 +1508,8 @@ const DIALOG_SCENARIOS = {
     icon: '🛠️',
     partnerName: 'Alex (Product Manager)',
     partnerRole: 'Senior Product Manager',
-    initialPrompt: 'Hi Istvan! Our QA team flagged an issue in production: the database connection pool times out during peak checkout hours. Could you investigate this ticket?',
-    initialPromptDe: 'Hi Istvan! Unser QS-Team hat ein Problem in der Produktion gemeldet: Der Datenbank-Verbindungspool bricht zu Spitzenzeiten ab. Könntest du dieses Ticket untersuchen?',
+    initialPrompt: 'Hi {name}! Our QA team flagged an issue in production: the database connection pool times out during peak checkout hours. Could you investigate this ticket?',
+    initialPromptDe: 'Hi {name}! Unser QS-Team hat ein Problem in der Produktion gemeldet: Der Datenbank-Verbindungspool bricht zu Spitzenzeiten ab. Könntest du dieses Ticket untersuchen?',
     contextKeywords: ['check', 'fix', 'database', 'issue', 'problem', 'look', 'connection', 'timeout', 'test', 'server', 'log', 'query', 'reproduce', 'hotfix', 'pool']
   },
   architecture: {
@@ -1518,8 +1518,8 @@ const DIALOG_SCENARIOS = {
     icon: '📐',
     partnerName: 'Elena (Senior Architect)',
     partnerRole: 'Staff Software Architect',
-    initialPrompt: 'Hi Istvan! We are currently redesigning our backend service layer. What are your thoughts on applying the Single Responsibility Principle and RESTful API conventions here?',
-    initialPromptDe: 'Hi Istvan! Wir überarbeiten aktuell unsere Backend-Service-Schicht. Was hältst du davon, hier das Single-Responsibility-Prinzip und RESTful-API-Konventionen anzuwenden?',
+    initialPrompt: 'Hi {name}! We are currently redesigning our backend service layer. What are your thoughts on applying the Single Responsibility Principle and RESTful API conventions here?',
+    initialPromptDe: 'Hi {name}! Wir überarbeiten aktuell unsere Backend-Service-Schicht. Was hältst du davon, hier das Single-Responsibility-Prinzip und RESTful-API-Konventionen anzuwenden?',
     contextKeywords: ['architecture', 'clean code', 'refactor', 'solid', 'pattern', 'api', 'rest', 'json', 'service', 'layer', 'class', 'interface', 'coupling', 'microservices']
   },
   smalltalk: {
@@ -1528,8 +1528,8 @@ const DIALOG_SCENARIOS = {
     icon: '☕',
     partnerName: 'Mark (Colleague)',
     partnerRole: 'Senior Developer & Teammate',
-    initialPrompt: 'Hey Istvan! Taking a quick screen break? How is your week treating you so far, and did you get any chance to work on your music projects?',
-    initialPromptDe: 'Hey Istvan! Machst du eine kurze Bildschirmpause? Wie läuft deine Woche bisher und hattest du Gelegenheit, an deinen Musikprojekten zu arbeiten?',
+    initialPrompt: 'Hey {name}! Taking a quick screen break? How is your week treating you so far, and did you get any chance to work on your music projects?',
+    initialPromptDe: 'Hey {name}! Machst du eine kurze Bildschirmpause? Wie läuft deine Woche bisher und hattest du Gelegenheit, an deinen Musikprojekten zu arbeiten?',
     contextKeywords: ['good', 'busy', 'fine', 'weekend', 'work', 'coffee', 'music', 'weather', 'tired', 'learning', 'project', 'nice', 'studio', 'beat', 'relax']
   },
   travel: {
@@ -1548,8 +1548,8 @@ const DIALOG_SCENARIOS = {
     icon: '🌐',
     partnerName: 'AI English Coach',
     partnerRole: 'Persönlicher Sprachtrainer',
-    initialPrompt: 'Hello Istvan! I am your interactive English conversational partner. You can talk to me about programming, daily life, exams, or anything you like. What is on your mind today?',
-    initialPromptDe: 'Hallo Istvan! Ich bin dein interaktiver englischer Gesprächspartner. Du kannst mit mir über Programmierung, Alltag, Prüfungen oder beliebige Themen sprechen. Woran denkst du gerade?',
+    initialPrompt: 'Hello {name}! I am your interactive English conversational partner. You can talk to me about programming, daily life, exams, or anything you like. What is on your mind today?',
+    initialPromptDe: 'Hallo {name}! Ich bin dein interaktiver englischer Gesprächspartner. Du kannst mit mir über Programmierung, Alltag, Prüfungen oder beliebige Themen sprechen. Woran denkst du gerade?',
     contextKeywords: []
   }
 };

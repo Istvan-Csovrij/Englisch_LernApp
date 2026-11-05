@@ -22,7 +22,7 @@
 
   <meta name="apple-mobile-web-app-title" content="English Master">
 
-  <link rel="stylesheet" href="style.css?v=20261105_v11">
+  <link rel="stylesheet" href="style.css?v=20261105_v12">
 
   <script>
 
@@ -785,7 +785,17 @@
 
         </div>
 
-        <button class="scenario-reset-btn" id="btnResetDialog" title="Dialog neu starten">🔄 Neu starten</button>
+        <div class="scenario-actions-group">
+          <button class="scenario-user-btn" id="btnEditUserName" title="Klicke hier, um deinen Namen einzustellen">
+            👤 <span id="displayUserName">Name eingeben</span> ✏️
+          </button>
+          <button class="scenario-feedback-btn" id="btnAskFeedback" title="Lass deine letzten Fehler im Chat analysieren und korrigieren">
+            🩺 Fehler korrigieren
+          </button>
+          <button class="scenario-reset-btn" id="btnResetDialog" title="Dialog neu starten">
+            🔄 Neu starten
+          </button>
+        </div>
 
       </div>
 
@@ -1161,9 +1171,9 @@
 
   <!-- Scripts -->
 
-  <script src="data.js?v=20261105_v11"></script>
+  <script src="data.js?v=20261105_v12"></script>
 
-  <script src="app.js?v=20261105_v11"></script>
+  <script src="app.js?v=20261105_v12"></script>
 
 </body>
 

@@ -973,6 +973,28 @@ document.addEventListener('DOMContentLoaded', () => {
   // ============================================================
   let currentDialogMode = 'text'; // 'text' oder 'voice'
   let currentScenarioId = 'beginner';
+
+  function getUserName() {
+    return localStorage.getItem('fiae_user_name') || '';
+  }
+
+  function setUserName(name) {
+    const clean = (name || '').trim();
+    if (clean) {
+      localStorage.setItem('fiae_user_name', clean);
+    } else {
+      localStorage.removeItem('fiae_user_name');
+    }
+    updateUserNameUI();
+  }
+
+  function updateUserNameUI() {
+    const el = document.getElementById('displayUserName');
+    if (el) {
+      const name = getUserName();
+      el.textContent = name ? name : 'Name eingeben';
+    }
+  }
   let dialogHistories = {};
   let dialogInitialized = false;
 
@@ -1838,6 +1860,26 @@ document.addEventListener('DOMContentLoaded', () => {
     },
 
     // Hauptfunktion: Erkennt Thema, Turn-Zähler und wählt abwechslungsreiche Antworten
+    getUserName() {
+      return (typeof localStorage !== 'undefined' && localStorage.getItem('fiae_user_name')) || '';
+    },
+
+    setUserName(name) {
+      const clean = (name || '').trim();
+      if (typeof setUserName === 'function') {
+        setUserName(clean);
+      } else if (typeof localStorage !== 'undefined') {
+        if (clean) localStorage.setItem('fiae_user_name', clean);
+        else localStorage.removeItem('fiae_user_name');
+      }
+    },
+
+    salutation(withComma = true) {
+      const name = this.getUserName();
+      if (!name) return '';
+      return withComma ? `, ${name}` : ` ${name}`;
+    },
+
     getPartnerMeta(scenarioId) {
       const meta = {
         beginner: { name: 'Emma', role: 'Geduldige Englisch-Tutorin für Alltag & Smalltalk', desc: 'Anfänger & Plaudern' },
@@ -1894,6 +1936,85 @@ document.addEventListener('DOMContentLoaded', () => {
     detectDirectIntent(rawInput, scenarioId) {
       const norm = this.normalizeInput(rawInput);
       const meta = this.getPartnerMeta(scenarioId);
+      const userName = this.getUserName();
+
+      // 0A. Benutzer stellt sich mit Namen vor ("My name is ...", "I am ...", "Ich heiße ...")
+      const nameMatch = rawInput.match(/\b(my\s+name\s+is|i\s+am|call\s+me|ich\s+hei[sß]+e|mein\s+name\s+ist|nenne?\s+mich)\s+([A-Za-zÄÖÜäöüß]+)\b/i);
+      const isSoloName = !userName && /^[A-Za-zÄÖÜäöüß]{2,20}$/.test(rawInput.trim()) && !/^(hello|hi|yes|no|okay|cool|super|good|nice|what|who|how|why)$/i.test(rawInput.trim());
+
+      if (nameMatch || isSoloName) {
+        let extractedName = nameMatch ? nameMatch[2] : rawInput.trim();
+        extractedName = extractedName.charAt(0).toUpperCase() + extractedName.slice(1).toLowerCase();
+        this.setUserName(extractedName);
+
+        return {
+          id: 'intent_name_saved',
+          en: `Wonderful to meet you, ${extractedName}! 🎉 I have saved your name and will remember it. In this chat, there is zero pressure: we can talk about everyday life, hobbies, or practice words and sentences together. What would you like to talk about today?`,
+          de: `Wunderbar, dich kennenzulernen, ${extractedName}! 🎉 Ich habe deinen Namen gespeichert und spreche dich ab jetzt so an. Hier gibt es null Leistungsdruck: Wir können über den Alltag, Hobbys plaudern oder Sätze üben. Worüber möchtest du heute sprechen?`,
+          suggestions: [
+            "Can you teach me some new conversational words?",
+            "How old are you, and what are your hobbies?",
+            "Can you correct my English when I make mistakes?"
+          ]
+        };
+      }
+
+      // 0B. Benutzer bittet explizit um Fehler-Korrektur ("sag mir meine fehler", "korrigiere mich", "what were my mistakes", etc.)
+      const isCorrectionRequest = /(\b(korrigier[a-z]*|korrektur[a-z]*|correct[a-z]*|mistake[s]?|fehler[n]?|falsch|feedback)\b|(\b(sag|zeige?|show|tell)\b.*\b(fehler|mistake)\b)|(\b(was|what)\b.*\b(fehler|mistake|falsch|wrong)\b)|(\b(hilf|help|how)\b.*\b(richtig|correct|improve)\b)|(\bwie\s+(sage|schreibe)\s+ich\s+das\s+richtig\b))/i.test(norm);
+
+      if (isCorrectionRequest) {
+        // Letzten relevanten Satz des Nutzers aus dem Chatverlauf ermitteln
+        let lastUserText = '';
+        if (typeof dialogHistories !== 'undefined' && dialogHistories[scenarioId]) {
+          const hist = dialogHistories[scenarioId];
+          for (let i = hist.length - 1; i >= 0; i--) {
+            const m = hist[i];
+            if (m.type === 'user' && !/(\b(korrigier|fehler|correct|mistake|feedback)\b)/i.test(m.text)) {
+              lastUserText = m.text.trim();
+              break;
+            }
+          }
+        }
+
+        if (lastUserText) {
+          const analysis = typeof SentenceDoctor !== 'undefined' ? SentenceDoctor.analyze(lastUserText) : null;
+          if (analysis && analysis.hasError) {
+            const cleanTip = analysis.explanation.replace(/<[^>]*>/g, '').trim();
+            return {
+              id: 'intent_correction_report',
+              en: `Here is your SentenceDoctor feedback${this.salutation()}!\n\n👉 Your sentence was:\n"${lastUserText}"\n\n🔍 Analysis & Improvements:\n${cleanTip}\n\n✅ How to say it 100% correctly:\n👉 "${analysis.correctedText}"\n\nWould you like to try typing or speaking this corrected sentence?`,
+              de: `Hier ist deine genaue SentenceDoctor-Analyse${this.salutation()}!\n\n👉 Dein letzter Satz war:\n„${lastUserText}“\n\n🔍 Deine Fehler & Verbesserungen:\n${cleanTip}\n\n✅ So klingt es 100% richtig auf Englisch:\n👉 „${analysis.correctedText}“\n\nProbier gleich mal aus, den korrigierten Satz einzugeben oder zu sprechen!`,
+              suggestions: [
+                analysis.correctedText,
+                "Can you explain the grammar rule in more detail?",
+                "Understood! Let's continue chatting."
+              ]
+            };
+          } else {
+            return {
+              id: 'intent_correction_report_clean',
+              en: `Great news${this.salutation()}! I analyzed your previous sentence:\n\n👉 "${lastUserText}"\n\nYour sentence was already grammatically correct, natural, and very clear! 👍 You made no mistakes. What would you like to practice next?`,
+              de: `Gute Nachrichten${this.salutation()}! Ich habe deinen letzten Satz analysiert:\n\n👉 „${lastUserText}“\n\nDein Satz war grammatikalisch bereits völlig fehlerfrei und gut verständlich! 👍 Du hast keine Fehler gemacht. Worüber möchtest du als Nächstes sprechen?`,
+              suggestions: [
+                "Can you teach me 3 useful new words?",
+                "Can you ask me an everyday question in English?",
+                "Let's practice a realistic conversation."
+              ]
+            };
+          }
+        } else {
+          return {
+            id: 'intent_correction_report_empty',
+            en: `I would love to check your English and show you your mistakes${this.salutation()}! 😊 Write or speak any English sentence right now, and I will analyze your spelling, grammar, and sentence structure step by step!`,
+            de: `Sehr gerne überprüfe ich dein Englisch und zeige dir deine Fehler${this.salutation()}! 😊 Schreib oder sprich mir jetzt einfach einen englischen Satz, und ich analysiere Rechtschreibung, Grammatik und Satzbau Schritt für Schritt!`,
+            suggestions: [
+              "Yesterday I worked on my programming project.",
+              "I want learn more English words for my job.",
+              "How old you are Emma?"
+            ]
+          };
+        }
+      }
 
       // 1. Asking for Partner's Name / Identity ("What is your name?", "wath is your name?", "who are you?")
       if (/\b(what|tell|may|can)\b.*\b(your|ur)\s+(name|naem)\b/i.test(norm) ||
@@ -1903,8 +2024,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (scenarioId === 'beginner') {
           return {
             id: 'intent_name_beginner',
-            en: `Hello Istvan! My name is ${meta.name}, and I am your ${meta.role}. I am very happy to meet you! How are you feeling today, and would you like to practice simple English together?`,
-            de: `Hallo Istvan! Mein Name ist ${meta.name} und ich bin deine ${meta.role}. Ich freue mich sehr, dich kennenzulernen! Wie geht es dir heute und möchtest du einfaches Englisch mit mir üben?`,
+            en: `Hello${this.salutation()}! My name is ${meta.name}, and I am your ${meta.role}. I am very happy to meet you! How are you feeling today, and would you like to practice simple English together?`,
+            de: `Hallo${this.salutation()}! Mein Name ist ${meta.name} und ich bin deine ${meta.role}. Ich freue mich sehr, dich kennenzulernen! Wie geht es dir heute und möchtest du einfaches Englisch mit mir üben?`,
             suggestions: [
               "Nice to meet you Emma! I am ready to practice.",
               "Hello Emma! What are your favorite topics?",
@@ -1914,8 +2035,8 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (scenarioId === 'standup') {
           return {
             id: 'intent_name_standup',
-            en: `Good morning Istvan! My name is ${meta.name}, and I am the ${meta.role} for our development team. Nice to meet you! How did your work go yesterday?`,
-            de: `Guten Morgen Istvan! Mein Name ist ${meta.name} und ich bin die ${meta.role} für unser Entwicklerteam. Schön dich kennenzulernen! Wie lief deine Arbeit gestern?`,
+            en: `Good morning${this.salutation()}! My name is ${meta.name}, and I am the ${meta.role} for our development team. Nice to meet you! How did your work go yesterday?`,
+            de: `Guten Morgen${this.salutation()}! Mein Name ist ${meta.name} und ich bin die ${meta.role} für unser Entwicklerteam. Schön dich kennenzulernen! Wie lief deine Arbeit gestern?`,
             suggestions: [
               "Nice to meet you, Sarah! Yesterday I fixed an issue in our codebase.",
               "Good morning Sarah! Yesterday I worked on the database queries.",
@@ -1925,8 +2046,8 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (scenarioId === 'interview') {
           return {
             id: 'intent_name_interview',
-            en: `Hello Istvan, my name is ${meta.name}. I am the ${meta.role} conducting your technical interview today. Nice to meet you! Are you ready to tell me about yourself?`,
-            de: `Hallo Istvan, mein Name ist ${meta.name}. Ich bin der ${meta.role} und führe heute dein Vorstellungsgespräch. Schön dich kennenzulernen! Möchtest du dich kurz vorstellen?`,
+            en: `Hello${this.salutation()}, my name is ${meta.name}. I am the ${meta.role} conducting your technical interview today. Nice to meet you! Are you ready to tell me about yourself?`,
+            de: `Hallo${this.salutation()}, mein Name ist ${meta.name}. Ich bin der ${meta.role} und führe heute dein Vorstellungsgespräch. Schön dich kennenzulernen! Möchtest du dich kurz vorstellen?`,
             suggestions: [
               "Nice to meet you Mr. Davis! I would love to introduce myself.",
               "Hello Mr. Davis! I have prepared a summary of my technical skills.",
@@ -1936,8 +2057,8 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (scenarioId === 'support') {
           return {
             id: 'intent_name_support',
-            en: `Hi Istvan! My name is ${meta.name}, and I am the ${meta.role} managing our production incidents. Thanks for jumping in! Have you seen the latest error logs?`,
-            de: `Hi Istvan! Mein Name ist ${meta.name} und ich bin der ${meta.role} für unsere Produktionsvorfälle. Danke fürs Dazukommen! Hast du die neuesten Fehler-Logs gesehen?`,
+            en: `Hi${this.salutation()}! My name is ${meta.name}, and I am the ${meta.role} managing our production incidents. Thanks for jumping in! Have you seen the latest error logs?`,
+            de: `Hi${this.salutation()}! Mein Name ist ${meta.name} und ich bin der ${meta.role} für unsere Produktionsvorfälle. Danke fürs Dazukommen! Hast du die neuesten Fehler-Logs gesehen?`,
             suggestions: [
               "Hi Alex! Yes, I am analyzing the server logs right now.",
               "Hello Alex! What is the severity of this production bug?",
@@ -1947,8 +2068,8 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (scenarioId === 'smalltalk') {
           return {
             id: 'intent_name_smalltalk',
-            en: `Hey Istvan! I'm ${meta.name}, your teammate from the backend team. Great to chat over a coffee! How is your week going so far?`,
-            de: `Hey Istvan! Ich bin ${meta.name}, dein Kollege aus dem Backend-Team. Schön, beim Kaffee zu quatschen! Wie läuft deine Woche bisher?`,
+            en: `Hey${this.salutation()}! I'm ${meta.name}, your teammate from the backend team. Great to chat over a coffee! How is your week going so far?`,
+            de: `Hey${this.salutation()}! Ich bin ${meta.name}, dein Kollege aus dem Backend-Team. Schön, beim Kaffee zu quatschen! Wie läuft deine Woche bisher?`,
             suggestions: [
               "Nice to meet you Mark! My week has been busy but good.",
               "Hey Mark! Coffee is definitely needed today. How about you?",
@@ -1958,8 +2079,8 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (scenarioId === 'travel') {
           return {
             id: 'intent_name_travel',
-            en: `Good day, sir! My name is ${meta.name}, and I am the ${meta.role} here at the Royal Grand Hotel in London. How may I be of service to you today?`,
-            de: `Guten Tag, mein Herr! Mein Name ist ${meta.name} und ich bin der ${meta.role} hier im Royal Grand Hotel in London. Wie kann ich Ihnen heute behilflich sein?`,
+            en: `Good day${this.salutation()}! My name is ${meta.name}, and I am the ${meta.role} here at the Royal Grand Hotel in London. How may I be of service to you today?`,
+            de: `Guten Tag${this.salutation()}! Mein Name ist ${meta.name} und ich bin der ${meta.role} hier im Royal Grand Hotel in London. Wie kann ich Ihnen heute behilflich sein?`,
             suggestions: [
               "Good day James! I would like to check into my room, please.",
               "Could you recommend an authentic English pub or restaurant?",
@@ -1969,8 +2090,8 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
           return {
             id: 'intent_name_general',
-            en: `Hello Istvan! My name is ${meta.name}, and I am your ${meta.role}. I am here to help you practice English naturally. What would you like to talk about?`,
-            de: `Hallo Istvan! Mein Name ist ${meta.name} und ich bin dein ${meta.role}. Ich bin hier, um dir beim natürlichen Englisch-Lernen zu helfen. Worüber möchtest du sprechen?`,
+            en: `Hello${this.salutation()}! My name is ${meta.name}, and I am your ${meta.role}. I am here to help you practice English naturally. What would you like to talk about?`,
+            de: `Hallo${this.salutation()}! Mein Name ist ${meta.name} und ich bin dein ${meta.role}. Ich bin hier, um dir beim natürlichen Englisch-Lernen zu helfen. Worüber möchtest du sprechen?`,
             suggestions: [
               "Nice to meet you! I want to practice everyday English.",
               "Could you explain some technical terms to me?",
@@ -1985,8 +2106,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (scenarioId === 'beginner') {
           return {
             id: 'intent_age_beginner',
-            en: `I am 28 years old! In English, we say: "I am ... years old" or simply "I am 28". How old are you, Istvan? Would you like to practice saying your age?`,
-            de: `Ich bin 28 Jahre alt! Auf Englisch sagt man: "I am ... years old" oder einfach "I am 28". Wie alt bist du, Istvan? Möchtest du üben, dein Alter zu sagen?`,
+            en: `I am 28 years old! In English, we say: "I am ... years old" or simply "I am 28". How old are you${this.salutation()}? Would you like to practice saying your age?`,
+            de: `Ich bin 28 Jahre alt! Auf Englisch sagt man: "I am ... years old" oder einfach "I am 28". Wie alt bist du${this.salutation()}? Möchtest du üben, dein Alter zu sagen?`,
             suggestions: [
               "I am in my twenties.",
               "I am in my thirties.",
@@ -1997,8 +2118,8 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (scenarioId === 'standup') {
           return {
             id: 'intent_age_standup',
-            en: `Haha, that's a fun question, Istvan! I am 31 years old. What about you? In English, you say: "I am ... years old". How old are you?`,
-            de: `Haha, das ist eine sympathische Frage, Istvan! Ich bin 31 Jahre alt. Und du? Auf Englisch sagt man: "I am ... years old". Wie alt bist du?`,
+            en: `Haha, that's a fun question${this.salutation()}! I am 31 years old. What about you? In English, you say: "I am ... years old". How old are you?`,
+            de: `Haha, das ist eine sympathische Frage${this.salutation()}! Ich bin 31 Jahre alt. Und du? Auf Englisch sagt man: "I am ... years old". Wie alt bist du?`,
             suggestions: [
               "I am in my thirties.",
               "I am in my twenties.",
@@ -2009,8 +2130,8 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (scenarioId === 'interview') {
           return {
             id: 'intent_age_interview',
-            en: `I am 42 years old, and I have been leading software engineering teams for over 15 years. How about you, Istvan? How old are you, and how long have you been coding?`,
-            de: `Ich bin 42 Jahre alt und leite seit über 15 Jahren Softwareentwicklungsteams. Wie ist es bei dir, Istvan? Wie alt bist du und wie lange programmierst du schon?`,
+            en: `I am 42 years old, and I have been leading software engineering teams for over 15 years. How about you${this.salutation()}? How old are you, and how long have you been coding?`,
+            de: `Ich bin 42 Jahre alt und leite seit über 15 Jahren Softwareentwicklungsteams. Wie ist es bei dir${this.salutation()}? Wie alt bist du und wie lange programmierst du schon?`,
             suggestions: [
               "I am in my twenties and enjoying software development.",
               "I am in my thirties and learning very fast.",
@@ -2020,8 +2141,8 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
           return {
             id: 'intent_age_general',
-            en: `${meta.name} smiles: I am around 30 years old! How old are you, Istvan? In English, you answer with "I am ... years old".`,
-            de: `${meta.name} lächelt: Ich bin um die 30 Jahre alt! Wie alt bist du, Istvan? Auf Englisch antwortest du mit "I am ... years old".`,
+            en: `${meta.name} smiles: I am around 30 years old! How old are you${this.salutation()}? In English, you answer with "I am ... years old".`,
+            de: `${meta.name} lächelt: Ich bin um die 30 Jahre alt! Wie alt bist du${this.salutation()}? Auf Englisch antwortest du mit "I am ... years old".`,
             suggestions: [
               "I am in my twenties.",
               "I am in my thirties.",
@@ -2035,8 +2156,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (/\b(i\s+am\s+(a\s+)?(complete\s+)?beginner|anf[aä]nger|learn\s+english|english\s+lernen|sprach[en]*\s+lernen|my\s+english\s+is\s+(bad|poor|not\s+good)|help\s+me\s+(to\s+)?learn|teach\s+me|einfach\s+lernen|anf[aä]ngerlevel)\b/i.test(norm)) {
         return {
           id: 'intent_beginner_welcome',
-          en: `Welcome, Istvan! Never worry about being a beginner—everyone starts somewhere, and practicing every day is the secret to speaking fluently! I will speak clearly, use simple words, and help you step by step. What would you like to practice first: everyday words, simple questions, or talking about yourself?`,
-          de: `Willkommen, Istvan! Mach dir überhaupt keine Sorgen, Anfänger zu sein – jeder fängt mal an und tägliches Üben ist das Geheimnis zum fließenden Sprechen! Ich spreche langsam und einfach mit dir. Womit möchtest du starten: Alltagswörter, einfache Fragen oder dich kurz vorstellen?`,
+          en: `Welcome${this.salutation()}! Never worry about being a beginner—everyone starts somewhere, and practicing every day is the secret to speaking fluently! I will speak clearly, use simple words, and help you step by step. What would you like to practice first: everyday words, simple questions, or talking about yourself?`,
+          de: `Willkommen${this.salutation()}! Mach dir überhaupt keine Sorgen, Anfänger zu sein – jeder fängt mal an und tägliches Üben ist das Geheimnis zum fließenden Sprechen! Ich spreche langsam und einfach mit dir. Womit möchtest du starten: Alltagswörter, einfache Fragen oder dich kurz vorstellen?`,
           suggestions: [
             "Let's practice introducing myself in English.",
             "Can you teach me 5 useful everyday English words?",
@@ -2049,8 +2170,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (/\b(can\s+we\s+(just\s+)?chat|just\s+talk|einfach\s+unterhalten|lass\s+uns\s+plaudern|nur\s+reden|talk\s+with\s+me|speak\s+with\s+me|let('?s)?\s+talk|let('?s)?\s+chat|unterhaltung)\b/i.test(norm)) {
         return {
           id: 'intent_just_chat',
-          en: `I would love to just chat with you, Istvan! We don't have to talk about work or tickets at all. We can talk about life, movies, hobbies, food, or whatever you enjoy. Tell me: how was your morning so far?`,
-          de: `Ich würde mich sehr gerne einfach so mit dir unterhalten, Istvan! Wir müssen überhaupt nicht über Arbeit reden. Wir können über das Leben, Filme, Hobbys, Essen oder was auch immer dir Spaß macht plaudern. Erzähl mal: Wie war dein Morgen bisher?`,
+          en: `I would love to just chat with you${this.salutation()}! We don't have to talk about work or tickets at all. We can talk about life, movies, hobbies, food, or whatever you enjoy. Tell me: how was your morning so far?`,
+          de: `Ich würde mich sehr gerne einfach so mit dir unterhalten${this.salutation()}! Wir müssen überhaupt nicht über Arbeit reden. Wir können über das Leben, Filme, Hobbys, Essen oder was auch immer dir Spaß macht plaudern. Erzähl mal: Wie war dein Morgen bisher?`,
           suggestions: [
             "My morning was good, I had a fresh cup of coffee.",
             "I was busy with my computer training today.",
@@ -2091,8 +2212,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (/\b(where\s+(are\s+you\s+from|do\s+you\s+live|do\s+you\s+come\s+from)|woher\s+kommst\s+du|wo\s+wohnst\s+du|where\s+from)\b/i.test(norm)) {
         return {
           id: 'intent_origin_location',
-          en: `I live and work in Munich, Germany, but originally I worked with international software teams in London and Dublin! Where are you from, Istvan? Where do you live?`,
-          de: `Ich wohne und arbeite in München, habe aber mehrere Jahre mit internationalen Entwicklerteams in London und Dublin gearbeitet! Woher kommst du, Istvan? Wo wohnst du?`,
+          en: `I live and work in Munich, Germany, but originally I worked with international software teams in London and Dublin! Where are you from${this.salutation()}? Where do you live?`,
+          de: `Ich wohne und arbeite in München, habe aber mehrere Jahre mit internationalen Entwicklerteams in London und Dublin gearbeitet! Woher kommst du${this.salutation()}? Wo wohnst du?`,
           suggestions: [
             "I come from Hungary, and I live in Germany.",
             "I live in Germany and work as a software developer.",
@@ -2105,8 +2226,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (/\b(what\s+are\s+your\s+hobbies|what\s+do\s+you\s+do\s+in\s+your\s+free\s+time|your\s+hobby|hobbys|was\s+machst\s+du\s+in\s+deiner\s+freizeit|freizeit)\b/i.test(norm)) {
         return {
           id: 'intent_hobbies_freetime',
-          en: `In my free time, I love producing electronic music on synthesizers, going for mountain hikes, and learning new programming languages! What are your favorite hobbies, Istvan? What do you enjoy doing?`,
-          de: `In meiner Freizeit produziere ich elektronische Musik am Synthesizer, wandere in den Bergen und probiere neue Programmiersprachen aus! Was sind deine Lieblings-Hobbys, Istvan?`,
+          en: `In my free time, I love producing electronic music on synthesizers, going for mountain hikes, and learning new programming languages! What are your favorite hobbies${this.salutation()}? What do you enjoy doing?`,
+          de: `In meiner Freizeit produziere ich elektronische Musik am Synthesizer, wandere in den Bergen und probiere neue Programmiersprachen aus! Was sind deine Lieblings-Hobbys${this.salutation()}?`,
           suggestions: [
             "I love making music and producing beats.",
             "I enjoy programming and learning new technologies.",
@@ -2119,8 +2240,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (/\b(what\s+do\s+you\s+like\s+to\s+eat|favorite\s+food|do\s+you\s+like\s+coffee|do\s+you\s+drink\s+coffee|lieblingsessen|was\s+isst\s+du|pizza|burger|pasta)\b/i.test(norm)) {
         return {
           id: 'intent_food_drinks',
-          en: `I run on strong black coffee and fresh Italian pizza! ☕🍕 What about you, Istvan? What is your favorite food or drink? Do you like coffee or tea?`,
-          de: `Mein Treibstoff ist starker schwarzer Kaffee und frische italienische Pizza! ☕🍕 Was magst du am liebsten, Istvan? Trinkst du lieber Kaffee oder Tee?`,
+          en: `I run on strong black coffee and fresh Italian pizza! ☕🍕 What about you${this.salutation()}? What is your favorite food or drink? Do you like coffee or tea?`,
+          de: `Mein Treibstoff ist starker schwarzer Kaffee und frische italienische Pizza! ☕🍕 Was magst du am liebsten${this.salutation()}? Trinkst du lieber Kaffee oder Tee?`,
           suggestions: [
             "I love coffee in the morning to start my day.",
             "My favorite food is traditional homemade cooking.",
@@ -2133,8 +2254,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (/\b(do\s+you\s+have\s+(a\s+)?(pet|dog|cat)|pets|haustier|hast\s+du\s+einen\s+hund|katze|tiere)\b/i.test(norm)) {
         return {
           id: 'intent_pets_animals',
-          en: `I love dogs, especially Golden Retrievers—they are friendly, loyal, and full of energy! Do you have any pets at home, Istvan, or do you prefer dogs or cats?`,
-          de: `Ich liebe Hunde, besonders Golden Retriever – sie sind so freundlich und treu! Hast du Haustiere zu Hause, Istvan, oder magst du eher Hunde oder Katzen?`,
+          en: `I love dogs, especially Golden Retrievers—they are friendly, loyal, and full of energy! Do you have any pets at home${this.salutation()}, or do you prefer dogs or cats?`,
+          de: `Ich liebe Hunde, besonders Golden Retriever – sie sind so freundlich und treu! Hast du Haustiere zu Hause${this.salutation()}, oder magst du eher Hunde oder Katzen?`,
           suggestions: [
             "I have a pet at home.",
             "I love dogs because they are friendly.",
@@ -2147,8 +2268,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (/\b(what\s+music\s+do\s+you\s+like|favorite\s+music|what\s+kind\s+of\s+music|welche\s+musik|lieblingsmusik)\b/i.test(norm)) {
         return {
           id: 'intent_music_taste',
-          en: `I love electronic ambient music with groovy synth beats when I focus, and rock when I relax! What kind of music do you like listening to, Istvan?`,
-          de: `Ich höre gerne elektronische Ambient-Musik mit Synthesizer-Beats beim Arbeiten und Rock zum Entspannen! Welche Musik hörst du gerne, Istvan?`,
+          en: `I love electronic ambient music with groovy synth beats when I focus, and rock when I relax! What kind of music do you like listening to${this.salutation()}?`,
+          de: `Ich höre gerne elektronische Ambient-Musik mit Synthesizer-Beats beim Arbeiten und Rock zum Entspannen! Welche Musik hörst du gerne${this.salutation()}?`,
           suggestions: [
             "I love electronic music and synth sounds.",
             "I enjoy rock and classic pop.",
@@ -2161,8 +2282,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (/\b(how\s+is\s+the\s+weather|what\s+is\s+the\s+weather\s+like|wie\s+ist\s+das\s+wetter|is\s+it\s+cold|is\s+it\s+sunny|is\s+it\s+raining|wetter)\b/i.test(norm)) {
         return {
           id: 'intent_weather_chat',
-          en: `It is a bit chilly and overcast today—perfect weather to stay warm indoors with a hot cup of tea and practice English! How is the weather where you are right now, Istvan?`,
-          de: `Draußen ist es heute etwas kühl und bedeckt – perfektes Wetter, um drinnen bei einem heißen Tee Englisch zu üben! Wie ist das Wetter bei dir gerade, Istvan?`,
+          en: `It is a bit chilly and overcast today—perfect weather to stay warm indoors with a hot cup of tea and practice English! How is the weather where you are right now${this.salutation()}?`,
+          de: `Draußen ist es heute etwas kühl und bedeckt – perfektes Wetter, um drinnen bei einem heißen Tee Englisch zu üben! Wie ist das Wetter bei dir gerade${this.salutation()}?`,
           suggestions: [
             "It is sunny and pleasant today.",
             "It is raining and grey outside.",
@@ -2189,8 +2310,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (/\b(i\s+am\s+(very\s+)?(tired|exhausted|stressed|happy|sad|bored)|ich\s+bin\s+m[uü]de|gestresst)\b/i.test(norm)) {
         return {
           id: 'intent_feelings_empathy',
-          en: `I hear you, Istvan! It is completely normal to feel that way. Take a deep breath, grab some water, and relax. We can keep our conversation light and easy. How can I make your day a little better?`,
-          de: `Das verstehe ich gut, Istvan! Das ist völlig normal. Nimm dir einen kurzen Moment zum Durchatmen und mach dir keinen Stress. Wir machen ganz entspannt weiter. Wie kann ich dir deinen Tag etwas verschönern?`,
+          en: `I hear you${this.salutation()}! It is completely normal to feel that way. Take a deep breath, grab some water, and relax. We can keep our conversation light and easy. How can I make your day a little better?`,
+          de: `Das verstehe ich gut${this.salutation()}! Das ist völlig normal. Nimm dir einen kurzen Moment zum Durchatmen und mach dir keinen Stress. Wir machen ganz entspannt weiter. Wie kann ich dir deinen Tag etwas verschönern?`,
           suggestions: [
             "Let's do a very quick and easy 2-minute chat.",
             "Can you tell me an easy English phrase?",
@@ -2231,8 +2352,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (/^(yes|yeah|yep|sure|ok|okay|cool|super|great|thanks|thank you|danke|genau|ja|nein|no)\b/i.test(norm)) {
         return {
           id: 'intent_short_affirmation',
-          en: `Awesome, Istvan! I am glad to hear that. What would you like to talk about or practice next?`,
-          de: `Klasse, Istvan! Das freut mich. Worüber möchtest du als Nächstes sprechen oder was möchtest du üben?`,
+          en: `Awesome${this.salutation()}! I am glad to hear that. What would you like to talk about or practice next?`,
+          de: `Klasse${this.salutation()}! Das freut mich. Worüber möchtest du als Nächstes sprechen oder was möchtest du üben?`,
           suggestions: [
             "Can you teach me some new conversational words?",
             "Let's talk about hobbies and daily routines.",
@@ -2245,8 +2366,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (/\b(how\s+are\s+you|how\s+r\s+u|how\s+is\s+it\s+going|hows\s+it\s+going|wie\s+geht\s+es\s+dir|wie\s+gehts)\b/i.test(norm)) {
         return {
           id: 'intent_how_are_you',
-          en: `Good morning Istvan! I am doing very well, thank you for asking! How are you doing today, and are you ready for our ${meta.desc}?`,
-          de: `Guten Morgen Istvan! Mir geht es sehr gut, vielen Dank der Nachfrage! Wie geht es dir heute und bist du bereit für unser ${meta.desc}?`,
+          en: `Good morning${this.salutation()}! I am doing very well, thank you for asking! How are you doing today, and are you ready for our ${meta.desc}?`,
+          de: `Guten Morgen${this.salutation()}! Mir geht es sehr gut, vielen Dank der Nachfrage! Wie geht es dir heute und bist du bereit für unser ${meta.desc}?`,
           suggestions: [
             "I am doing great, thank you! Ready to start.",
             "A bit tired, but looking forward to today's tasks.",
@@ -2259,8 +2380,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (/^(hello|hi|hey|good\s+morning|good\s+day|guten\s+morgen|hallo|servus)\b/i.test(norm) && norm.length < 25) {
         return {
           id: 'intent_greeting_simple',
-          en: `Good morning Istvan! Great to see you. How is your day going so far? Let's get started with our ${meta.desc}.`,
-          de: `Guten Morgen Istvan! Schön dich zu sehen. Wie läuft dein Tag bisher? Lass uns mit unserem ${meta.desc} starten.`,
+          en: `Good morning${this.salutation()}! Great to see you. How is your day going so far? Let's get started with our ${meta.desc}.`,
+          de: `Guten Morgen${this.salutation()}! Schön dich zu sehen. Wie läuft dein Tag bisher? Lass uns mit unserem ${meta.desc} starten.`,
           suggestions: [
             "Good morning! I am ready to give my update.",
             "Hello! Everything is going smoothly today.",
@@ -2301,8 +2422,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (/\b(i\s+do\s*not\s+understand|i\s+dont\s+understand|can\s+you\s+help|repeat\s+please|nicht\s+verstanden|hilfe|hilf\s+mir)\b/i.test(norm)) {
         return {
           id: 'intent_help_understand',
-          en: `No worries at all, Istvan! Take your time. You can speak in simple words, or tap one of the suggested answers below. You can also ask me questions in German if you like!`,
-          de: `Keine Sorge, Istvan! Lass dir Zeit. Du kannst in einfachen Worten sprechen oder unten auf die Antwortvorschläge tippen. Du kannst mich auch auf Deutsch fragen!`,
+          en: `No worries at all${this.salutation()}! Take your time. You can speak in simple words, or tap one of the suggested answers below. You can also ask me questions in German if you like!`,
+          de: `Keine Sorge${this.salutation()}! Lass dir Zeit. Du kannst in einfachen Worten sprechen oder unten auf die Antwortvorschläge tippen. Du kannst mich auch auf Deutsch fragen!`,
           suggestions: [
             "Yesterday I worked on my programming tasks.",
             "Could you explain that in simpler words, please?",
@@ -2354,8 +2475,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (/\b(yesterday\s+i\s+was\s+(sick|ill|off|absent|on\s+vacation)|i\s+was\s+sick|war\s+krank|hatte\s+urlaub)\b/i.test(norm)) {
         return {
           id: 'intent_sick_leave',
-          en: `Welcome back, Istvan! I hope you had some good rest. What is your main priority to get started with today?`,
-          de: `Willkommen zurück, Istvan! Ich hoffe, du konntest dich gut erholen. Was ist deine wichtigste Aufgabe für den Einstieg heute?`,
+          en: `Welcome back${this.salutation()}! I hope you had some good rest. What is your main priority to get started with today?`,
+          de: `Willkommen zurück${this.salutation()}! Ich hoffe, du konntest dich gut erholen. Was ist deine wichtigste Aufgabe für den Einstieg heute?`,
           suggestions: [
             "Today I am catching up on unread emails and tickets.",
             "I am starting work on the authentication module.",
@@ -2368,8 +2489,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (/\b(no\s+blockers|no\s+blocker|dont\s+have\s+any\s+blockers|everything\s+is\s+fine|keine\s+blocker)\b/i.test(norm)) {
         return {
           id: 'intent_no_blockers',
-          en: `That's fantastic news, Istvan! Having no blockers means smooth sailing. What feature or ticket are you tackling next?`,
-          de: `Das sind fantastische Neuigkeiten, Istvan! Keine Blocker bedeutet freie Bahn. Welches Feature oder Ticket gehst du als nächstes an?`,
+          en: `That's fantastic news${this.salutation()}! Having no blockers means smooth sailing. What feature or ticket are you tackling next?`,
+          de: `Das sind fantastische Neuigkeiten${this.salutation()}! Keine Blocker bedeutet freie Bahn. Welches Feature oder Ticket gehst du als nächstes an?`,
           suggestions: [
             "I will continue refactoring the backend service.",
             "I will write unit tests for the API endpoints.",
@@ -2382,8 +2503,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (/\?\s*$/.test(norm.trim())) {
         return {
           id: 'intent_general_question',
-          en: `That is a good question, Istvan! In our ${meta.desc}, my goal is to support your progress. Could you tell me a bit more about what you have in mind?`,
-          de: `Das ist eine gute Frage, Istvan! In unserem ${meta.desc} ist es mein Ziel, dich zu unterstützen. Kannst du mir etwas mehr darüber erzählen?`,
+          en: `That is a good question${this.salutation()}! In our ${meta.desc}, my goal is to support your progress. Could you tell me a bit more about what you have in mind?`,
+          de: `Das ist eine gute Frage${this.salutation()}! In unserem ${meta.desc} ist es mein Ziel, dich zu unterstützen. Kannst du mir etwas mehr darüber erzählen?`,
           suggestions: [
             "I wanted to ask about our priorities.",
             "I was wondering about our deployment schedule.",
@@ -2401,7 +2522,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const scenario = this.scenarios[scenarioId] || this.scenarios.beginner || this.scenarios.standup;
       const meta = this.getPartnerMeta(scenarioId);
 
-      // 1. ZUERST: Prüfen auf direkte Fragen & Gesprächsabsichten (Name, Alter, Begrüßung, Rolle, Hilfe, etc.)
+      // 1. ZUERST: Prüfen auf direkte Fragen & Gesprächsabsichten (Name, Fehler, Alter, Begrüßung, Rolle, etc.)
       const directReply = this.detectDirectIntent(userInput, scenarioId);
       if (directReply) {
         return directReply;
@@ -2483,8 +2604,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (scenarioId === 'beginner') {
         const beginnerFallbacks = [
           {
-            en: `That is really nice to hear, Istvan! 😊 In everyday English, we often follow up by asking: "And how about you?" Would you like to ask me something, or shall I tell you about my favorite English words?`,
-            de: `Das ist wirklich schön zu hören, Istvan! 😊 Im Alltagsenglisch fragt man oft nach mit: "And how about you?" (Und wie ist es bei dir?). Möchtest du mich etwas fragen oder soll ich dir meine englischen Lieblingswörter verraten?`,
+            en: `That is really nice to hear${this.salutation()}! 😊 In everyday English, we often follow up by asking: "And how about you?" Would you like to ask me something, or shall I tell you about my favorite English words?`,
+            de: `Das ist wirklich schön zu hören${this.salutation()}! 😊 Im Alltagsenglisch fragt man oft nach mit: "And how about you?" (Und wie ist es bei dir?). Möchtest du mich etwas fragen oder soll ich dir meine englischen Lieblingswörter verraten?`,
             suggestions: [
               "And how about you? What are you doing today?",
               "Can you teach me 3 useful English words?",
@@ -2492,8 +2613,8 @@ document.addEventListener('DOMContentLoaded', () => {
             ]
           },
           {
-            en: `You are doing wonderfully, Istvan! Practice makes perfect. What is a topic you enjoy talking about most: food, music, travel, or computers?`,
-            de: `Du machst das wunderbar, Istvan! Übung macht den Meister. Über welches Thema sprichst du am liebsten: Essen, Musik, Reisen oder Computer?`,
+            en: `You are doing wonderfully${this.salutation()}! Practice makes perfect. What is a topic you enjoy talking about most: food, music, travel, or computers?`,
+            de: `Du machst das wunderbar${this.salutation()}! Übung macht den Meister. Über welches Thema sprichst du am liebsten: Essen, Musik, Reisen oder Computer?`,
             suggestions: [
               "I really enjoy talking about music and creative hobbies.",
               "I like talking about computers, programming, and technology.",
@@ -2501,8 +2622,8 @@ document.addEventListener('DOMContentLoaded', () => {
             ]
           },
           {
-            en: `Great conversation, Istvan! English has many simple sentences you can use every day. Would you like to practice a short dialogue with me?`,
-            de: `Tolles Gespräch, Istvan! Im Englischen gibt es viele einfache Sätze, die du täglich nutzen kannst. Möchtest du einen kurzen Dialog mit mir üben?`,
+            en: `Great conversation${this.salutation()}! English has many simple sentences you can use every day. Would you like to practice a short dialogue with me?`,
+            de: `Tolles Gespräch${this.salutation()}! Im Englischen gibt es viele einfache Sätze, die du täglich nutzen kannst. Möchtest du einen kurzen Dialog mit mir üben?`,
             suggestions: [
               "Yes! Please give me a simple sentence to practice.",
               "Can you ask me an everyday question in English?",
@@ -2519,8 +2640,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (scenarioId === 'standup') {
         const standupFallbacks = [
           {
-            en: `Thanks for the update, Istvan! What are you planning to work on today, and do you foresee any blockers?`,
-            de: `Danke für dein Update, Istvan! Woran planst du heute zu arbeiten und siehst du irgendwelche Hindernisse (Blocker)?`,
+            en: `Thanks for the update${this.salutation()}! What are you planning to work on today, and do you foresee any blockers?`,
+            de: `Danke für dein Update${this.salutation()}! Woran planst du heute zu arbeiten und siehst du irgendwelche Hindernisse (Blocker)?`,
             suggestions: [
               "Today I will write unit tests for the new service.",
               "I plan to finish the documentation and review open PRs.",
@@ -2528,8 +2649,8 @@ document.addEventListener('DOMContentLoaded', () => {
             ]
           },
           {
-            en: `Great progress, Istvan! Keep up the momentum. Are there any dependencies on other team members or external teams today?`,
-            de: `Toller Fortschritt, Istvan! Bleib am Ball. Gibt es heute irgendwelche Abhängigkeiten zu anderen Teammitgliedern oder Teams?`,
+            en: `Great progress${this.salutation()}! Keep up the momentum. Are there any dependencies on other team members or external teams today?`,
+            de: `Toller Fortschritt${this.salutation()}! Bleib am Ball. Gibt es heute irgendwelche Abhängigkeiten zu anderen Teammitgliedern oder Teams?`,
             suggestions: [
               "No dependencies, I have everything I need to proceed.",
               "I am coordinating with the frontend team on API data formats.",
@@ -2537,8 +2658,8 @@ document.addEventListener('DOMContentLoaded', () => {
             ]
           },
           {
-            en: `Understood, Istvan! That gives us a clear picture. Is there anything specific you would like to discuss after standup?`,
-            de: `Verstanden, Istvan! Das gibt uns ein klares Bild. Gibt es etwas Bestimmtes, das du nach dem Standup besprechen möchtest?`,
+            en: `Understood${this.salutation()}! That gives us a clear picture. Is there anything specific you would like to discuss after standup?`,
+            de: `Verstanden${this.salutation()}! Das gibt uns ein klares Bild. Gibt es etwas Bestimmtes, das du nach dem Standup besprechen möchtest?`,
             suggestions: [
               "Nothing to discuss, I can jump straight into coding.",
               "A quick 5-minute sync on architecture would be helpful.",
@@ -2555,8 +2676,8 @@ document.addEventListener('DOMContentLoaded', () => {
       // Allgemeiner Fallback für andere Szenarien
       return {
         id: 'open_fallback_' + this.state.turnCount,
-        en: `Thanks for sharing, Istvan! In our ${meta.desc}, every contribution helps. What would you like to focus on next?`,
-        de: `Danke fürs Teilen, Istvan! In unserem ${meta.desc} hilft jeder Beitrag weiter. Worauf möchtest du dich als Nächstes konzentrieren?`,
+        en: `Thanks for sharing${this.salutation()}! In our ${meta.desc}, every contribution helps. What would you like to focus on next?`,
+        de: `Danke fürs Teilen${this.salutation()}! In unserem ${meta.desc} hilft jeder Beitrag weiter. Worauf möchtest du dich als Nächstes konzentrieren?`,
         suggestions: [
           "Let's continue with our planned discussion.",
           "Could you explain the next step in simple terms?",
@@ -2656,6 +2777,33 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
+    // Initialisiere Benutzernamen in der UI
+    updateUserNameUI();
+
+    const btnEditUserName = document.getElementById('btnEditUserName');
+    if (btnEditUserName) {
+      btnEditUserName.addEventListener('click', () => {
+        const current = getUserName();
+        const newName = prompt('Wie lautet dein Name? (Wird für die persönliche Anrede im Chat genutzt):', current);
+        if (newName !== null) {
+          setUserName(newName);
+          showToast(newName.trim() ? `👤 Name gespeichert: ${newName.trim()}` : '👤 Name zurückgesetzt');
+          resetDialogScenario(currentScenarioId);
+        }
+      });
+    }
+
+    const btnAskFeedback = document.getElementById('btnAskFeedback');
+    if (btnAskFeedback) {
+      btnAskFeedback.addEventListener('click', () => {
+        const input = document.getElementById('dialogTextInput');
+        if (input) {
+          input.value = "Kannst du bitte meine Fehler korrigieren?";
+          submitUserChatMessage();
+        }
+      });
+    }
+
     // Erstes Szenario starten
     switchDialogScenario('beginner');
   }
@@ -2706,12 +2854,29 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    // Initiale Begrüßungsnachricht des Partners
+    // Initiale Begrüßungsnachricht des Partners (dynamisch mit Benutzername)
+    const userName = getUserName();
+    let promptEn = scenario.initialPrompt;
+    let promptDe = scenario.initialPromptDe;
+
+    if (userName) {
+      promptEn = promptEn.replace(/\{name\}/g, userName).replace(/Istvan/g, userName);
+      promptDe = promptDe.replace(/\{name\}/g, userName).replace(/Istvan/g, userName);
+    } else {
+      if (scenarioId === 'beginner') {
+        promptEn = `Hello and welcome! 😊 I am Emma, your friendly English tutor. In this chat, there is zero pressure: we can talk about everyday life, hobbies, or learn new words. Before we begin: what is your name?`;
+        promptDe = `Hallo und herzlich willkommen! 😊 Ich bin Emma, deine freundliche Sprachbegleiterin. Hier gibt es null Leistungsdruck: Wir können über den Alltag, Hobbys plaudern oder neue Wörter lernen. Bevor wir starten: Wie lautet dein Name?`;
+      } else {
+        promptEn = promptEn.replace(/\{name\}/g, '').replace(/Istvan/g, '').replace(/\s+,/g, ',').replace(/\s{2,}/g, ' ');
+        promptDe = promptDe.replace(/\{name\}/g, '').replace(/Istvan/g, '').replace(/\s+,/g, ',').replace(/\s{2,}/g, ' ');
+      }
+    }
+
     const initialPartnerMsg = {
       type: 'partner',
       sender: scenario.partnerName,
-      textEn: scenario.initialPrompt,
-      textDe: scenario.initialPromptDe,
+      textEn: promptEn,
+      textDe: promptDe,
       suggestions: getInitialSuggestions(scenarioId)
     };
 
@@ -2726,10 +2891,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function getInitialSuggestions(scenarioId) {
     if (scenarioId === 'beginner') {
+      const uName = getUserName();
+      if (!uName) {
+        return [
+          'My name is Istvan.',
+          'My name is Alex.',
+          'Can we just practice without names?'
+        ];
+      }
       return [
-        'Hello Emma! I am a beginner, can we practice simple conversation?',
-        'How old are you, and what are your favorite hobbies?',
-        'Can you teach me some useful everyday English words?'
+        `Hello Emma! My name is ${uName}.`,
+        'Can you teach me some useful everyday English words?',
+        'Can you correct my English when I make mistakes?'
       ];
     }
     if (scenarioId === 'standup') {
