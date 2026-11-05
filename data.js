@@ -169,8 +169,8 @@ const VOCAB_DATA = [
     phonetic: 'nais tu miht ju',
     german: 'Freut mich, dich / Sie kennenzulernen!',
     definition: 'Der perfekte, freundliche Einstiegssatz bei neuen Kollegen oder Gesprächspartnern.',
-    exampleEn: 'Hello, I am Istvan, the new software developer. Nice to meet you!',
-    exampleDe: 'Hallo, ich bin Istvan, der neue Softwareentwickler. Freut mich, dich kennenzulernen!',
+    exampleEn: 'Hello, I am Alex, the new software developer. Nice to meet you!',
+    exampleDe: 'Hallo, ich bin Alex, der neue Softwareentwickler. Freut mich, dich kennenzulernen!',
     svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>`
   },
   {
@@ -231,8 +231,8 @@ const VOCAB_DATA = [
     phonetic: 'ai häv a re-ser-vey-shun an-der thö neym',
     german: 'Ich habe eine Reservierung auf den Namen...',
     definition: 'Standardsatz für Hotel-Check-in oder Mietwagenabholung.',
-    exampleEn: 'Good evening, I have a hotel reservation under the name Istvan Csovrij.',
-    exampleDe: 'Guten Abend, ich habe eine Hotelreservierung auf den Namen Istvan Csovrij.',
+    exampleEn: 'Good evening, I have a hotel reservation under the name Alex Miller.',
+    exampleDe: 'Guten Abend, ich habe eine Hotelreservierung auf den Namen Alex Miller.',
     svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"/><path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/><line x1="9" y1="13" x2="9.01" y2="13"/><line x1="15" y1="13" x2="15.01" y2="13"/></svg>`
   },
   {
@@ -505,6 +505,187 @@ const VOCAB_DATA = [
     "exampleEn": "The automated production deployment was completed without any downtime.",
     "exampleDe": "Das automatisierte Produktions-Deployment wurde ohne Ausfallzeit abgeschlossen."
   }
+,
+  {
+    id: 'voc_agenda',
+    category: 'meetings',
+    categoryName: 'Meetings & Besprechungen',
+    english: 'Agenda',
+    phonetic: 'ä-dschen-da',
+    german: 'Tagesordnung / Ablaufplan',
+    definition: 'A list of items to be discussed or acted upon at a meeting.',
+    exampleEn: 'Before we start the meeting, let\'s quickly review today\'s agenda.',
+    exampleDe: 'Bevor wir das Meeting starten, lasst uns kurz die heutige Tagesordnung durchgehen.',
+    svg: '<svg viewBox="0 0 100 100"><rect x="25" y="15" width="50" height="70" rx="6" fill="none" stroke="#38bdf8" stroke-width="4"/><line x1="35" y1="30" x2="65" y2="30" stroke="#38bdf8" stroke-width="4"/><line x1="35" y1="45" x2="65" y2="45" stroke="#38bdf8" stroke-width="4"/><line x1="35" y1="60" x2="55" y2="60" stroke="#38bdf8" stroke-width="4"/></svg>'
+  },
+  {
+    id: 'voc_action_item',
+    category: 'meetings',
+    categoryName: 'Meetings & Besprechungen',
+    english: 'Action Item',
+    phonetic: 'äk-schen ay-tem',
+    german: 'Aufgabenpunkt / To-Do',
+    definition: 'A specific task or action that needs to be completed, usually assigned to an individual during a meeting.',
+    exampleEn: 'My action item from the sprint retrospective is to update our API documentation.',
+    exampleDe: 'Mein Aufgabenpunkt aus der Sprint-Retrospektive ist es, unsere API-Dokumentation zu aktualisieren.',
+    svg: '<svg viewBox="0 0 100 100"><circle cx="35" cy="35" r="8" fill="#10b981"/><line x1="50" y1="35" x2="80" y2="35" stroke="#e2e8f0" stroke-width="4"/><circle cx="35" cy="65" r="8" fill="#10b981"/><line x1="50" y1="65" x2="80" y2="65" stroke="#e2e8f0" stroke-width="4"/></svg>'
+  },
+  {
+    id: 'voc_deliverable',
+    category: 'meetings',
+    categoryName: 'Meetings & Besprechungen',
+    english: 'Deliverable',
+    phonetic: 'di-liw-er-a-bel',
+    german: 'Projektergebnis / Liefergegenstand',
+    definition: 'A tangible product or service given to a client or stakeholder upon project milestone completion.',
+    exampleEn: 'The main deliverable for this sprint is the user registration endpoint.',
+    exampleDe: 'Das wichtigste Projektergebnis für diesen Sprint ist der Endpunkt für die Benutzerregistrierung.',
+    svg: '<svg viewBox="0 0 100 100"><rect x="25" y="30" width="50" height="50" rx="6" fill="none" stroke="#f59e0b" stroke-width="4"/><polygon points="25,30 50,15 75,30 50,45" fill="#f59e0b" opacity="0.5"/></svg>'
+  },
+  {
+    id: 'voc_consensus',
+    category: 'meetings',
+    categoryName: 'Meetings & Besprechungen',
+    english: 'Consensus',
+    phonetic: 'kon-sen-sas',
+    german: 'Einigung / Übereinstimmung',
+    definition: 'A general agreement reached by all members of a group or team.',
+    exampleEn: 'After an open discussion, the engineering team reached a consensus on using PostgreSQL.',
+    exampleDe: 'Nach einer offenen Diskussion erzielte das Entwicklerteam eine Einigung über die Nutzung von PostgreSQL.',
+    svg: '<svg viewBox="0 0 100 100"><circle cx="35" cy="45" r="16" fill="#38bdf8" opacity="0.6"/><circle cx="65" cy="45" r="16" fill="#10b981" opacity="0.6"/><path d="M40,75 L60,75" stroke="#fff" stroke-width="4"/></svg>'
+  },
+  {
+    id: 'voc_stakeholder',
+    category: 'meetings',
+    categoryName: 'Meetings & Besprechungen',
+    english: 'Stakeholder',
+    phonetic: 'steyk-hol-der',
+    german: 'Projektbeteiligter / Interessengruppe',
+    definition: 'Any person or organization that has a legitimate interest in the outcome of a software project.',
+    exampleEn: 'We will present the working demo to key business stakeholders on Friday.',
+    exampleDe: 'Wir werden die lauffähige Demo am Freitag den wichtigsten Projektbeteiligten vorstellen.',
+    svg: '<svg viewBox="0 0 100 100"><circle cx="50" cy="35" r="15" fill="none" stroke="#a855f7" stroke-width="4"/><path d="M25,75 C25,55 75,55 75,75" fill="none" stroke="#a855f7" stroke-width="4"/></svg>'
+  },
+  {
+    id: 'voc_escalation',
+    category: 'meetings',
+    categoryName: 'Meetings & Besprechungen',
+    english: 'Escalation',
+    phonetic: 'es-ka-ley-schen',
+    german: 'Eskalation / Weiterleitung an höhere Stelle',
+    definition: 'The process of raising an unresolved issue or blocker to higher authority levels for quick resolution.',
+    exampleEn: 'If the third-party API remains down, we will initiate an immediate management escalation.',
+    exampleDe: 'Wenn die Drittanbieter-API weiterhin down bleibt, leiten wir eine sofortige Management-Eskalation ein.',
+    svg: '<svg viewBox="0 0 100 100"><path d="M20,80 L80,20 M80,20 L50,20 M80,20 L80,50" fill="none" stroke="#ef4444" stroke-width="5"/></svg>'
+  },
+  {
+    id: 'voc_workaround',
+    category: 'daily',
+    categoryName: 'Tägliche IT-Begriffe',
+    english: 'Workaround',
+    phonetic: 'wörk-a-rawnd',
+    german: 'Behelfslösung / Übergangslösung',
+    definition: 'A temporary method to bypass a bug or problem while waiting for a permanent fix.',
+    exampleEn: 'We applied a quick workaround so users can log in while we patch the root cause.',
+    exampleDe: 'Wir haben eine schnelle Übergangslösung eingerichtet, damit sich Benutzer einloggen können, während wir die Ursache beheben.',
+    svg: '<svg viewBox="0 0 100 100"><path d="M20,50 Q50,15 80,50" fill="none" stroke="#f59e0b" stroke-width="4" stroke-dasharray="6,6"/><line x1="20" y1="50" x2="80" y2="50" stroke="#ef4444" stroke-width="3"/></svg>'
+  },
+  {
+    id: 'voc_redundancy',
+    category: 'architecture',
+    categoryName: 'Architektur & Clean Code',
+    english: 'Redundancy',
+    phonetic: 'ri-dan-den-si',
+    german: 'Ausfallsicherheit / Redundanz',
+    definition: 'Duplication of critical components to increase system reliability in case of failure.',
+    exampleEn: 'Our database cluster uses multi-region redundancy to ensure zero downtime.',
+    exampleDe: 'Unser Datenbank-Cluster nutzt regionsübergreifende Redundanz, um Ausfallzeiten zu verhindern.',
+    svg: '<svg viewBox="0 0 100 100"><rect x="20" y="35" width="28" height="30" rx="4" fill="none" stroke="#10b981" stroke-width="4"/><rect x="52" y="35" width="28" height="30" rx="4" fill="none" stroke="#10b981" stroke-width="4"/></svg>'
+  },
+  {
+    id: 'voc_bottleneck',
+    category: 'daily',
+    categoryName: 'Tägliche IT-Begriffe',
+    english: 'Bottleneck',
+    phonetic: 'bot-tel-nek',
+    german: 'Engpass / Leistungsengstelle',
+    definition: 'A point of congestion in a system that limits overall throughput and performance.',
+    exampleEn: 'Unindexed database queries were the primary bottleneck in our backend application.',
+    exampleDe: 'Nicht indexierte Datenbankabfragen waren der Hauptengpass in unserer Backend-Anwendung.',
+    svg: '<svg viewBox="0 0 100 100"><path d="M35,20 L65,20 L65,40 L80,75 L20,75 L35,40 Z" fill="none" stroke="#f59e0b" stroke-width="4"/></svg>'
+  },
+  {
+    id: 'voc_feasible',
+    category: 'daily',
+    categoryName: 'Tägliche IT-Begriffe',
+    english: 'Feasible',
+    phonetic: 'fie-si-bel',
+    german: 'Machbar / umsetzbar',
+    definition: 'Possible to do easily or conveniently within given resources and time constraints.',
+    exampleEn: 'Delivering this feature by next sprint is technically feasible with our current team.',
+    exampleDe: 'Dieses Feature bis zum nächsten Sprint zu liefern, ist mit unserem aktuellen Team technisch machbar.',
+    svg: '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="35" fill="none" stroke="#10b981" stroke-width="4"/><polyline points="35,50 45,62 65,38" fill="none" stroke="#10b981" stroke-width="5"/></svg>'
+  },
+  {
+    id: 'voc_reliable',
+    category: 'daily',
+    categoryName: 'Tägliche IT-Begriffe',
+    english: 'Reliable',
+    phonetic: 'ri-lay-a-bel',
+    german: 'Zuverlässig / verlässlich',
+    definition: 'Consistently good in quality or performance; able to be trusted.',
+    exampleEn: 'We write comprehensive unit tests to ensure our payment service is 100% reliable.',
+    exampleDe: 'Wir schreiben umfassende Unit-Tests, um sicherzustellen, dass unser Bezahldienst 100% verlässlich ist.',
+    svg: '<svg viewBox="0 0 100 100"><path d="M50,15 L78,30 L78,60 C78,75 50,88 50,88 C50,88 22,75 22,60 L22,30 Z" fill="none" stroke="#38bdf8" stroke-width="4"/></svg>'
+  },
+  {
+    id: 'voc_challenging',
+    category: 'daily',
+    categoryName: 'Tägliche IT-Begriffe',
+    english: 'Challenging',
+    phonetic: 'tschäl-len-dsching',
+    german: 'Herausfordernd / anspruchsvoll',
+    definition: 'Testing one\'s abilities; demanding and rewarding effort.',
+    exampleEn: 'Refactoring the legacy microservices architecture was challenging but highly rewarding.',
+    exampleDe: 'Die Überarbeitung der Altsystem-Microservices-Architektur war herausfordernd, aber sehr lohnend.',
+    svg: '<svg viewBox="0 0 100 100"><polygon points="50,15 90,80 10,80" fill="none" stroke="#a855f7" stroke-width="4"/><circle cx="50" cy="45" r="5" fill="#a855f7"/></svg>'
+  },
+  {
+    id: 'voc_clarify',
+    category: 'meetings',
+    categoryName: 'Meetings & Besprechungen',
+    english: 'Clarify',
+    phonetic: 'klär-i-fai',
+    german: 'Klären / verdeutlichen',
+    definition: 'To make a statement or situation less confused and more clearly comprehensible.',
+    exampleEn: 'Could we schedule a five-minute call to clarify the acceptance criteria for this user story?',
+    exampleDe: 'Könnten wir ein 5-Minuten-Telefonat vereinbaren, um die Akzeptanzkriterien für diese User Story zu klären?',
+    svg: '<svg viewBox="0 0 100 100"><circle cx="50" cy="45" r="25" fill="none" stroke="#38bdf8" stroke-width="4"/><line x1="50" y1="35" x2="50" y2="50" stroke="#38bdf8" stroke-width="4"/><circle cx="50" cy="58" r="2" fill="#38bdf8"/></svg>'
+  },
+  {
+    id: 'voc_postpone',
+    category: 'meetings',
+    categoryName: 'Meetings & Besprechungen',
+    english: 'Postpone',
+    phonetic: 'post-pown',
+    german: 'Verschieben / vertagen',
+    definition: 'To cause or arrange for an event or task to take place at a later time than originally scheduled.',
+    exampleEn: 'Because two key developers are ill, we decided to postpone the deployment until Monday.',
+    exampleDe: 'Da zwei wichtige Entwickler krank sind, haben wir beschlossen, das Deployment auf Montag zu verschieben.',
+    svg: '<svg viewBox="0 0 100 100"><circle cx="45" cy="50" r="28" fill="none" stroke="#f59e0b" stroke-width="4"/><line x1="45" y1="32" x2="45" y2="50" stroke="#f59e0b" stroke-width="4"/><line x1="45" y1="50" x2="60" y2="50" stroke="#f59e0b" stroke-width="4"/><path d="M75,45 L85,55 L75,65" fill="none" stroke="#f59e0b" stroke-width="4"/></svg>'
+  },
+  {
+    id: 'voc_deadline',
+    category: 'meetings',
+    categoryName: 'Meetings & Besprechungen',
+    english: 'Deadline',
+    phonetic: 'ded-layn',
+    german: 'Abgabefrist / Stichtag',
+    definition: 'The latest time or date by which something should be completed.',
+    exampleEn: 'Our final project submission deadline for the FIAE examination committee is next month.',
+    exampleDe: 'Unsere finale Projektabgabefrist für den FIAE-Prüfungsausschuss ist nächsten Monat.',
+    svg: '<svg viewBox="0 0 100 100"><rect x="20" y="20" width="60" height="60" rx="6" fill="none" stroke="#ef4444" stroke-width="4"/><line x1="20" y1="38" x2="80" y2="38" stroke="#ef4444" stroke-width="4"/><circle cx="50" cy="58" r="10" fill="#ef4444"/></svg>'
+  }
 ];
 
 const SPEECH_DATA = [
@@ -558,9 +739,9 @@ const SPEECH_DATA = [
     category: 'conversation',
     categoryName: 'Smalltalk & Alltag',
     instruction: 'Höre zu und sprich den Satz laut nach:',
-    sentenceEn: 'Hello, my name is Istvan and I am learning English.',
-    sentenceDe: 'Hallo, mein Name ist Istvan und ich lerne Englisch.',
-    phonetic: 'häl-lo, mai neym is Istvan änd ai äm lör-ning ing-glisch.'
+    sentenceEn: 'Hello, my name is Alex and I am learning English.',
+    sentenceDe: 'Hallo, mein Name ist Alex und ich lerne Englisch.',
+    phonetic: 'häl-lo, mai neym is Älex änd ai äm lör-ning ing-glisch.'
   },
   {
     id: 'sp-7',
@@ -616,6 +797,178 @@ const SPEECH_DATA = [
     "sentenceEn": "I look forward to hearing from you and discussing the technical details.",
     "sentenceDe": "Ich freue mich darauf, von Ihnen zu hören und die technischen Details zu besprechen.",
     "phonetic": "ai luk for-ward tu hi-ring from ju änd dis-ka-sing thö tek-ni-kl di-teyls."
+  }
+,
+  {
+    id: 'sp_meet_1',
+    category: 'meetings',
+    categoryName: 'Meetings & Besprechungen',
+    english: 'Could you please elaborate on that point?',
+    phonetic: 'kud ju plies i-läb-o-reyt on dät poynt?',
+    german: 'Könntest du diesen Punkt bitte näher ausführen?',
+    context: 'Höflich nach weiteren Details in einer Besprechung fragen.'
+  },
+  {
+    id: 'sp_meet_2',
+    category: 'meetings',
+    categoryName: 'Meetings & Besprechungen',
+    english: 'Let\'s take this discussion offline and follow up after the standup.',
+    phonetic: 'lets teyk dis dis-kasch-en off-layn änd fol-lo ap af-ter de ständ-ap.',
+    german: 'Lass uns diese Diskussion bilateral (offline) nach dem Standup fortsetzen.',
+    context: 'Standard-Meeting-Phrase, um Zeit bei Detaildiskussionen zu sparen.'
+  },
+  {
+    id: 'sp_meet_3',
+    category: 'meetings',
+    categoryName: 'Meetings & Besprechungen',
+    english: 'Can everyone see my shared screen properly?',
+    phonetic: 'kän ev-ri-wan sie mai schärd skrien prop-er-li?',
+    german: 'Können alle meinen geteilten Bildschirm gut sehen?',
+    context: 'Typischer Einstieg in Online-Meetings und Demos.'
+  },
+  {
+    id: 'sp_meet_4',
+    category: 'meetings',
+    categoryName: 'Meetings & Besprechungen',
+    english: 'I see your point, but we have to consider database latency.',
+    phonetic: 'ai sie jor poynt, bat wi häf tu kon-si-der dey-ta-beys ley-ten-si.',
+    german: 'Ich verstehe deinen Punkt, aber wir müssen die Datenbank-Latenz bedenken.',
+    context: 'Höflich Einwände oder technische Bedenken einbringen.'
+  },
+  {
+    id: 'sp_meet_5',
+    category: 'meetings',
+    categoryName: 'Meetings & Besprechungen',
+    english: 'Let\'s summarize the key action items before we wrap up.',
+    phonetic: 'lets sam-ma-rays de kie äk-schen ay-tems bi-for wi räp ap.',
+    german: 'Lass uns die wichtigsten Aufgabenpunkte zusammenfassen, bevor wir abschließen.',
+    context: 'Besprechungen mit klaren Verantwortlichkeiten beenden.'
+  },
+  {
+    id: 'sp_meet_6',
+    category: 'meetings',
+    categoryName: 'Meetings & Besprechungen',
+    english: 'I have a blocker regarding server permissions from the DevOps team.',
+    phonetic: 'ai häf a blok-ker ri-gar-ding ser-ver per-misch-ens from de dev-ops tiem.',
+    german: 'Ich habe ein Hindernis (Blocker) bezüglich der Server-Berechtigungen vom DevOps-Team.',
+    context: 'Im Daily Standup ein Problem klar und professionell ansprechen.'
+  },
+  {
+    id: 'sp_meet_7',
+    category: 'meetings',
+    categoryName: 'Meetings & Besprechungen',
+    english: 'Who is the primary owner of this sprint ticket?',
+    phonetic: 'hu is de pray-ma-ri ow-ner of dis sprint tik-ket?',
+    german: 'Wer ist der Hauptverantwortliche für dieses Sprint-Ticket?',
+    context: 'Zuständigkeiten im Team klären.'
+  },
+  {
+    id: 'sp_meet_8',
+    category: 'meetings',
+    categoryName: 'Meetings & Besprechungen',
+    english: 'I completely agree with this architecture proposal.',
+    phonetic: 'ai kom-pliet-li ä-grie wid dis ar-ki-tek-tscher pro-po-sal.',
+    german: 'Ich stimme diesem Architekturvorschlag voll und ganz zu.',
+    context: 'Zustimmung in technischen Diskussionen ausdrücken.'
+  },
+  {
+    id: 'sp_meet_9',
+    category: 'meetings',
+    categoryName: 'Meetings & Besprechungen',
+    english: 'Sorry to interrupt, but could you clarify what you mean by that?',
+    phonetic: 'sor-ri tu in-ter-rapt, bat kud ju klär-i-fai wat ju mien bai dät?',
+    german: 'Entschuldige die Unterbrechung, aber könntest du klarstellen, was du damit meinst?',
+    context: 'Höfliches Nachfragen und Unterbrechen in Diskussionen.'
+  },
+  {
+    id: 'sp_meet_10',
+    category: 'meetings',
+    categoryName: 'Meetings & Besprechungen',
+    english: 'What is our estimated timeline for deploying this release?',
+    phonetic: 'wat is awer es-ti-mey-ted taym-layn for dip-loy-ing dis ri-lies?',
+    german: 'Wie sieht unser geschätzter Zeitplan für die Veröffentlichung dieses Releases aus?',
+    context: 'Fristen und Veröffentlichungstermine erfragen.'
+  },
+  {
+    id: 'sp_cas_1',
+    category: 'daily',
+    categoryName: 'Alltag & Konversation',
+    english: 'Good morning! How was your weekend? Did you do anything fun?',
+    phonetic: 'gud mor-ning! haw was jor wiek-end? did ju du en-i-thing fan?',
+    german: 'Guten Morgen! Wie war dein Wochenende? Hast du etwas Schönes gemacht?',
+    context: 'Klassischer Montagmorgen-Smalltalk im Team.'
+  },
+  {
+    id: 'sp_cas_2',
+    category: 'daily',
+    categoryName: 'Alltag & Konversation',
+    english: 'I am learning English step by step to communicate better with international teams.',
+    phonetic: 'ai äm lör-ning ing-glisch step bai step tu kom-mju-ni-keyt bet-ter wid in-ter-nä-schon-al tiems.',
+    german: 'Ich lerne Schritt für Schritt Englisch, um besser mit internationalen Teams zu kommunizieren.',
+    context: 'Die eigene Motivation und Lernfortschritte erklären.'
+  },
+  {
+    id: 'sp_cas_3',
+    category: 'daily',
+    categoryName: 'Alltag & Konversation',
+    english: 'Could you speak a little slower, please? I am still practicing my English.',
+    phonetic: 'kud ju spiek a lit-tel slow-er, plies? ai äm stil präk-ti-sing mai ing-glisch.',
+    german: 'Könntest du bitte etwas langsamer sprechen? Ich übe noch mein Englisch.',
+    context: 'Freundliche Bitte um langsameres Sprechtempo ohne Scheu.'
+  },
+  {
+    id: 'sp_cas_4',
+    category: 'daily',
+    categoryName: 'Alltag & Konversation',
+    english: 'In my free time, I really enjoy producing electronic music with synthesizers.',
+    phonetic: 'in mai frie taym, ai riel-li en-djoy pro-dju-sing e-lek-tron-ik mju-sik wid syn-the-say-sers.',
+    german: 'In meiner Freizeit mache ich sehr gerne elektronische Musik mit Synthesizern.',
+    context: 'Über eigene Hobbys und Leidenschaften erzählen.'
+  },
+  {
+    id: 'sp_cas_5',
+    category: 'daily',
+    categoryName: 'Alltag & Konversation',
+    english: 'I usually start my morning with a hot cup of fresh black coffee.',
+    phonetic: 'ai ju-schu-al-li start mai mor-ning wid a hot kap of fresch bläk kof-fie.',
+    german: 'Ich starte meinen Morgen gewöhnlich mit einer heißen Tasse frischem schwarzem Kaffee.',
+    context: 'Alltagsroutine in der Kaffeeküche.'
+  },
+  {
+    id: 'sp_cas_6',
+    category: 'daily',
+    categoryName: 'Alltag & Konversation',
+    english: 'Thank you so much for your patient help! I really appreciate it.',
+    phonetic: 'thänk ju so matsch for jor pey-schent help! ai riel-li äp-prie-schi-eyt it.',
+    german: 'Vielen Dank für deine geduldige Hilfe! Ich schätze das wirklich sehr.',
+    context: 'Herzlicher und professioneller Dank an Kollegen oder Tutoren.'
+  },
+  {
+    id: 'sp_dev_1',
+    category: 'architecture',
+    categoryName: 'Architektur & Clean Code',
+    english: 'We should separate the business logic from the database access layer.',
+    phonetic: 'wi schud sep-a-reyt de bis-nes lod-dschik from de dey-ta-beys äk-ses ley-er.',
+    german: 'Wir sollten die Geschäftslogik von der Datenbank-Zugriffsschicht trennen.',
+    context: 'Architekturprinzip der Schichtenarchitektur (Separation of Concerns).'
+  },
+  {
+    id: 'sp_dev_2',
+    category: 'database',
+    categoryName: 'Datenbanken & SQL',
+    english: 'Adding a composite index reduced our query response time from two seconds to fifty milliseconds.',
+    phonetic: 'äd-ding a kom-po-sit in-deks ri-djust awer kwie-ri ri-spons taym from tu sek-onds tu fif-ti mil-li-sek-onds.',
+    german: 'Das Hinzufügen eines zusammengesetzten Index hat unsere Abfragezeit von zwei Sekunden auf 50 Millisekunden gesenkt.',
+    context: 'Erfolgreiche Performance-Optimierung im Standup berichten.'
+  },
+  {
+    id: 'sp_dev_3',
+    category: 'architecture',
+    categoryName: 'Architektur & Clean Code',
+    english: 'Automated unit tests give us confidence when refactoring legacy code.',
+    phonetic: 'aw-to-mey-ted ju-nit tests gif as kon-fi-dens wen ri-fäk-tor-ing leg-a-si kowd.',
+    german: 'Automatisierte Unit-Tests geben uns Sicherheit bei der Überarbeitung von Altsystemen.',
+    context: 'Bedeutung von Testautomatisierung erklären.'
   }
 ];
 
@@ -858,7 +1211,7 @@ const CLOZE_DATA = [
     "category": "grammar",
     "categoryName": "Grammatik & Zeiten",
     "question": "Welche unregelmäßige Simple-Past-Form ist korrekt für 'write'?",
-    "sentenceBefore": "Last week, Istvan",
+    "sentenceBefore": "Last week, Alex",
     "sentenceAfter": "a Python script to automate the backup.",
     "correctAnswer": "wrote",
     "options": [
@@ -1076,8 +1429,8 @@ const STORY_DATA = [
     icon: '💻',
     sentences: [
       {
-        en: 'Good morning! My name is Istvan, and I work as a junior software developer.',
-        de: 'Guten Morgen! Mein Name ist Istvan und ich arbeite als Junior-Softwareentwickler.'
+        en: 'Good morning! My name is Alex, and I work as a junior software developer.',
+        de: 'Guten Morgen! Mein Name ist Alex und ich arbeite als Junior-Softwareentwickler.'
       },
       {
         en: 'Every morning at nine o\'clock, our development team gathers for the daily standup meeting.',
@@ -1170,8 +1523,8 @@ const STORY_DATA = [
     icon: '☕',
     sentences: [
       {
-        en: 'Hey Istvan, are you taking a quick screen break? Would you like to grab a coffee together?',
-        de: 'Hey Istvan, machst du eine kurze Bildschirmpause? Möchtest du dir zusammen einen Kaffee holen?'
+        en: 'Hey there, are you taking a quick screen break? Would you like to grab a coffee together?',
+        de: 'Hey, machst du eine kurze Bildschirmpause? Möchtest du dir zusammen einen Kaffee holen?'
       },
       {
         en: 'Yes, absolutely! My eyes need a rest after two hours of intensive coding.',
@@ -1217,8 +1570,8 @@ const STORY_DATA = [
         de: 'Bitte halten Sie Ihren Reisepass und Ihre Bordkarte für die Grenzkontrolle bereit.'
       },
       {
-        en: 'Good afternoon, I have a hotel room reservation under the name Istvan Csovrij.',
-        de: 'Guten Tag, ich habe eine Hotelzimmer-Reservierung auf den Namen Istvan Csovrij.'
+        en: 'Good afternoon, I have a hotel room reservation under the name Alex Miller.',
+        de: 'Guten Tag, ich habe eine Hotelzimmer-Reservierung auf den Namen Alex Miller.'
       },
       {
         en: 'Welcome! Here is your magnetic key card for room three hundred five on the third floor.',
@@ -1453,6 +1806,58 @@ const STORY_DATA = [
       {
         en: 'Speaking fluent English in professional developer circles was a thrilling experience that broadened my global perspective.',
         de: 'Fließend Englisch in professionellen Entwicklerkreisen zu sprechen war eine aufregende Erfahrung, die meinen globalen Horizont erweiterte.'
+      }
+    ]
+  }
+  ,
+  {
+    id: 'story-2',
+    category: 'meetings',
+    categoryName: 'Meetings & Besprechungen',
+    title: 'The Agile Sprint Planning Meeting',
+    titleDe: 'Die Sprint-Planungs-Besprechung',
+    description: 'Erlebe ein vollständiges englisches Team-Meeting: User Stories besprechen, Einigungen erzielen, Aufgaben verteilen und Termine abstimmen.',
+    icon: '💼',
+    sentences: [
+      {
+        en: 'Welcome everyone to our sprint planning session for the upcoming release!',
+        de: 'Willkommen an alle zu unserer Sprint-Planungsrunde für das anstehende Release!'
+      },
+      {
+        en: 'Today, we need to review user stories, estimate story points, and define our sprint goal.',
+        de: 'Heute müssen wir die User Stories besprechen, Story Points schätzen und unser Sprint-Ziel definieren.'
+      },
+      {
+        en: 'Our Product Owner presents the highest-priority ticket: a secure customer authentication endpoint.',
+        de: 'Unsere Product Ownerin stellt das wichtigste Ticket vor: einen sicheren Endpunkt zur Kundenauthentifizierung.'
+      },
+      {
+        en: 'The software architect asks: "Could you please elaborate on the security requirements for tokens?"',
+        de: 'Der Softwarearchitekt fragt: "Könntest du bitte die Sicherheitsanforderungen für die Token näher erläutern?"'
+      },
+      {
+        en: 'I suggest: "We should implement JSON Web Tokens with a fifteen-minute expiration time."',
+        de: 'Ich schlage vor: "Wir sollten JSON Web Tokens mit einer 15-minütigen Ablaufzeit implementieren."'
+      },
+      {
+        en: 'The team discusses the proposal and reaches a consensus after ten minutes.',
+        de: 'Das Team diskutiert den Vorschlag und erzielt nach zehn Minuten eine Einigung.'
+      },
+      {
+        en: 'The Scrum Master asks: "Who is going to be the primary owner for writing the automated tests?"',
+        de: 'Die Scrum Masterin fragt: "Wer übernimmt die Hauptverantwortung für das Schreiben der automatisierten Tests?"'
+      },
+      {
+        en: 'I raise my hand and volunteer to implement the test suite and verify edge cases.',
+        de: 'Ich hebe die Hand und melde mich freiwillig, die Testsuite zu implementieren und Randfälle zu prüfen.'
+      },
+      {
+        en: 'Before wrapping up the meeting, we summarize our key action items and assign deadlines.',
+        de: 'Bevor wir das Meeting abschließen, fassen wir unsere wichtigsten Aufgabenpunkte zusammen und vergeben Fristen.'
+      },
+      {
+        en: 'Everyone feels confident and excited to kick off the new two-week development sprint!',
+        de: 'Alle fühlen sich sicher und freuen sich darauf, den neuen zweiwöchigen Entwicklungssprint zu starten!'
       }
     ]
   }

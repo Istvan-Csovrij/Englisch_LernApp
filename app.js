@@ -86,7 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
       label: 'Weich',
       desc: 'Sanfte Aussprache, warmes Lerntempo & natürliche Betonung',
       rate: 0.90,
-      pitch: 1.03,
+      pitch: 1.0,
       volume: 0.92
     },
     clear: {
@@ -120,6 +120,13 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const voices = window.speechSynthesis.getVoices() || [];
       if (!voices.length) return null;
+
+      // 0. Prüfe benutzerdefinierte Stimme aus Einstellungen
+      const customURI = localStorage.getItem('englapp_custom_voice_uri');
+      if (customURI) {
+        const found = voices.find(v => v.voiceURI === customURI || v.name === customURI);
+        if (found) return found;
+      }
 
       const enVoices = voices.filter(v => v.lang && v.lang.toLowerCase().startsWith('en'));
       if (!enVoices.length) return voices[0] || null;
@@ -237,7 +244,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const v = getBestEnglishVoice();
     const vName = v ? v.name.split('-')[0].trim() : 'Standard';
     showToast(`🔊 ${p.name} (${vName})`);
-    speakEnglish("Hello Istvan! Your English voice is now soft, smooth, and friendly. Let's practice English together!");
+    speakEnglish("Hello! Your English voice is now soft, smooth, and friendly. Let's practice English together!");
   }
 
   if ('speechSynthesis' in window) {
@@ -835,8 +842,31 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // --- GLOSSARY SEARCH & STATS ---
+  function openVocabInFlashcards(vocabId) {
+    let idx = filteredVocab.findIndex(v => v.id === vocabId);
+    if (idx === -1) {
+      currentCategory = 'all';
+      document.querySelectorAll('.cat-chip').forEach(c => {
+        c.classList.toggle('active', c.dataset.category === 'all');
+      });
+      filteredVocab = [...VOCAB_DATA];
+      idx = filteredVocab.findIndex(v => v.id === vocabId);
+    }
+    if (idx !== -1) {
+      currentCardIndex = idx;
+      renderCurrentCard();
+      switchView('flashcards');
+      showToast(`🎴 Karteikarte geöffnet: ${filteredVocab[idx].english}`);
+      const cardEl = document.getElementById('flashcardEl');
+      if (cardEl) {
+        cardEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+  }
+
   function renderGlossary(searchTerm = '') {
     const listEl = document.getElementById('glossaryList');
+    if (!listEl) return;
     listEl.innerHTML = '';
 
     const term = searchTerm.toLowerCase().trim();
@@ -848,12 +878,14 @@ document.addEventListener('DOMContentLoaded', () => {
       displayList = displayList.filter(v => 
         v.english.toLowerCase().includes(term) ||
         v.german.toLowerCase().includes(term) ||
-        v.definition.toLowerCase().includes(term)
+        v.definition.toLowerCase().includes(term) ||
+        (v.exampleEn && v.exampleEn.toLowerCase().includes(term)) ||
+        (v.exampleDe && v.exampleDe.toLowerCase().includes(term))
       );
     }
 
     if (displayList.length === 0) {
-      listEl.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 16px;">Keine Treffer.</p>';
+      listEl.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 24px;">Keine Treffer gefunden.</p>';
       return;
     }
 
@@ -861,29 +893,77 @@ document.addEventListener('DOMContentLoaded', () => {
       const isMastered = masteredCards.includes(item.id);
       const div = document.createElement('div');
       div.className = 'glossary-item';
+      div.dataset.vocabId = item.id;
       div.innerHTML = `
-        <div class="item-left">
-          <div class="item-en">
-            ${item.english}
-            <span class="item-badge">${item.categoryName}</span>
-            ${isMastered ? ' <span title="Gemeistert">⭐</span>' : ''}
+        <div class="glossary-summary">
+          <div class="item-left">
+            <div class="item-en">
+              ${item.english}
+              ${item.phonetic ? `<span class="item-phonetic">${item.phonetic}</span>` : ''}
+              <span class="item-badge">${item.categoryName}</span>
+              ${isMastered ? ' <span title="Gemeistert" class="item-star">⭐</span>' : ''}
+            </div>
+            <div class="item-de">${item.german}</div>
           </div>
-          <div class="item-de">${item.german}</div>
+          <div class="item-actions">
+            <button class="item-audio-btn" title="Aussprache anhören" data-speak="${encodeURIComponent(item.english)}">🔊</button>
+            <button class="item-card-btn" title="In Karteikarten-Trainer öffnen" data-open-card="${item.id}">🎴 Karte</button>
+            <button class="item-expand-toggle" title="Details ein-/ausklappen">▼</button>
+          </div>
         </div>
-        <div class="item-actions">
-          <button class="item-audio-btn" title="Aussprache anhören">🔊</button>
+        <div class="glossary-details">
+          <div class="glossary-def-box">
+            <div class="glossary-def-label">📖 Definition:</div>
+            <div class="glossary-def-text">${item.definition}</div>
+          </div>
+          ${item.exampleEn ? `
+            <div class="glossary-example-box">
+              <div class="glossary-example-header">
+                <span class="glossary-example-label">💬 Beispielsatz:</span>
+                <button class="item-audio-btn-sm" data-speak="${encodeURIComponent(item.exampleEn)}" title="Satz anhören">🔊 Anhören</button>
+              </div>
+              <div class="glossary-example-en">${item.exampleEn}</div>
+              <div class="glossary-example-de">🇩🇪 <em>${item.exampleDe || ''}</em></div>
+            </div>
+          ` : ''}
+          <div class="glossary-footer-actions">
+            <button class="btn-open-in-cards" data-open-card="${item.id}">
+              🎴 In Karteikarten-Trainer öffnen & üben
+            </button>
+          </div>
         </div>
       `;
 
-      div.querySelector('.item-audio-btn').addEventListener('click', () => {
-        speakEnglish(item.english, 0.9);
+      div.querySelector('.glossary-summary').addEventListener('click', (e) => {
+        if (e.target.closest('.item-audio-btn') || e.target.closest('.item-card-btn')) return;
+        div.classList.toggle('expanded');
+        const toggleBtn = div.querySelector('.item-expand-toggle');
+        if (toggleBtn) {
+          toggleBtn.textContent = div.classList.contains('expanded') ? '▲' : '▼';
+        }
+      });
+
+      div.querySelectorAll('[data-speak]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const txt = decodeURIComponent(e.currentTarget.dataset.speak);
+          speakEnglish(txt, 0.88);
+        });
+      });
+
+      div.querySelectorAll('[data-open-card]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const vId = e.currentTarget.dataset.openCard;
+          openVocabInFlashcards(vId);
+        });
       });
 
       listEl.appendChild(div);
     });
   }
 
-  document.getElementById('glossarySearchInput').addEventListener('input', (e) => {
+    document.getElementById('glossarySearchInput').addEventListener('input', (e) => {
     renderGlossary(e.target.value);
   });
 
@@ -1340,7 +1420,7 @@ document.addEventListener('DOMContentLoaded', () => {
         playSound('success');
 
         feedbackEn = `Correct! 🎉 "${item.english}" means "${item.german}".`;
-        feedbackDe = `Hervorragend, Istvan! 🎉 Das ist absolut richtig!\n👉 **"${item.english}"** = **"${item.german}"**\n💡 *Erklärung:* ${item.definition}\n*(+15 XP • Punktestand: ${this.state.score} von ${this.state.totalAsked} richtig)*`;
+        feedbackDe = `Hervorragend${this.salutation()}! 🎉 Das ist absolut richtig!\n👉 **"${item.english}"** = **"${item.german}"**\n💡 *Erklärung:* ${item.definition}\n*(+15 XP • Punktestand: ${this.state.score} von ${this.state.totalAsked} richtig)*`;
       } else {
         playSound('try-again');
         feedbackEn = `Close! "${item.english}" translates to "${item.german}".`;
@@ -1379,17 +1459,17 @@ document.addEventListener('DOMContentLoaded', () => {
         personal: [
           {
             id: 'beg_pers_1',
-            en: 'Nice to meet you, Istvan! I love getting to know people. In English, you can introduce yourself by saying: "Hello, my name is Istvan and I am learning software development!" Would you like to practice that?',
-            de: 'Schön dich kennenzulernen, Istvan! Ich lerne gerne Menschen kennen. Auf Englisch kannst du dich so vorstellen: "Hello, my name is Istvan and I am learning software development!" Möchtest du das üben?',
+            en: 'Nice to meet you{name}! I love getting to know people. In English, you can introduce yourself by saying: "Hello, my name is Istvan and I am learning software development!" Would you like to practice that?',
+            de: 'Schön dich kennenzulernen{name}! Ich lerne gerne Menschen kennen. Auf Englisch kannst du dich so vorstellen: "Hello, my name is Istvan and I am learning software development!" Möchtest du das üben?',
             suggestions: [
-              'Hello Emma, my name is Istvan!',
+              'Hello Emma, my name is Alex!',
               'I am a junior software developer.',
               'What is your favorite topic to talk about?'
             ]
           },
           {
             id: 'beg_pers_2',
-            en: 'Talking about your day is very easy in English! You can simply say: "Today was good", or "Today was a busy day". How was your day today, Istvan?',
+            en: 'Talking about your day is very easy in English! You can simply say: "Today was good", or "Today was a busy day". How was your day today{name}?',
             de: 'Über seinen Tag zu sprechen ist auf Englisch ganz einfach! Du kannst einfach sagen: "Today was good" (Heute war gut) oder "Today was a busy day" (Heute war ein ereignisreicher Tag). Wie war dein Tag heute?',
             suggestions: [
               'Today was a good day, thank you!',
@@ -1401,7 +1481,7 @@ document.addEventListener('DOMContentLoaded', () => {
         hobbies: [
           {
             id: 'beg_hob_1',
-            en: 'Hobbies are the best way to practice casual English! You can say: "I like making music", or "I enjoy walking outdoors". What do you love doing in your free time, Istvan?',
+            en: 'Hobbies are the best way to practice casual English! You can say: "I like making music", or "I enjoy walking outdoors". What do you love doing in your free time{name}?',
             de: 'Hobbys sind der beste Weg, um ungezwungenes Alltagsenglisch zu üben! Du kannst sagen: "I like making music" (Ich mache gerne Musik) oder "I enjoy walking outdoors" (Ich gehe gerne draußen spazieren). Was machst du am liebsten in deiner Freizeit?',
             suggestions: [
               'I love making music with synthesizers.',
@@ -1469,8 +1549,8 @@ document.addEventListener('DOMContentLoaded', () => {
         casual_chat: [
           {
             id: 'beg_chat_1',
-            en: 'I really enjoy our relaxed conversation, Istvan! Remember: you don\'t need complex words or perfect grammar to be understood. Simple, clear sentences are the best! What would you like to talk about next?',
-            de: 'Ich genieße unser entspanntes Gespräch sehr, Istvan! Denk immer daran: Du brauchst keine komplizierten Wörter oder perfekte Grammatik, um verstanden zu werden. Einfache, klare Sätze sind das Beste! Worüber möchtest du als Nächstes sprechen?',
+            en: 'I really enjoy our relaxed conversation{name}! Remember: you don\'t need complex words or perfect grammar to be understood. Simple, clear sentences are the best! What would you like to talk about next?',
+            de: 'Ich genieße unser entspanntes Gespräch sehr{name}! Denk immer daran: Du brauchst keine komplizierten Wörter oder perfekte Grammatik, um verstanden zu werden. Einfache, klare Sätze sind das Beste! Worüber möchtest du als Nächstes sprechen?',
             suggestions: [
               'Can we talk about daily routines?',
               'Can you ask me an easy question?',
@@ -1483,8 +1563,8 @@ document.addEventListener('DOMContentLoaded', () => {
         database: [
           {
             id: 'su_db_1',
-            en: 'Great progress on the database optimization, Istvan! Query tuning has a huge impact on system performance. Did you analyze the execution plan with EXPLAIN, or did you add composite indexes?',
-            de: 'Großartiger Fortschritt bei der Datenbankoptimierung, Istvan! Abfrageoptimierung hat großen Einfluss auf die Performance. Hast du den Ausführungsplan mit EXPLAIN analysiert oder zusammengesetzte Indizes angelegt?',
+            en: 'Great progress on the database optimization{name}! Query tuning has a huge impact on system performance. Did you analyze the execution plan with EXPLAIN, or did you add composite indexes?',
+            de: 'Großartiger Fortschritt bei der Datenbankoptimierung{name}! Abfrageoptimierung hat großen Einfluss auf die Performance. Hast du den Ausführungsplan mit EXPLAIN analysiert oder zusammengesetzte Indizes angelegt?',
             suggestions: [
               'I analyzed the execution plan and added an index on the user ID column.',
               'I refactored a slow SQL join that was causing a full table scan.',
@@ -1537,8 +1617,8 @@ document.addEventListener('DOMContentLoaded', () => {
         bug_fix: [
           {
             id: 'su_bug_1',
-            en: 'Thanks for taking care of that bug ticket, Istvan! What was the root cause of the issue, and could you reproduce it easily in your local setup?',
-            de: 'Danke, dass du das Fehlerticket übernommen hast, Istvan! Was war die Ursache des Problems und konntest du es lokal leicht nachstellen?',
+            en: 'Thanks for taking care of that bug ticket{name}! What was the root cause of the issue, and could you reproduce it easily in your local setup?',
+            de: 'Danke, dass du das Fehlerticket übernommen hast{name}! Was war die Ursache des Problems und konntest du es lokal leicht nachstellen?',
             suggestions: [
               'The root cause was an unhandled null pointer exception in the auth controller.',
               'I reproduced the error using a special character in the username.',
@@ -1571,8 +1651,8 @@ document.addEventListener('DOMContentLoaded', () => {
         general_progress: [
           {
             id: 'su_gen_1',
-            en: 'Sounds like you made great headway yesterday, Istvan! What is your primary milestone for today, and do you foresee any architectural challenges?',
-            de: 'Klingt, als hättest du gestern tolle Fortschritte gemacht, Istvan! Was ist dein Hauptziel für heute und siehst du architektonische Herausforderungen?',
+            en: 'Sounds like you made great headway yesterday{name}! What is your primary milestone for today, and do you foresee any architectural challenges?',
+            de: 'Klingt, als hättest du gestern tolle Fortschritte gemacht{name}! Was ist dein Hauptziel für heute und siehst du architektonische Herausforderungen?',
             suggestions: [
               'Today my focus is on finishing the REST API endpoints.',
               'I plan to refactor the service layer and improve modularity.',
@@ -1591,8 +1671,8 @@ document.addEventListener('DOMContentLoaded', () => {
           },
           {
             id: 'su_gen_3',
-            en: 'Awesome! We are in great shape for the upcoming sprint review. Thanks for the clear update, Istvan!',
-            de: 'Großartig! Wir stehen für das kommende Sprint-Review bestens da. Danke für das klare Update, Istvan!',
+            en: 'Awesome! We are in great shape for the upcoming sprint review. Thanks for the clear update{name}!',
+            de: 'Großartig! Wir stehen für das kommende Sprint-Review bestens da. Danke für das klare Update{name}!',
             suggestions: [
               'Thank you Sarah, let\'s deliver a successful sprint!',
               'I will document the new endpoints in Swagger/OpenAPI today.',
@@ -1675,8 +1755,8 @@ document.addEventListener('DOMContentLoaded', () => {
         database_incident: [
           {
             id: 'sup_db_1',
-            en: 'Thanks for taking the lead on this ticket, Istvan! The database timeouts are impacting checkout during peak hours. Could you inspect the connection pool metrics in Grafana first?',
-            de: 'Danke, dass du die Führung bei diesem Ticket übernimmst, Istvan! Die Datenbank-Timeouts beeinträchtigen den Checkout. Könntest du zuerst die Verbindungspool-Metriken in Grafana prüfen?',
+            en: 'Thanks for taking the lead on this ticket{name}! The database timeouts are impacting checkout during peak hours. Could you inspect the connection pool metrics in Grafana first?',
+            de: 'Danke, dass du die Führung bei diesem Ticket übernimmst{name}! Die Datenbank-Timeouts beeinträchtigen den Checkout. Könntest du zuerst die Verbindungspool-Metriken in Grafana prüfen?',
             suggestions: [
               'I am checking the database connection pool metrics right now.',
               'The pool seems maxed out at 50 connections with high query wait times.',
@@ -1710,8 +1790,8 @@ document.addEventListener('DOMContentLoaded', () => {
         clean_code: [
           {
             id: 'arch_clean_1',
-            en: 'Welcome Istvan! We want to refactor our monolithic service layer. How would you apply the Single Responsibility Principle to break up our 2,000-line OrderManager class?',
-            de: 'Willkommen Istvan! Wir wollen unsere monolithische Service-Schicht umbauen. Wie würdest du das Single-Responsibility-Prinzip anwenden, um die 2.000 Zeilen lange OrderManager-Klasse aufzuteilen?',
+            en: 'Welcome{name}! We want to refactor our monolithic service layer. How would you apply the Single Responsibility Principle to break up our 2,000-line OrderManager class?',
+            de: 'Willkommen{name}! Wir wollen unsere monolithische Service-Schicht umbauen. Wie würdest du das Single-Responsibility-Prinzip anwenden, um die 2.000 Zeilen lange OrderManager-Klasse aufzuteilen?',
             suggestions: [
               'I would split it into dedicated classes: OrderValidation, OrderPricing, and OrderRepository.',
               'We should extract interfaces so each service component has a single reason to change.',
@@ -1730,8 +1810,8 @@ document.addEventListener('DOMContentLoaded', () => {
           },
           {
             id: 'arch_clean_3',
-            en: 'Your architectural intuition is top notch, Istvan! When building RESTful APIs, how do you ensure clear response structures and proper HTTP status code handling?',
-            de: 'Deine architektonische Intuition ist erstklassig, Istvan! Wie stellst du beim Entwurf von REST-APIs klare Antwortstrukturen und saubere HTTP-Statuscodes sicher?',
+            en: 'Your architectural intuition is top notch{name}! When building RESTful APIs, how do you ensure clear response structures and proper HTTP status code handling?',
+            de: 'Deine architektonische Intuition ist erstklassig{name}! Wie stellst du beim Entwurf von REST-APIs klare Antwortstrukturen und saubere HTTP-Statuscodes sicher?',
             suggestions: [
               'I use standard HTTP codes: 200 for OK, 201 for Created, 400 for Bad Request, and 404 for Not Found.',
               'I design standardized JSON response envelopes containing data, error messages, and pagination metadata.',
@@ -1745,8 +1825,8 @@ document.addEventListener('DOMContentLoaded', () => {
         music_hobby: [
           {
             id: 'st_music_1',
-            en: 'Producing electronic music sounds like such a fascinating hobby, Istvan! What digital audio workstation do you use, and do you enjoy sound design or composing melodies more?',
-            de: 'Elektronische Musik zu produzieren klingt nach einem faszinierenden Hobby, Istvan! Welche DAW nutzt du und macht dir Sounddesign oder das Melodienkomponieren mehr Spaß?',
+            en: 'Producing electronic music sounds like such a fascinating hobby{name}! What digital audio workstation do you use, and do you enjoy sound design or composing melodies more?',
+            de: 'Elektronische Musik zu produzieren klingt nach einem faszinierenden Hobby{name}! Welche DAW nutzt du und macht dir Sounddesign oder das Melodienkomponieren mehr Spaß?',
             suggestions: [
               'I use a DAW and software synthesizers to sculpt unique basslines and melodies.',
               'I enjoy designing custom synth patches with oscillators, filters, and audio effects.',
@@ -1827,8 +1907,8 @@ document.addEventListener('DOMContentLoaded', () => {
         general: [
           {
             id: 'fr_1',
-            en: 'That is very interesting, Istvan! Tell me more about that. How do you apply this in your daily programming work or personal routine?',
-            de: 'Das ist sehr interessant, Istvan! Erzähl mir mehr darüber. Wie wendest du das in deiner täglichen Programmierarbeit oder deinem Alltag an?',
+            en: 'That is very interesting{name}! Tell me more about that. How do you apply this in your daily programming work or personal routine?',
+            de: 'Das ist sehr interessant{name}! Erzähl mir mehr darüber. Wie wendest du das in deiner täglichen Programmierarbeit oder deinem Alltag an?',
             suggestions: [
               'In my daily routine, I balance intensive coding with continuous learning.',
               'I focus on writing readable code with clean architecture and automated tests.',
@@ -2687,12 +2767,140 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  // Rückwärtskompatible Wrapper-Funktion
+  function formatReplyText(t) {
+    if (!t) return '';
+    const uName = getUserName();
+    if (uName) {
+      return t.replace(/\{name\}/g, `, ${uName}`).replace(/Istvan/g, uName).replace(/\s+,/g, ',').replace(/\s{2,}/g, ' ');
+    } else {
+      return t.replace(/\{name\}/g, '').replace(/Istvan/g, '').replace(/\s+,/g, ',').replace(/\s{2,}/g, ' ').trim();
+    }
+  }
+
+  // Rückwärtskompatible Wrapper-Funktion mit Formatierung
   function generatePartnerResponse(userInput, scenarioId) {
-    return DialogEngine.generateResponse(userInput, scenarioId);
+    let raw;
+    try {
+      raw = DialogEngine.generateResponse(userInput, scenarioId);
+    } catch (e) {
+      console.warn('DialogEngine generateResponse error:', e);
+      raw = {
+        id: 'safety_fallback',
+        en: "That is interesting! Tell me more about that. What would you like to practice next?",
+        de: "Das ist interessant! Erzähl mir mehr darüber. Was möchtest du als Nächstes üben?",
+        suggestions: [
+          "Can you teach me some new words?",
+          "How are you doing today?",
+          "Let's practice a simple conversation."
+        ]
+      };
+    }
+    if (!raw) return raw;
+    return {
+      ...raw,
+      en: formatReplyText(raw.en),
+      de: formatReplyText(raw.de)
+    };
   }
 
   // --- INITIALISIERUNG DES DIALOG-VIEWS ---
+
+  // --- STIMMEN-AUSWAHL & MODAL ---
+  function openVoicePickerModal() {
+    let modal = document.getElementById('voicePickerModal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'voicePickerModal';
+      modal.className = 'app-modal-overlay';
+      modal.innerHTML = `
+        <div class="app-modal-card">
+          <div class="app-modal-header">
+            <h3>🎙️ Englische Stimme wählen</h3>
+            <button class="modal-close-btn" id="btnCloseVoiceModal">✕</button>
+          </div>
+          <p class="app-modal-desc">
+            Wähle hier die für dein Gerät angenehmste, weichste englische Stimme aus. Du kannst jede Stimme mit <strong>🔊 Probe</strong> testen.
+          </p>
+          <div class="voice-list-container" id="voiceListContainer">
+            <p style="text-align: center; color: var(--text-muted); padding: 16px;">Lade Stimmen...</p>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+
+      modal.querySelector('#btnCloseVoiceModal').addEventListener('click', () => {
+        modal.classList.remove('active');
+      });
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.classList.remove('active');
+      });
+    }
+
+    const container = modal.querySelector('#voiceListContainer');
+    container.innerHTML = '';
+
+    if (!('speechSynthesis' in window)) {
+      container.innerHTML = '<p style="color: #ef4444; padding: 12px;">SpeechSynthesis wird in diesem Browser leider nicht unterstützt.</p>';
+      modal.classList.add('active');
+      return;
+    }
+
+    const voices = window.speechSynthesis.getVoices() || [];
+    const enVoices = voices.filter(v => v.lang && v.lang.toLowerCase().startsWith('en'));
+
+    if (enVoices.length === 0) {
+      container.innerHTML = '<p style="color: var(--text-muted); padding: 12px;">Keine englischen Stimmen auf diesem Gerät gefunden.</p>';
+      modal.classList.add('active');
+      return;
+    }
+
+    const savedVoiceURI = localStorage.getItem('englapp_custom_voice_uri') || '';
+    const bestDefault = getBestEnglishVoice();
+
+    enVoices.forEach(v => {
+      const isSelected = savedVoiceURI ? (v.voiceURI === savedVoiceURI) : (bestDefault && v.voiceURI === bestDefault.voiceURI);
+      const isNatural = /natural|neural|online|enhanced|premium|google/i.test(v.name + ' ' + v.voiceURI);
+
+      const row = document.createElement('div');
+      row.className = 'voice-item-row' + (isSelected ? ' selected' : '');
+      row.innerHTML = `
+        <div class="voice-item-info">
+          <div class="voice-item-name">
+            ${v.name}
+            ${isNatural ? '<span class="voice-pill-natural">🌟 Natürlich</span>' : ''}
+            ${isSelected ? '<span class="voice-pill-active">Aktiv</span>' : ''}
+          </div>
+          <div class="voice-item-lang">${v.lang} ${v.localService ? '• Lokale Stimme' : '• Online/HQ'}</div>
+        </div>
+        <div class="voice-item-actions">
+          <button class="voice-sample-btn" title="Hörprobe abspielen">🔊 Probe</button>
+          <button class="voice-select-btn ${isSelected ? 'is-active' : ''}">${isSelected ? '✓ Gewählt' : 'Auswählen'}</button>
+        </div>
+      `;
+
+      row.querySelector('.voice-sample-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (window.speechSynthesis.speaking) window.speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance("Hello! How does this English voice sound to you? It should be very smooth and natural.");
+        u.voice = v;
+        u.rate = 0.88;
+        u.pitch = 1.0;
+        window.speechSynthesis.speak(u);
+      });
+
+      row.querySelector('.voice-select-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        localStorage.setItem('englapp_custom_voice_uri', v.voiceURI);
+        showToast(`🎙️ Stimme aktiviert: ${v.name}`);
+        openVoicePickerModal();
+      });
+
+      container.appendChild(row);
+    });
+
+    modal.classList.add('active');
+  }
+
   function initDialogView() {
     if (dialogInitialized) return;
     dialogInitialized = true;
@@ -2793,6 +3001,13 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
+    const btnOpenVoicePicker = document.getElementById('btnOpenVoicePicker');
+    if (btnOpenVoicePicker) {
+      btnOpenVoicePicker.addEventListener('click', () => {
+        openVoicePickerModal();
+      });
+    }
+
     const btnAskFeedback = document.getElementById('btnAskFeedback');
     if (btnAskFeedback) {
       btnAskFeedback.addEventListener('click', () => {
@@ -2838,12 +3053,12 @@ document.addEventListener('DOMContentLoaded', () => {
       const initialPartnerMsg = {
         type: 'partner',
         sender: scenario.partnerName,
-        textEn: `Hello Istvan! Let's test your vocabulary. ${firstQ.en}`,
-        textDe: `Hallo Istvan! 🎯 In diesem Modus teste ich deinen Wortschatz. Ich nenne dir englische IT- & Fachbegriffe und du nennst mir die deutsche Bedeutung!
+        textEn: formatReplyText(`Hello{name}! Let's test your vocabulary. ${firstQ.en}`),
+        textDe: formatReplyText(`Hallo{name}! 🎯 In diesem Modus teste ich deinen Wortschatz. Ich nenne dir englische IT- & Fachbegriffe und du nennst mir die deutsche Bedeutung!
 
 👉 Wie lautet die deutsche Bedeutung von:
 **"${firstQ.vocabItem.english}"**?
-*(Kategorie: ${firstQ.vocabItem.categoryName})*`,
+*(Kategorie: ${firstQ.vocabItem.categoryName})*`),
         suggestions: firstQ.suggestions
       };
       dialogHistories[scenarioId].push(initialPartnerMsg);
@@ -2894,7 +3109,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const uName = getUserName();
       if (!uName) {
         return [
-          'My name is Istvan.',
+          'My name is Alex.',
           'My name is Alex.',
           'Can we just practice without names?'
         ];
@@ -3133,8 +3348,8 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('generatePartnerResponse error:', err);
       partnerReply = {
         id: 'safety_fallback',
-        en: "That is interesting, Istvan! Tell me more about that. What would you like to practice next?",
-        de: "Das ist interessant, Istvan! Erzähl mir mehr darüber. Was möchtest du als Nächstes üben?",
+        en: "That is interesting{name}! Tell me more about that. What would you like to practice next?",
+        de: "Das ist interessant{name}! Erzähl mir mehr darüber. Was möchtest du als Nächstes üben?",
         suggestions: [
           "Can you teach me some new words?",
           "How are you doing today?",
