@@ -1838,6 +1838,21 @@ document.addEventListener('DOMContentLoaded', () => {
     },
 
     // Hauptfunktion: Erkennt Thema, Turn-Zähler und wählt abwechslungsreiche Antworten
+    getPartnerMeta(scenarioId) {
+      const meta = {
+        beginner: { name: 'Emma', role: 'Geduldige Englisch-Tutorin für Alltag & Smalltalk', desc: 'Anfänger & Plaudern' },
+        standup: { name: 'Sarah', role: 'Scrum Master & Agile Coach', desc: 'Daily Scrum Standup' },
+        interview: { name: 'Mr. Davis', role: 'Lead Software Architect', desc: 'IT-Vorstellungsgespräch' },
+        support: { name: 'Alex', role: 'Senior Product Manager', desc: 'Bug-Report & Ticket Support' },
+        architecture: { name: 'David', role: 'Senior Cloud Solutions Architect', desc: 'System-Architektur Review' },
+        smalltalk: { name: 'Mark', role: 'Senior Developer & Teammate', desc: 'Kaffeepause & Smalltalk' },
+        travel: { name: 'James', role: 'Head Concierge at Royal Grand Hotel', desc: 'Hotel & London Reisen' },
+        free: { name: 'AI English Coach', role: 'Persönlicher Sprachtrainer', desc: 'Freie Konversation' },
+        quiz: { name: 'Prof. Miller', role: 'Vokabel-Coach', desc: 'Vokabel-Prüfer & Quiz' }
+      };
+      return meta[scenarioId] || meta.beginner || meta.standup;
+    },
+
     normalizeInput(raw) {
       if (!raw) return '';
       let text = raw.trim().toLowerCase();
@@ -2642,7 +2657,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Erstes Szenario starten
-    switchDialogScenario('standup');
+    switchDialogScenario('beginner');
   }
 
   function switchDialogScenario(scenarioId) {
@@ -2937,14 +2952,34 @@ document.addEventListener('DOMContentLoaded', () => {
       analysis: analysis
     });
 
-    // Antwort des Partners generieren
-    const partnerReply = generatePartnerResponse(text, scenarioId);
+    // Antwort des Partners generieren (mit robustem Fallback)
+    let partnerReply;
+    try {
+      partnerReply = generatePartnerResponse(text, scenarioId);
+    } catch (err) {
+      console.error('generatePartnerResponse error:', err);
+      partnerReply = {
+        id: 'safety_fallback',
+        en: "That is interesting, Istvan! Tell me more about that. What would you like to practice next?",
+        de: "Das ist interessant, Istvan! Erzähl mir mehr darüber. Was möchtest du als Nächstes üben?",
+        suggestions: [
+          "Can you teach me some new words?",
+          "How are you doing today?",
+          "Let's practice a simple conversation."
+        ]
+      };
+    }
+
     dialogHistories[scenarioId].push({
       type: 'partner',
       sender: scenario.partnerName,
       textEn: partnerReply.en,
       textDe: partnerReply.de,
-      suggestions: partnerReply.suggestions
+      suggestions: partnerReply.suggestions || [
+        "Can you teach me some new words?",
+        "How are you doing today?",
+        "Let's continue chatting."
+      ]
     });
 
     // XP vergeben & Sound abspielen
