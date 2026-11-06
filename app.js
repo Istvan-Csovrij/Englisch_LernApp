@@ -331,11 +331,10 @@ function initApp() {
         isMale: true
       };
     }
-    const curScenario = (typeof DIALOG_SCENARIOS !== 'undefined' && DIALOG_SCENARIOS[currentScenarioId]) ? DIALOG_SCENARIOS[currentScenarioId] : null;
     return {
-      name: curScenario ? curScenario.partnerName : 'Emma (Tutorin)',
-      role: curScenario ? `Rolle: ${curScenario.partnerRole}` : 'Rolle: Geduldige Englisch-Tutorin für Alltag & Smalltalk',
-      isMale: curScenario ? (curScenario.gender === 'male') : false
+      name: 'Nova (Futuristische KI-Tutorin)',
+      role: 'Rolle: Deine futuristische Englisch-Tutorin & KI-Begleiterin',
+      isMale: false
     };
   }
 
@@ -738,11 +737,13 @@ function initApp() {
     };
   }
 
-  // --- SPEECH RECOGNITION (SPRACHE PRÜFEN & KONTROLLIEREN) ---
+  // --- SPEECH RECOGNITION (SPRACHE PRÜFEN & KONTROLLIEREN - v30 CONTINUOUS & PUSH-TO-TALK) ---
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   let recognition = null;
   let isRecording = false;
   let activeMicTarget = 'speechTrainer';
+  let isDialogRecording = false;
+  let dialogSpeechFinalAccumulator = '';
 
   if (SpeechRecognition) {
     recognition = new SpeechRecognition();
@@ -766,29 +767,56 @@ function initApp() {
         cardFb.className = 'card-pronounce-feedback listening';
         cardFb.textContent = '🔴 Höre zu... Sprich jetzt das englische Wort!';
       } else if (activeMicTarget === 'dialogChat') {
+        isDialogRecording = true;
         const dialogMic = document.getElementById('btnDialogMic');
         if (dialogMic) dialogMic.classList.add('recording');
         const hint = document.getElementById('dialogInputHint');
-        if (hint) hint.textContent = '🔴 Ich höre zu... Bitte sprich jetzt deinen Satz auf Englisch!';
+        if (hint) hint.textContent = '🔴 Aufnahme aktiv... Sprich in Ruhe! Klicke auf "⏹️ Stoppen & Abschicken", wenn du fertig bist.';
+        showDialogRecordingBar(true);
       }
     };
 
     recognition.onresult = (event) => {
-      const spokenText = event.results[0][0].transcript;
       if (activeMicTarget === 'speechTrainer') {
+        const spokenText = event.results[0][0].transcript;
         evaluateSentencePronunciation(spokenText);
       } else if (activeMicTarget === 'flashcard') {
+        const spokenText = event.results[0][0].transcript;
         evaluateFlashcardPronunciation(spokenText);
       } else if (activeMicTarget === 'dialogChat') {
-        handleDialogSpeechResult(spokenText);
+        let interim = '';
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          const trans = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            dialogSpeechFinalAccumulator += (dialogSpeechFinalAccumulator ? ' ' : '') + trans.trim();
+          } else {
+            interim += trans;
+          }
+        }
+        const fullSpoken = (dialogSpeechFinalAccumulator + (interim ? ' ' + interim : '')).trim();
+        const input = document.getElementById('dialogTextInput');
+        if (input && fullSpoken) {
+          input.value = fullSpoken;
+        }
+        const statusText = document.getElementById('dialogRecordingStatusText');
+        if (statusText && fullSpoken) {
+          const displaySample = fullSpoken.length > 40 ? fullSpoken.slice(0, 37) + '...' : fullSpoken;
+          statusText.textContent = `🎙️ "${displaySample}"`;
+        }
       }
     };
 
     recognition.onerror = (event) => {
       isRecording = false;
+      if (isDialogRecording) {
+        isDialogRecording = false;
+        showDialogRecordingBar(false);
+      }
       stopAllRecordingUI();
       if (event.error === 'not-allowed') {
         showToast('⚠️ Mikrofon-Zugriff im Browser blockiert.');
+      } else if (event.error === 'no-speech') {
+        // Stille abfangen ohne Toast-Spam
       } else {
         showToast('⚠️ Sprachaufnahme: ' + event.error);
       }
@@ -796,6 +824,14 @@ function initApp() {
 
     recognition.onend = () => {
       isRecording = false;
+      if (isDialogRecording) {
+        isDialogRecording = false;
+        showDialogRecordingBar(false);
+        const input = document.getElementById('dialogTextInput');
+        if (input && input.value.trim()) {
+          showToast('🎤 Aufnahme beendet. Prüfe deinen Satz und tippe auf Senden ➤');
+        }
+      }
       stopAllRecordingUI();
     };
   }
@@ -813,8 +849,95 @@ function initApp() {
     }
     const dialogMic = document.getElementById('btnDialogMic');
     if (dialogMic) dialogMic.classList.remove('recording');
+    showDialogRecordingBar(false);
     const hint = document.getElementById('dialogInputHint');
     if (hint) hint.textContent = '✍️ Tippe deine Antwort ein oder tippe auf das 🎙️ Mikrofon, um direkt zu sprechen!';
+  }
+
+  function showDialogRecordingBar(active) {
+    const bar = document.getElementById('dialogRecordingBar');
+    const sendBtn = document.getElementById('btnDialogSend');
+    const statusText = document.getElementById('dialogRecordingStatusText');
+    if (bar) {
+      bar.style.display = active ? 'flex' : 'none';
+    }
+    if (sendBtn) {
+      if (active) {
+        sendBtn.classList.add('is-recording-send');
+        sendBtn.innerHTML = '⏹️';
+        sendBtn.title = 'Aufnahme beenden & Abschicken';
+      } else {
+        sendBtn.classList.remove('is-recording-send');
+        sendBtn.innerHTML = '➤';
+        sendBtn.title = 'Nachricht senden';
+      }
+    }
+    if (statusText && active) {
+      statusText.textContent = 'Aufnahme läuft... Sprich in Ruhe deinen Satz!';
+    }
+  }
+
+  function startDialogSpeechRecording() {
+    if (!recognition) {
+      showToast('⚠️ Spracherkennung im Browser nicht verfügbar.');
+      return;
+    }
+    activeMicTarget = 'dialogChat';
+    isDialogRecording = true;
+    dialogSpeechFinalAccumulator = '';
+    const input = document.getElementById('dialogTextInput');
+    if (input && !input.value.trim()) {
+      input.placeholder = '🎙️ Höre zu... Dein gesprochener Satz erscheint hier...';
+    }
+    try {
+      recognition.continuous = true;
+      recognition.interimResults = true;
+    } catch (e) {}
+
+    try {
+      recognition.start();
+    } catch (e) {
+      console.warn('Speech start error:', e);
+    }
+  }
+
+  function stopDialogRecordingAndSend() {
+    isDialogRecording = false;
+    if (isRecording) {
+      try { recognition.stop(); } catch(e) {}
+    }
+    showDialogRecordingBar(false);
+    const input = document.getElementById('dialogTextInput');
+    const text = (input ? input.value : '').trim();
+    if (text) {
+      submitUserChatMessage();
+    } else {
+      showToast('ℹ️ Keine Sprache erkannt. Bitte sprich deinen Satz ins Mikrofon.');
+    }
+  }
+
+  function cancelDialogRecording() {
+    isDialogRecording = false;
+    dialogSpeechFinalAccumulator = '';
+    if (isRecording) {
+      try { recognition.stop(); } catch(e) {}
+    }
+    showDialogRecordingBar(false);
+    const input = document.getElementById('dialogTextInput');
+    if (input) input.value = '';
+    showToast('❌ Aufnahme abgebrochen');
+  }
+
+  function toggleDialogSpeechRecording() {
+    if (!recognition) {
+      showToast('⚠️ Spracherkennung im Browser nicht verfügbar.');
+      return;
+    }
+    if (isRecording && activeMicTarget === 'dialogChat') {
+      stopDialogRecordingAndSend();
+    } else {
+      startDialogSpeechRecording();
+    }
   }
 
   // --- AUSSPRACHE-BEWERTUNG IM SPRECHTRAINER ---
@@ -1083,6 +1206,10 @@ function initApp() {
     } else {
       activeMicTarget = 'flashcard';
       try {
+        recognition.continuous = false;
+        recognition.interimResults = false;
+      } catch (e) {}
+      try {
         recognition.start();
       } catch (err) {
         console.error('Speech recognition error:', err);
@@ -1182,6 +1309,10 @@ function initApp() {
       recognition.stop();
     } else {
       activeMicTarget = 'speechTrainer';
+      try {
+        recognition.continuous = false;
+        recognition.interimResults = false;
+      } catch (e) {}
       try {
         recognition.start();
       } catch (err) {
@@ -2243,6 +2374,62 @@ function initApp() {
               'Can we practice English for IT?'
             ]
           }
+        ],
+        school_exams: [
+          {
+            id: 'beg_school_1',
+            en: 'A math exam in school sounds challenging{name}! How did it go? Did you feel well-prepared for the questions?',
+            de: 'Eine Mathe-Klausur in der Schule klingt anspruchsvoll{name}! Wie ist es gelaufen? Hast du dich gut vorbereitet gefühlt?',
+            suggestions: [
+              'The math exam was tricky, but I think I did well.',
+              'It was quite difficult, but I am glad it is over!',
+              'Now I can finally relax and focus on English.'
+            ]
+          },
+          {
+            id: 'beg_school_2',
+            en: 'Passing exams takes dedication! What subject do you find most interesting in school or training{name}?',
+            de: 'Prüfungen zu meistern erfordert Durchhaltevermögen! Welches Fach findest du in der Schule oder Ausbildung am interessantesten{name}?',
+            suggestions: [
+              'Computer science and programming are my favorites.',
+              'I really enjoy economics and business.',
+              'English and languages are very useful for my future.'
+            ]
+          }
+        ],
+        tired_relax: [
+          {
+            id: 'beg_tired_1',
+            en: 'You worked hard today{name}, so it is completely natural to feel tired! Make yourself comfortable. Would you like a very light, easy conversation, or should we keep it short?',
+            de: 'Du hast heute hart gearbeitet{name}, da ist es völlig verständlich, dass du müde bist! Mach es dir gemütlich. Möchtest du eine ganz entspannte, leichte Unterhaltung oder machen wir nur kurz?',
+            suggestions: [
+              'Let us just do a short and easy practice today.',
+              'I will grab a warm tea and relax on the couch.',
+              'Can you teach me two relaxing English idioms?'
+            ]
+          },
+          {
+            id: 'beg_tired_2',
+            en: 'Rest and good sleep are the best way to recharge your brain{name}! How do you usually relax in the evening?',
+            de: 'Erholung und guter Schlaf sind das Beste für den Kopf{name}! Wie entspannst du dich abends am liebsten?',
+            suggestions: [
+              'I like listening to calm music or watching a series.',
+              'I just lie down and scroll on my phone.',
+              'A good night of sleep will give me energy for tomorrow.'
+            ]
+          }
+        ],
+        home_routine: [
+          {
+            id: 'beg_home_1',
+            en: 'Welcome home{name}! There is nothing better than being back home after a long day. What are your plans for this evening?',
+            de: 'Willkommen zu Hause{name}! Es gibt nichts Besseres als nach einem langen Tag heimzukommen. Was hast du heute Abend noch vor?',
+            suggestions: [
+              'I will cook some dinner and then relax.',
+              'I want to practice 10 minutes of English.',
+              'Just chilling and enjoying my free time!'
+            ]
+          }
         ]
       },
       standup: {
@@ -2732,32 +2919,48 @@ function initApp() {
       const meta = this.getPartnerMeta(scenarioId);
       const userName = this.getUserName();
 
-      // 0-Guest. Neue Person / Gast stellt sich vor ("Das ist Peter", "Hier ist Anna", "Ich bin Anna", etc.)
+      // 0-Guest. Neue Person / Gast stellt sich vor (v30: Strikte Validierung gegen False Positives wie 'calling', 'tired')
       const isGuestIntroMatch = (() => {
-        // 1. Explizite Einführung: "das ist mein Freund/Kollege X", "hier ist X", "this is X"
-        const introExplicit = rawInput.match(/\b(?:das\s+ist|this\s+is)\s+(?:mein\s+freund|meine\s+freundin|mein\s+kollege|meine\s+kollegin|my\s+friend|my\s+colleague|a\s+friend|ein\s+freund)?\s*([A-Za-zÄÖÜäöüß]{2,25})\b/i);
-        if (introExplicit) return introExplicit[1];
+        const NON_NAME_WORDS = new Set([
+          'calling', 'tired', 'school', 'exam', 'math', 'matt', 'home', 'good', 'fine', 'great',
+          'ready', 'developer', 'student', 'beginner', 'online', 'offline', 'here', 'there',
+          'today', 'tomorrow', 'yesterday', 'now', 'feeling', 'working', 'studying', 'learning',
+          'doing', 'going', 'talking', 'speaking', 'coming', 'trying', 'thinking', 'waiting',
+          'happy', 'sad', 'angry', 'busy', 'bored', 'sick', 'ill', 'well', 'bad', 'excited',
+          'nervous', 'calm', 'sure', 'right', 'wrong', 'late', 'early', 'fast', 'slow',
+          'cool', 'hot', 'cold', 'warm', 'hungry', 'thirsty', 'asleep', 'awake', 'free',
+          'a', 'an', 'the', 'my', 'your', 'his', 'her', 'our', 'their', 'this', 'that',
+          'what', 'how', 'why', 'when', 'where', 'who', 'which', 'just', 'really', 'very',
+          'not', 'also', 'too', 'much', 'more', 'some', 'any', 'all', 'every', 'both',
+          'muede', 'müde', 'krank', 'gesund', 'fleissig', 'faul', 'da', 'hier', 'dort',
+          'bereit', 'fertig', 'schön', 'toll', 'gut', 'schlecht', 'neu', 'alt', 'spass',
+          'spaß', 'schule', 'klausur', 'prüfung', 'arbeit', 'pause', 'mittag', 'abend'
+        ]);
 
-        const hierIstMatch = rawInput.match(/\b(?:hier\s+ist|hier\s+spricht|here\s+is)\s+([A-Za-zÄÖÜäöüß]{2,25})\b/i);
-        if (hierIstMatch) return hierIstMatch[1];
-
-        const auchDaMatch = rawInput.match(/\b(?:ich\s+bin\s+auch\s+da|auch\s+hier)\s*[,.]?\s*(?:ich\s+hei[sß]+e|ich\s+bin|mein\s+name\s+ist)?\s*([A-Za-zÄÖÜäöüß]{2,25})\b/i);
-        if (auchDaMatch) return auchDaMatch[1];
-
-        // 2. Wenn das Gespräch bereits läuft (turnCount > 1) und jemand sagt "Ich bin Peter" oder "My name is Peter"
-        // (Bei turnCount <= 1 ist es der Hauptnutzer, der sich zu Beginn vorstellt!)
-        if (userName && this.state.turnCount > 1) {
-          const isCorrection = /\b(nicht|sondern|richtig|falsch|korrigier|eigentlich|statt)\b/i.test(rawInput);
-          if (!isCorrection) {
-            const newPersonIntro = rawInput.match(/\b(?:ich\s+bin|i\s+am|ich\s+hei[sß]+e|my\s+name\s+is)\s+([A-Za-zÄÖÜäöüß]{2,25})\b/i);
-            if (newPersonIntro) {
-              const candidate = newPersonIntro[1].trim();
-              if (candidate.toLowerCase() !== userName.toLowerCase() && !/^(here|da|bereit|ready|beginner|developer|online|good|fine|ok|okay)$/i.test(candidate)) {
-                return candidate;
-              }
-            }
-          }
+        function isValidGuestCandidate(candidate) {
+          if (!candidate || candidate.length < 2 || candidate.length > 20) return false;
+          const low = candidate.toLowerCase();
+          if (NON_NAME_WORDS.has(low)) return false;
+          if (low.endsWith('ing') || low.endsWith('ed') || low.endsWith('ly')) return false;
+          if (userName && low === userName.toLowerCase()) return false;
+          return true;
         }
+
+        // 1. Explizite Einführung eines Gastes:
+        // "das ist mein Freund/Kollege X", "this is my friend/colleague X", "meet my friend X"
+        const introExplicit = rawInput.match(/\b(?:das\s+ist|this\s+is)\s+(?:mein\s+freund|meine\s+freundin|mein\s+kollege|meine\s+kollegin|my\s+friend|my\s+colleague|a\s+friend|ein\s+gast|a\s+guest)\s+([A-Za-zÄÖÜäöüß]{2,20})\b/i);
+        if (introExplicit && isValidGuestCandidate(introExplicit[1])) return introExplicit[1];
+
+        const meetMatch = rawInput.match(/\b(?:meet\s+my\s+friend|meet\s+my\s+colleague|meet)\s+([A-Za-zÄÖÜäöüß]{2,20})\b/i);
+        if (meetMatch && isValidGuestCandidate(meetMatch[1])) return meetMatch[1];
+
+        const hierIstMatch = rawInput.match(/\b(?:hier\s+ist\s+(?:mein\s+freund|meine\s+freundin|mein\s+kollege|ein\s+gast)|here\s+is\s+(?:my\s+friend|a\s+guest))\s+([A-Za-zÄÖÜäöüß]{2,20})\b/i);
+        if (hierIstMatch && isValidGuestCandidate(hierIstMatch[1])) return hierIstMatch[1];
+
+        // 2. Neuer Teilnehmer meldet sich selbst explizit neu im Chat an:
+        const joinerMatch = rawInput.match(/\b(?:ich\s+bin\s+auch\s+(?:neu|da|dabei)|i\s+am\s+also\s+joining|i\s+am\s+joining)\b.*?\b(?:ich\s+hei[sß]+e|mein\s+name\s+ist|my\s+name\s+is|call\s+me)\s+([A-Za-zÄÖÜäöüß]{2,20})\b/i);
+        if (joinerMatch && isValidGuestCandidate(joinerMatch[1])) return joinerMatch[1];
+
         return null;
       })();
 
@@ -3076,58 +3279,17 @@ ${cleanTip}`,
       // 2. Asking for Partner's Age / "How old are you?" / "What is your age?" / "Wie alt bist du?"
       if (/\b(how\s+old(\s+(are\s+you|r\s+u|is\s+she|is\s+he))?|what\s+is\s+your\s+age|whats\s+your\s+age|your\s+age|ur\s+age|wie\s+alt\s+bist\s+du)\b/i.test(norm)) {
         if (scenarioId === 'economics') {
-        const grade = (typeof getEconomicsGrade === 'function') ? getEconomicsGrade() : '11';
-        if (grade === '11') {
           return {
-            id: 'econ_fallback_11_' + this.state.turnCount,
-            en: `Excellent economic observation${this.salutation()}! In Grade 11, we focus on the fundamental mechanics of trade: why countries exchange goods, how exchange rates fluctuate, and how specialization generates wealth. What concept would you like to explore next?`,
-            de: `Hervorragende volkswirtschaftliche Beobachtung${this.salutation()}! In Klasse 11 konzentrieren wir uns auf die Grundmechanismen des Handels: Warum Staaten Güter tauschen, wie Wechselkurse schwanken und wie Spezialisierung Wohlstand schafft. Welches Konzept möchtest du vertiefen?`,
+            id: 'intent_age_economics',
+            en: `I am 34 years old and have been teaching economics for nearly a decade! How old are you${this.salutation()}?`,
+            de: `Ich bin 34 Jahre alt und unterrichte Wirtschaft seit fast zehn Jahren! Wie alt bist du${this.salutation()}?`,
             suggestions: [
-              "Can you explain opportunity costs with an everyday example?",
-              "What happens when the Euro becomes stronger against the US Dollar?",
-              "Why do multinational companies open production sites in developing countries?"
+              "I am in my twenties.",
+              "I am preparing for my Abitur exams.",
+              "Can we analyze international trade theory?"
             ]
           };
-        } else if (grade === '12') {
-          return {
-            id: 'econ_fallback_12_' + this.state.turnCount,
-            en: `Very perceptive point${this.salutation()}! For Grade 12, we critically evaluate both sides: while protectionist tariffs shield domestic workers, they also invite retaliatory trade barriers and raise consumer inflation. How would you weigh these opposing interests?`,
-            de: `Sehr scharfsinniger Punkt${this.salutation()}! Für die 12. Klasse müssen wir beide Seiten kritisch abwägen: Während Schutzzölle heimische Arbeitsplätze sichern, provozieren sie auch Vergeltungsmaßnahmen und erhöhen die Inflation für Verbraucher. Wie würdest du diese Interessen gewichten?`,
-            suggestions: [
-              "Protectionism protects domestic jobs, but increases prices for consumers.",
-              "Nearshoring helps avoid long shipping routes and political risks.",
-              "Can you give me an example of non-tariff trade barriers?"
-            ]
-          };
-        } else {
-          return {
-            id: 'econ_fallback_13_' + this.state.turnCount,
-            en: `A sophisticated macroeconomic observation${this.salutation()}! In Abitur examinations, examiners look for rigorous argumentation: linking monetary policy, geopolitical de-risking, and multilateral WTO rules. Let\'s formulate a well-structured thesis on this topic!`,
-            de: `Eine anspruchsvolle makroökonomische Beobachtung${this.salutation()}! In Abiturprüfungen erwarten Prüfer eine präzise Argumentation: Die Verknüpfung von Geldpolitik, geopolitischem De-risking und multilateralen WTO-Regeln. Lass uns dazu eine strukturierte These formulieren!`,
-            suggestions: [
-              "On the one hand, open markets maximize efficiency, but on the other, they create dependencies.",
-              "How does central bank interest rate policy combat imported inflation?",
-              "Let\'s practice a typical oral Abitur exam question on modern trade policy."
-            ]
-          };
-        }
-      }
-
-      if (scenarioId === 'economics') {
-      const grade = getEconomicsGrade();
-      const uGreeting = userName ? `Hello ${userName}! ` : 'Hello and welcome! ';
-      const uGreetingDe = userName ? `Hallo ${userName}! ` : 'Hallo und herzlich willkommen! ';
-      if (grade === '11') {
-        promptEn = `${uGreeting}I am ${partnerFirstName}, your International Economics coach for Gymnasium Grade 11. Today we explore foundational trade concepts: Why do nations trade, and how does David Ricardo\'s comparative advantage work? What would you like to discuss first?`;
-        promptDe = `${uGreetingDe}Ich bin ${partnerFirstName}, dein Coach für Internationale Wirtschaft im Gymnasium Klasse 11. Heute behandeln wir die Grundlagen des Welthandels: Warum betreiben Staaten Außenhandel und wie funktioniert der komparative Kostenvorteil nach David Ricardo? Worüber möchtest du zuerst sprechen?`;
-      } else if (grade === '12') {
-        promptEn = `${uGreeting}I am ${partnerFirstName}, your Economics tutor for Grade 12 (Qualification Phase 1). In this course, we examine contentious trade policies: free trade versus protectionism, customs tariffs, supply chain resilience, and ESG standards. Which economic challenge shall we examine?`;
-        promptDe = `${uGreetingDe}Ich bin ${partnerFirstName}, dein Wirtschafts-Tutor für Klasse 12 (Qualifikationsphase 1). In diesem Halbjahr analysieren wir wirtschaftspolitische Kontroversen: Freihandel vs. Protektionismus, Schutzzölle, Lieferketten-Resilienz und ESG-Standards. Welche wirtschaftliche Herausforderung wollen wir untersuchen?`;
-      } else {
-        promptEn = `${uGreeting}I am ${partnerFirstName}, your Grade 13 & Abitur Economics lecturer. Here we prepare for high-level Abitur examinations: central bank monetary policies, global currency fluctuations, WTO arbitration, and geoeconomic decoupling. Which Abitur debate or exam topic would you like to practice today?`;
-        promptDe = `${uGreetingDe}Ich bin ${partnerFirstName}, dein Fachdozent für Klasse 13 und die Abiturprüfung. Hier trainieren wir für anspruchsvolle Abitur-Klausuren und mündliche Prüfungen: Geldpolitik der Zentralbanken, Währungskrisen, WTO-Schlichtung und geoeconomische Entkopplung. Welche Abitur-Debatte möchtest du heute durchgehen?`;
-      }
-    } else if (scenarioId === 'beginner') {
+        } else if (scenarioId === 'beginner') {
           return {
             id: 'intent_age_beginner',
             en: `I am 28 years old. How old are you${this.salutation()}?`,
@@ -3445,8 +3607,22 @@ ${cleanTip}`,
       // 2. Falls keine direkte Frage: Thema anhand von Schlüsselwörtern ermitteln
       let topicList = [];
 
-      // Allgemeine & Anfänger-Themen
-      if (lower.includes('name') || lower.includes('hello') || lower.includes('meet') || lower.includes('day') || lower.includes('introduce')) {
+      // Spezifische Alltagsthemen (Schule & Prüfungen, Müdigkeit, Zuhause) ZUERST prüfen:
+      if (/\b(tired|m[uü]de|exhausted|sleepy|sleep|couch|sofa|bed|bett|ausruhen|rest|relax|chill|unwind|calling\s+a\s+bit\s+tired|bit\s+tired|long\s+day)\b/i.test(lower)) {
+        topicList.push('tired_relax');
+      }
+      if (/\b(school|schule|exam|exams|klausur|pr[uü]fung|test|math\b|maths\b|matt\b|mathematik|homework|hausaufgabe|class|unterricht|grade\s*\d+|abitur)\b/i.test(lower)) {
+        topicList.push('school_exams');
+      }
+      if (/\b(im\s+home|i'm\s+home|at\s+home|now\s+home|back\s+home|arrive.*home|zuhause|heim|nach\s+hause|feierabend)\b/i.test(lower)) {
+        topicList.push('home_routine');
+      }
+
+      // Allgemeine & Anfänger-Themen (nur wenn nicht spezifisch)
+      if (lower.includes('name') || lower.includes('hello') || lower.includes('meet') || lower.includes('introduce')) {
+        topicList.push('personal');
+      }
+      if ((lower.includes('day') || lower.includes('today')) && topicList.length === 0) {
         topicList.push('personal');
       }
       if (lower.includes('hobby') || lower.includes('music') || lower.includes('synth') || lower.includes('beat') || lower.includes('guitar') || lower.includes('walk')) {
@@ -4028,10 +4204,14 @@ ${cleanTip}`,
       });
     }
 
-    // Senden per Button oder Enter-Taste
+    // Senden per Button oder Enter-Taste (v30: stoppt und sendet auch laufende Aufnahme)
     if (btnDialogSend) {
       btnDialogSend.addEventListener('click', () => {
-        submitUserChatMessage();
+        if (isRecording && activeMicTarget === 'dialogChat') {
+          stopDialogRecordingAndSend();
+        } else {
+          submitUserChatMessage();
+        }
       });
     }
 
@@ -4039,7 +4219,11 @@ ${cleanTip}`,
       dialogTextInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
           e.preventDefault();
-          submitUserChatMessage();
+          if (isRecording && activeMicTarget === 'dialogChat') {
+            stopDialogRecordingAndSend();
+          } else {
+            submitUserChatMessage();
+          }
         }
       });
     }
@@ -4047,21 +4231,23 @@ ${cleanTip}`,
     // Mikrofon-Button im Dialog
     if (btnDialogMic) {
       btnDialogMic.addEventListener('click', () => {
-        if (!recognition) {
-          showToast('Spracherkennung im Browser nicht verfügbar.');
-          return;
-        }
+        toggleDialogSpeechRecording();
+      });
+    }
 
-        if (isRecording && activeMicTarget === 'dialogChat') {
-          recognition.stop();
-        } else {
-          try {
-            activeMicTarget = 'dialogChat';
-            recognition.start();
-          } catch (e) {
-            console.warn('Mic start error:', e);
-          }
-        }
+    // Dedizierter "Aufnahme stoppen & Abschicken"-Button
+    const btnRecStopSend = document.getElementById('btnRecStopSend');
+    if (btnRecStopSend) {
+      btnRecStopSend.addEventListener('click', () => {
+        stopDialogRecordingAndSend();
+      });
+    }
+
+    // Dedizierter "Abbrechen"-Button
+    const btnRecCancel = document.getElementById('btnRecCancel');
+    if (btnRecCancel) {
+      btnRecCancel.addEventListener('click', () => {
+        cancelDialogRecording();
       });
     }
 

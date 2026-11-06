@@ -926,8 +926,21 @@
         </div>
 
       </div>
-
-
+      <!-- Active Speech Recording Bar with Explicit Stop & Send Button -->
+      <div class="dialog-recording-bar" id="dialogRecordingBar" style="display: none;">
+        <div class="recording-bar-status">
+          <span class="recording-pulse-dot">🔴</span>
+          <span class="recording-bar-text" id="dialogRecordingStatusText">Aufnahme läuft... Sprich in Ruhe deinen Satz!</span>
+        </div>
+        <div class="recording-bar-actions">
+          <button type="button" class="btn-rec-stop-send" id="btnRecStopSend" title="Aufnahme beenden und Text sofort abschicken">
+            ⏹️ Aufnahme stoppen &amp; Abschicken
+          </button>
+          <button type="button" class="btn-rec-cancel" id="btnRecCancel" title="Aufnahme verwerfen">
+            ❌ Abbrechen
+          </button>
+        </div>
+      </div>
 
       <!-- Chat Input Area -->
 
