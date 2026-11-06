@@ -1491,6 +1491,7 @@ function initApp() {
     }
   }
   let dialogHistories = {};
+  let activeGuests = [];
   let dialogInitialized = false;
 
   // --- DER GRAMMATIK- & SATZ-DOKTOR (CLIENT-SEITIGE ANALYSE & PRAISE) ---
@@ -2468,6 +2469,94 @@ function initApp() {
       const norm = this.normalizeInput(rawInput);
       const meta = this.getPartnerMeta(scenarioId);
       const userName = this.getUserName();
+
+      // 0-Guest. Neue Person / Gast stellt sich vor ("Das ist Peter", "Hier ist Anna", "Ich bin Anna", etc.)
+      const isGuestIntroMatch = (() => {
+        // 1. Explizite Einführung: "das ist mein Freund/Kollege X", "hier ist X", "this is X"
+        const introExplicit = rawInput.match(/\b(?:das\s+ist|this\s+is)\s+(?:mein\s+freund|meine\s+freundin|mein\s+kollege|meine\s+kollegin|my\s+friend|my\s+colleague|a\s+friend|ein\s+freund)?\s*([A-Za-zÄÖÜäöüß]{2,25})\b/i);
+        if (introExplicit) return introExplicit[1];
+
+        const hierIstMatch = rawInput.match(/\b(?:hier\s+ist|hier\s+spricht|here\s+is)\s+([A-Za-zÄÖÜäöüß]{2,25})\b/i);
+        if (hierIstMatch) return hierIstMatch[1];
+
+        const auchDaMatch = rawInput.match(/\b(?:ich\s+bin\s+auch\s+da|auch\s+hier)\s*[,.]?\s*(?:ich\s+hei[sß]+e|ich\s+bin|mein\s+name\s+ist)?\s*([A-Za-zÄÖÜäöüß]{2,25})\b/i);
+        if (auchDaMatch) return auchDaMatch[1];
+
+        // 2. Wenn Nutzer bereits als Istvan gespeichert ist und jemand sagt "Ich bin Peter" oder "My name is Peter"
+        // UND es ist KEINE Namenskorrektur (wie "nicht X sondern Y")
+        if (userName) {
+          const isCorrection = /\b(nicht|sondern|richtig|falsch|korrigier|eigentlich|statt)\b/i.test(rawInput);
+          if (!isCorrection) {
+            const newPersonIntro = rawInput.match(/\b(?:ich\s+bin|i\s+am|ich\s+hei[sß]+e|my\s+name\s+is)\s+([A-Za-zÄÖÜäöüß]{2,25})\b/i);
+            if (newPersonIntro) {
+              const candidate = newPersonIntro[1].trim();
+              if (candidate.toLowerCase() !== userName.toLowerCase() && !/^(here|da|bereit|ready|beginner|developer|online|good|fine|ok|okay)$/i.test(candidate)) {
+                return candidate;
+              }
+            }
+          }
+        }
+        return null;
+      })();
+
+      if (isGuestIntroMatch) {
+        let guestName = isGuestIntroMatch.charAt(0).toUpperCase() + isGuestIntroMatch.slice(1).toLowerCase();
+        if (typeof activeGuests !== 'undefined') {
+          if (!activeGuests.includes(guestName)) {
+            activeGuests.push(guestName);
+          }
+        }
+        const coachName = getCurrentPartnerMeta().name.split(' ')[0].replace(/[^A-Za-zÄÖÜäöüß]/g, '');
+        const hostName = userName || 'Istvan';
+
+        if (activeGuests.length > 1) {
+          return {
+            id: 'intent_guest_joined_multi',
+            isGuestIntro: true,
+            en: `Welcome to our conversation, ${guestName}! 👋 Now we have a fantastic learning team with ${hostName}, ${activeGuests.filter(g => g !== guestName).join(', ')}, and you! What would you like to talk about today?`,
+            de: `Willkommen in unserer Runde, ${guestName}! 👋 Jetzt haben wir ein tolles Team mit ${hostName}, ${activeGuests.filter(g => g !== guestName).join(', ')} und dir! Worüber möchtet ihr sprechen?`,
+            suggestions: [
+              `Hello ${coachName}! Glad to join the group.`,
+              `Can you ask our group an English question?`,
+              `Let's practice a team conversation together!`
+            ]
+          };
+        } else {
+          return {
+            id: 'intent_guest_joined',
+            isGuestIntro: true,
+            en: `Welcome to our conversation, ${guestName}! 👋 It's fantastic to have you joining ${hostName} and me (${coachName}). What would you like to talk about today, ${guestName}?`,
+            de: `Willkommen in unserer Runde, ${guestName}! 👋 Toll, dass du bei ${hostName} und mir (${coachName}) mitmachst. Worüber möchtest du sprechen, ${guestName}?`,
+            suggestions: [
+              `Hello ${coachName}! I would like to introduce myself in English.`,
+              `Can you ask ${guestName} and ${hostName} a question?`,
+              `Let's practice an English conversation together!`
+            ]
+          };
+        }
+      }
+
+      // 0-Guest-Inquiry: Wer ist alles da? / Who is here?
+      const isAskingWhoIsHere = /\b(wer\s+ist\s+(alles\s+)?(da|hier|im\s+gespräch|im\s+chat)|who\s+is\s+(all\s+)?(here|in\s+this\s+chat|with\s+us))\b/i.test(rawInput);
+      if (isAskingWhoIsHere) {
+        const coachName = getCurrentPartnerMeta().name.split(' ')[0].replace(/[^A-Za-zÄÖÜäöüß]/g, '');
+        const hostName = userName || 'Istvan';
+        const guestsList = (typeof activeGuests !== 'undefined' && activeGuests.length > 0)
+          ? activeGuests.join(', ')
+          : 'aktuell keine Gäste (nur du und ich)';
+
+        return {
+          id: 'intent_who_is_here',
+          isGuestIntro: true,
+          en: `In our conversation right now we have: ${hostName}, our guest(s): ${typeof activeGuests !== 'undefined' && activeGuests.length ? activeGuests.join(', ') : 'none yet'}, plus me (${coachName}) as your coach!`,
+          de: `In unserem Gespräch sind aktuell: ${hostName}, Gäste: ${guestsList}, plus ich (${coachName}) als euer Coach!`,
+          suggestions: [
+            `Can you ask our group a practice question?`,
+            `Let's practice English together!`,
+            `Teach us some useful conversation phrases.`
+          ]
+        };
+      }
 
       // 0A. Intelligente Erkennung von Name & Namens-Korrektur ("meine richtige nahme ist...", "nicht X sondern Y", etc.)
       let detectedNewName = null;
@@ -3754,6 +3843,7 @@ ${cleanTip}`,
   }
 
   function resetDialogScenario(scenarioId) {
+    activeGuests = [];
     const scenario = DIALOG_SCENARIOS[scenarioId] || DIALOG_SCENARIOS.standup;
     dialogHistories[scenarioId] = [];
 
@@ -4057,9 +4147,9 @@ ${cleanTip}`,
     const scenario = DIALOG_SCENARIOS[scenarioId] || DIALOG_SCENARIOS.standup;
     let analysis = SentenceDoctor.analyze(text);
 
-    // Wenn der Nutzer seinen Namen nennt, korrigiert oder nach seinem Namen fragt, keinen Fehler anzeigen!
-    const isNameMessage = /\b(nicht\s+[A-Za-z]+\s+sondern|meine?\s+(richtige[rn]?\s+)?na[h]?me|ich\s+hei[sß]+e|my\s+name\s+is|call\s+me|wie\s+hei[sß]+e\s+ich|what\s+is\s+my\s+name|wei[sß]+t\s+du\s+wie\s+ich|sag\s+mir\s+meinen\s+namen)\b/i.test(text);
-    if (isNameMessage && analysis) {
+    // Wenn der Nutzer seinen Namen nennt, einen Gast vorstellt oder fragt, keinen Fehler anzeigen!
+    const isNameOrGuestMessage = /\b(nicht\s+[A-Za-z]+\s+sondern|meine?\s+(richtige[rn]?\s+)?na[h]?me|ich\s+hei[sß]+e|my\s+name\s+is|call\s+me|wie\s+hei[sß]+e\s+ich|what\s+is\s+my\s+name|wei[sß]+t\s+du\s+wie\s+ich|sag\s+mir\s+meinen\s+namen|das\s+ist|hier\s+ist|this\s+is|wer\s+ist\s+(alles\s+)?da|who\s+is\s+here)\b/i.test(text) || (intent && intent.isGuestIntro);
+    if (isNameOrGuestMessage && analysis) {
       analysis = null;
     }
 
