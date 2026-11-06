@@ -2744,9 +2744,9 @@ function initApp() {
         const auchDaMatch = rawInput.match(/\b(?:ich\s+bin\s+auch\s+da|auch\s+hier)\s*[,.]?\s*(?:ich\s+hei[sß]+e|ich\s+bin|mein\s+name\s+ist)?\s*([A-Za-zÄÖÜäöüß]{2,25})\b/i);
         if (auchDaMatch) return auchDaMatch[1];
 
-        // 2. Wenn Nutzer bereits als Istvan gespeichert ist und jemand sagt "Ich bin Peter" oder "My name is Peter"
-        // UND es ist KEINE Namenskorrektur (wie "nicht X sondern Y")
-        if (userName) {
+        // 2. Wenn das Gespräch bereits läuft (turnCount > 1) und jemand sagt "Ich bin Peter" oder "My name is Peter"
+        // (Bei turnCount <= 1 ist es der Hauptnutzer, der sich zu Beginn vorstellt!)
+        if (userName && this.state.turnCount > 1) {
           const isCorrection = /\b(nicht|sondern|richtig|falsch|korrigier|eigentlich|statt)\b/i.test(rawInput);
           if (!isCorrection) {
             const newPersonIntro = rawInput.match(/\b(?:ich\s+bin|i\s+am|ich\s+hei[sß]+e|my\s+name\s+is)\s+([A-Za-zÄÖÜäöüß]{2,25})\b/i);
@@ -2820,6 +2820,22 @@ function initApp() {
         };
       }
 
+      // 0-NoName: Nutzer möchte ohne Namen üben
+      if (/\b(without\s+(using\s+)?names?|ohne\s+namen?|keine?n?\s+namen?)\b/i.test(rawInput)) {
+        const coachName = meta.name.split(' ')[0].replace(/[^A-Za-zÄÖÜäöüß]/g, '');
+        return {
+          id: 'intent_no_name_requested',
+          isNameUpdate: true,
+          en: `Certainly! No problem at all. We can dive straight into practicing English. What would you like to talk about today?`,
+          de: `Natürlich! Überhaupt kein Problem. Wir können direkt ins Englisch-Training einsteigen. Worüber möchtest du heute sprechen?`,
+          suggestions: [
+            "Can you teach me some useful everyday English words?",
+            "Let's practice a simple conversation about hobbies.",
+            "Can you check my sentences and correct any mistakes?"
+          ]
+        };
+      }
+
       // 0A. Intelligente Erkennung von Name & Namens-Korrektur ("meine richtige nahme ist...", "nicht X sondern Y", etc.)
       let detectedNewName = null;
       let isExplicitCorrection = false;
@@ -2849,14 +2865,12 @@ function initApp() {
         }
       }
 
-      // 4. Einzellwort-Name
+      // 4. Einzellwort-Name (z.B. wenn der Nutzer zu Beginn einfach "Istvan" eintippt)
       if (!detectedNewName) {
         const cleanTrim = rawInput.trim();
-        const isCommonWord = /^(hello|hi|yes|no|okay|cool|super|good|nice|what|who|how|why|thanks|thank|bitte|danke|hallo|nein|ja|morning|fine|great)$/i.test(cleanTrim);
-        if (/^[A-Za-zÄÖÜäöüß]{2,20}$/.test(cleanTrim) && !isCommonWord) {
-          if (!userName || /^[A-Z][a-zäöüß]+$/.test(cleanTrim)) {
-            detectedNewName = cleanTrim;
-          }
+        const isCommonWord = /^(hello|hi|yes|no|okay|cool|super|good|nice|what|who|how|why|thanks|thank|bitte|danke|hallo|nein|ja|morning|fine|great|ready|start|begin)$/i.test(cleanTrim);
+        if (/^[A-Za-zÄÖÜäöüß]{2,25}$/.test(cleanTrim) && !isCommonWord) {
+          detectedNewName = cleanTrim;
         }
       }
 
@@ -2892,15 +2906,16 @@ function initApp() {
             ]
           };
         } else {
+          const pName = partnerTitle.split(' ')[0].replace(/[^A-Za-zÄÖÜäöüß]/g, '');
           return {
             id: 'intent_name_saved',
             isNameUpdate: true,
-            en: `Nice to meet you, ${extractedName}! I am ${partnerTitle.split(' ')[0]}. What would you like to talk about today?`,
-            de: `Schön dich kennenzulernen, ${extractedName}! Ich bin ${partnerTitle.split(' ')[0]}. Worüber möchtest du heute sprechen?`,
+            en: `Wonderful to meet you, ${extractedName}! 🎉 I have saved your name. Now we are ready: What would you like to practice today? We can chat about everyday life, learn useful vocabulary, or practice speaking!`,
+            de: `Wunderbar, dich kennenzulernen, ${extractedName}! 🎉 Ich habe deinen Namen gespeichert. Jetzt kann es losgehen: Worüber möchtest du heute sprechen? Wir können über den Alltag plaudern, Vokabeln lernen oder freies Sprechen üben!`,
             suggestions: [
-              "Can you teach me some new conversational words?",
-              "How old are you, and what are your hobbies?",
-              "Can you correct my English when I make mistakes?"
+              "Can you teach me some useful everyday English words?",
+              "Let's practice a simple conversation about hobbies.",
+              "Can you check my sentences and correct any mistakes?"
             ]
           };
         }
@@ -4234,34 +4249,42 @@ ${cleanTip}`,
       return;
     }
 
-    // Initiale Begrüßungsnachricht des Partners (dynamisch mit Benutzername)
-    const userName = getUserName();
-    let promptEn = scenario.initialPrompt;
-    let promptDe = scenario.initialPromptDe;
-
+    // Initiale Begrüßungsnachricht des Partners:
+    // Der Coach startet IMMER mit persönlicher Vorstellung und fragt den Lernenden nach seinem Namen,
+    // um die Konversation maßgeschneidert und interaktiv aufzubauen!
     const partnerMeta = getCurrentPartnerMeta();
     const partnerFirstName = partnerMeta.name.split(' ')[0].replace(/[^A-Za-zÄÖÜäöüß]/g, '');
 
-    if (scenarioId === 'beginner') {
+    let promptEn = '';
+    let promptDe = '';
+
+    if (scenarioId === 'beginner' || scenarioId === 'free') {
       if (partnerMeta.isMale) {
-        const uGreeting = userName ? `Hello ${userName}! ` : 'Hello and welcome! ';
-        promptEn = `${uGreeting}😊 I am ${partnerFirstName}, your personal English coach. We can practice speaking, learn IT vocabulary, or prepare for daily standups. What would you like to talk about today?`;
-        const uGreetingDe = userName ? `Hallo ${userName}! ` : 'Hallo und herzlich willkommen! ';
-        promptDe = `${uGreetingDe}😊 Ich bin ${partnerFirstName}, dein persönlicher Englisch-Coach. Wir können lockeren Smalltalk üben, IT-Begriffe lernen oder Daily Standups trainieren. Worüber möchtest du heute sprechen?`;
+        promptEn = `Hello and welcome! 😊 I am ${partnerFirstName}, your personal English coach. Before we begin our conversation: Who am I speaking with today? What is your name?`;
+        promptDe = `Hallo und herzlich willkommen! 😊 Ich bin ${partnerFirstName}, dein persönlicher Englisch-Coach. Bevor wir mit unserem Gespräch beginnen: Mit wem spreche ich heute? Wie heißt du?`;
       } else {
-        const uGreeting = userName ? `Hello ${userName}! ` : 'Hello and welcome! ';
-        promptEn = `${uGreeting}😊 I am ${partnerFirstName}, your friendly English tutor. In this chat, there is zero pressure: we can talk about everyday life, hobbies, or learn new words together. What would you like to talk about today?`;
-        const uGreetingDe = userName ? `Hallo ${userName}! ` : 'Hallo und herzlich willkommen! ';
-        promptDe = `${uGreetingDe}😊 Ich bin ${partnerFirstName}, deine freundliche Sprachbegleiterin. Hier gibt es null Leistungsdruck: Wir können über den Alltag, Hobbys plaudern oder gemeinsam neue Wörter lernen. Worüber möchtest du heute sprechen?`;
+        promptEn = `Hello and welcome! 😊 I am ${partnerFirstName}, your friendly English tutor. In this chat, there is zero pressure! Before we begin: Who am I speaking with today? What is your name?`;
+        promptDe = `Hallo und herzlich willkommen! 😊 Ich bin ${partnerFirstName}, deine freundliche Sprachbegleiterin. Hier gibt es null Leistungsdruck! Bevor wir loslegen: Mit wem spreche ich heute? Wie heißt du?`;
+      }
+    } else if (scenarioId === 'economics') {
+      const grade = getEconomicsGrade();
+      const uGreeting = `Hello and welcome! 😊 I am ${partnerFirstName}, your International Economics coach. `;
+      const uGreetingDe = `Hallo und herzlich willkommen! 😊 Ich bin ${partnerFirstName}, dein Coach für Internationale Wirtschaft. `;
+      if (grade === '11') {
+        promptEn = `${uGreeting}Before we explore David Ricardo's comparative advantage in Grade 11: Who am I speaking with today? What is your name?`;
+        promptDe = `${uGreetingDe}Bevor wir in Klasse 11 die Grundlagen und David Ricardos komparativen Kostenvorteil erkunden: Mit wem spreche ich heute? Wie heißt du?`;
+      } else if (grade === '12') {
+        promptEn = `${uGreeting}Before we analyze protective tariffs and supply chain resilience in Grade 12: Who am I speaking with today? What is your name?`;
+        promptDe = `${uGreetingDe}Bevor wir in Klasse 12 Schutzzölle und Lieferketten-Resilienz untersuchen: Mit wem spreche ich heute? Wie heißt du?`;
+      } else {
+        promptEn = `${uGreeting}Before we practice advanced Abitur exam debates on monetary policy and geoeconomics: Who am I speaking with today? What is your name?`;
+        promptDe = `${uGreetingDe}Bevor wir anspruchsvolle Abitur-Debatten zu Geldpolitik und Geoeconomics trainieren: Mit wem spreche ich heute? Wie heißt du?`;
       }
     } else {
-      if (userName) {
-        promptEn = promptEn.replace(/\{name\}/g, userName).replace(/Istvan/g, userName);
-        promptDe = promptDe.replace(/\{name\}/g, userName).replace(/Istvan/g, userName);
-      } else {
-        promptEn = promptEn.replace(/\{name\}/g, '').replace(/Istvan/g, '').replace(/\s+,/g, ',').replace(/\s{2,}/g, ' ');
-        promptDe = promptDe.replace(/\{name\}/g, '').replace(/Istvan/g, '').replace(/\s+,/g, ',').replace(/\s{2,}/g, ' ');
-      }
+      const uGreeting = `Hello and welcome! 😊 I am ${partnerFirstName}. `;
+      const uGreetingDe = `Hallo und herzlich willkommen! 😊 Ich bin ${partnerFirstName}. `;
+      promptEn = `${uGreeting}Before we jump into our ${scenario.title}: Who am I speaking with today? What is your name?`;
+      promptDe = `${uGreetingDe}Bevor wir in unser Szenario (${scenario.title}) starten: Mit wem spreche ich heute? Wie heißt du?`;
     }
 
     const initialPartnerMsg = {
@@ -4282,45 +4305,19 @@ ${cleanTip}`,
   }
 
   function getInitialSuggestions(scenarioId) {
-    if (scenarioId === 'economics') {
-      const grade = getEconomicsGrade();
-      if (grade === '11') {
-        return [
-          'Can you explain David Ricardo\'s comparative advantage in simple words?',
-          'Why do nations trade instead of producing everything alone?',
-          'What is the difference between a trade surplus and a trade deficit?'
-        ];
-      }
-      if (grade === '12') {
-        return [
-          'What are the economic arguments for and against protective tariffs?',
-          'How can multinational companies improve their supply chain resilience?',
-          'What role does Foreign Direct Investment (FDI) play in emerging markets?'
-        ];
-      }
-      return [
-        'Let\'s practice an Abitur debate: Is economic globalization in retreat?',
-        'How do central bank interest rates influence international currency exchange rates?',
-        'Analyze the role of the WTO in resolving modern geoeconomic disputes.'
-      ];
-    }
-    if (scenarioId === 'beginner') {
-      const uName = getUserName();
-      if (!uName) {
-        return [
-          'My name is Alex.',
-          'My name is Alex.',
-          'Can we just practice without names?'
-        ];
-      }
-      const pMeta = getCurrentPartnerMeta();
-      const pName = pMeta.name.split(' ')[0].replace(/[^A-Za-zÄÖÜäöüß]/g, '');
-      return [
-        `Hello ${pName}! My name is ${uName}.`,
-        'Can you teach me some useful everyday English words?',
-        'Can you correct my English when I make mistakes?'
-      ];
-    }
+    const pMeta = getCurrentPartnerMeta();
+    const pName = pMeta.name.split(' ')[0].replace(/[^A-Za-zÄÖÜäöüß]/g, '');
+    const savedName = getUserName() || 'Istvan';
+
+    return [
+      `Hello ${pName}! My name is ${savedName}.`,
+      `Hi! I am ${savedName}. Nice to meet you.`,
+      `Hello! My name is Alex.`,
+      'Can we practice speaking without using names?'
+    ];
+  }
+
+  function getInitialSuggestions_legacy(scenarioId) {
     if (scenarioId === 'standup') {
       return [
         'Yesterday I worked on optimizing the database queries.',
@@ -4531,12 +4528,16 @@ ${cleanTip}`,
       return;
     }
 
-    // 3. Normales Szenario: Satz analysieren (Grammatik & Satzkorrektur)
+    // 3. Normales Szenario: Vorab Intent prüfen & Satz analysieren
     const scenario = DIALOG_SCENARIOS[scenarioId] || DIALOG_SCENARIOS.standup;
+    const directIntent = DialogEngine.detectDirectIntent(text, scenarioId);
+
     let analysis = SentenceDoctor.analyze(text);
 
-    // Wenn der Nutzer seinen Namen nennt, einen Gast vorstellt oder fragt, keinen Fehler anzeigen!
-    const isNameOrGuestMessage = /\b(nicht\s+[A-Za-z]+\s+sondern|meine?\s+(richtige[rn]?\s+)?na[h]?me|ich\s+hei[sß]+e|my\s+name\s+is|call\s+me|wie\s+hei[sß]+e\s+ich|what\s+is\s+my\s+name|wei[sß]+t\s+du\s+wie\s+ich|sag\s+mir\s+meinen\s+namen|das\s+ist|hier\s+ist|this\s+is|wer\s+ist\s+(alles\s+)?da|who\s+is\s+here)\b/i.test(text) || (intent && intent.isGuestIntro);
+    // Wenn der Nutzer seinen Namen nennt, sich vorstellt, einen Gast vorstellt oder nach dem Namen fragt:
+    // NIEMALS eine Fehler-Box anzeigen!
+    const isNameOrGuestMessage = directIntent || /\b(nicht\s+[A-Za-z]+\s+sondern|meine?\s+(richtige[rn]?\s+)?na[h]?me|ich\s+hei[sß]+e|my\s+name\s+is|call\s+me|ich\s+bin|i\s+am|mein\s+name\s+ist|wie\s+hei[sß]+e\s+ich|what\s+is\s+my\s+name|wei[sß]+t\s+du\s+wie\s+ich|sag\s+mir\s+meinen\s+namen|das\s+ist|hier\s+ist|this\s+is|wer\s+ist\s+(alles\s+)?da|who\s+is\s+here)\b/i.test(text);
+
     if (isNameOrGuestMessage && analysis) {
       analysis = null;
     }
@@ -4552,7 +4553,7 @@ ${cleanTip}`,
     // Antwort des Partners generieren
     let partnerReply;
     try {
-      partnerReply = generatePartnerResponse(text, scenarioId);
+      partnerReply = directIntent ? { ...directIntent, en: formatReplyText(directIntent.en), de: formatReplyText(directIntent.de) } : generatePartnerResponse(text, scenarioId);
     } catch (err) {
       console.error('generatePartnerResponse error:', err);
       partnerReply = {
