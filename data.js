@@ -1872,10 +1872,10 @@ const DIALOG_SCENARIOS = {
     gender: 'female',
     title: '🌱 Anfänger & Plaudern',
     icon: '🌱',
-    partnerName: 'Emma (Lernpartnerin & Tutorin)',
+    partnerName: 'Nova (Lernpartnerin & Tutorin)',
     partnerRole: 'Geduldige Englisch-Tutorin für Alltag & Smalltalk',
-    initialPrompt: 'Hello {name}! Welcome. I am Emma, your English tutor. What would you like to talk about today?',
-    initialPromptDe: 'Hallo {name}! Willkommen. Ich bin Emma, deine Englisch-Tutorin. Worüber möchtest du heute sprechen?',
+    initialPrompt: 'Hello {name}! Welcome. I am your personal English tutor. What would you like to talk about today?',
+    initialPromptDe: 'Hallo {name}! Willkommen. Ich bin dein persönlicher Sprachbegleiter. Worüber möchtest du heute sprechen?',
     contextKeywords: ['hello', 'hi', 'chat', 'talk', 'beginner', 'learn', 'words', 'hobby', 'music', 'food', 'weather', 'old', 'age', 'live', 'from', 'pet', 'dog', 'cat', 'help', 'simple', 'easy', 'question']
   },
   quiz: {

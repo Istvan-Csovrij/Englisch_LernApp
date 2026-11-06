@@ -1,5 +1,5 @@
-// Service Worker: Offline-Support für Englisch-LernApp (v21 - Soft Voice & Speech Controls)
-const CACHE_NAME = 'english-master-cache-v21';
+// Service Worker: Offline-Support für Englisch-LernApp (v22 - Soft Voice & Speech Controls)
+const CACHE_NAME = 'english-master-cache-v22';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -29,7 +29,7 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[Service Worker] Caching offline assets for v21...');
+      console.log('[Service Worker] Caching offline assets for v22...');
       return cache.addAll(ASSETS_TO_CACHE);
     }).catch((err) => {
       console.warn('[Service Worker] Non-fatal cache.addAll warning:', err);

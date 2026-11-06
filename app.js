@@ -2537,6 +2537,38 @@ function initApp() {
         }
       }
 
+      // 0B. Benutzer fragt nach seinem eigenen Namen ("Wie heiße ich?", "Weißt du wie ich heiße?", "What is my name?", etc.)
+      const isAskingOwnName = /\b(wie\s+(heisse|hei[sß]+e)\s+ich|wei[sß]+t\s+du\s+(wie\s+ich\s+heisse|wie\s+ich\s+hei[sß]+e|meinen\s+na[h]?men)|sag\s+(mir\s+)?meinen\s+na[h]?men|kennst\s+du\s+meinen\s+na[h]?men|wer\s+bin\s+ich|wie\s+ist\s+mein\s+na[h]?me|what\s+is\s+my\s+name|what\'s\s+my\s+name|do\s+you\s+know\s+my\s+name|who\s+am\s+i|do\s+you\s+remember\s+my\s+name|tell\s+me\s+my\s+name)\b/i.test(rawInput) || (rawInput.toLowerCase().includes('weißt du wer ich bin') || rawInput.toLowerCase().includes('weisst du wer ich bin') || rawInput.toLowerCase().includes('weißt du wie ich heisse'));
+
+      if (isAskingOwnName) {
+        const uName = this.getUserName();
+        if (uName) {
+          return {
+            id: 'intent_user_name_inquiry',
+            isNameInquiry: true,
+            en: `Of course I know your name! You are ${uName}. I always address you as ${uName}! What would you like to practice today, ${uName}?`,
+            de: `Natürlich kenne ich deinen Namen! Du bist ${uName}. Dein Name ist bei mir fest gespeichert und ich spreche dich immer gerne als ${uName} an! Was möchtest du heute üben?`,
+            suggestions: [
+              "Can you teach me 2 new English words?",
+              "Can you correct my sentences when I write?",
+              "Let us talk about IT and programming."
+            ]
+          };
+        } else {
+          return {
+            id: 'intent_user_name_unknown',
+            isNameInquiry: true,
+            en: `I do not know your name yet! What should I call you? You can tell me: "My name is Istvan".`,
+            de: `Ich kenne deinen Namen noch nicht! Wie darf ich dich nennen? Sag mir einfach: „Mein Name ist Istvan“ oder tippe oben auf „Name eingeben“.`,
+            suggestions: [
+              "My name is Istvan.",
+              "Call me Istvan.",
+              "Can we just practice without names?"
+            ]
+          };
+        }
+      }
+
       // 0B. Benutzer bittet explizit um Fehler-Korrektur ("sag mir meine fehler", "korrigiere mich", "what were my mistakes", etc.)
       const isCorrectionRequest = /(\b(korrigier[a-z]*|korrektur[a-z]*|correct[a-z]*|mistake[s]?|fehler[n]?|falsch|feedback)\b|(\b(sag|zeige?|show|tell)\b.*\b(fehler|mistake)\b)|(\b(was|what)\b.*\b(fehler|mistake|falsch|wrong)\b)|(\b(hilf|help|how)\b.*\b(richtig|correct|improve)\b)|(\bwie\s+(sage|schreibe)\s+ich\s+das\s+richtig\b))/i.test(norm);
 
@@ -3596,6 +3628,20 @@ ${cleanTip}`,
       });
     }
 
+    const btnChooseMale = document.getElementById('btnChooseMale');
+    if (btnChooseMale) {
+      btnChooseMale.addEventListener('click', () => {
+        setPartnerGender('male');
+      });
+    }
+
+    const btnChooseFemale = document.getElementById('btnChooseFemale');
+    if (btnChooseFemale) {
+      btnChooseFemale.addEventListener('click', () => {
+        setPartnerGender('female');
+      });
+    }
+
     const btnOpenAvatarPicker = document.getElementById('btnOpenAvatarPicker');
     if (btnOpenAvatarPicker) {
       btnOpenAvatarPicker.addEventListener('click', () => {
@@ -3625,6 +3671,33 @@ ${cleanTip}`,
     switchDialogScenario('beginner');
   }
 
+  function updateGenderTogglePills() {
+    const meta = getCurrentPartnerMeta();
+    const btnMale = document.getElementById('btnChooseMale');
+    const btnFemale = document.getElementById('btnChooseFemale');
+    if (btnMale && btnFemale) {
+      if (meta.isMale) {
+        btnMale.classList.add('active');
+        btnFemale.classList.remove('active');
+      } else {
+        btnFemale.classList.add('active');
+        btnMale.classList.remove('active');
+      }
+    }
+  }
+
+  function setPartnerGender(gender) {
+    if (gender === 'female') {
+      setSelectedAvatarId('future_female');
+      showToast('👩 Gesprächspartnerin: Nova (Damenstimme aktiv)');
+    } else {
+      setSelectedAvatarId('future_male');
+      showToast('👨 Gesprächspartner: Istvan (Männerstimme aktiv)');
+    }
+    updateGenderTogglePills();
+    switchDialogScenario(currentScenarioId);
+  }
+
   function switchDialogScenario(scenarioId) {
     currentScenarioId = scenarioId;
     DialogEngine.reset(scenarioId);
@@ -3650,6 +3723,8 @@ ${cleanTip}`,
     if (roleEl) roleEl.textContent = partnerMeta.role;
 
     // Wenn noch keine Nachrichten für dieses Szenario da sind, Begrüßung erstellen
+    updateGenderTogglePills();
+
     if (!dialogHistories[scenarioId] || dialogHistories[scenarioId].length === 0) {
       resetDialogScenario(scenarioId);
     } else {
@@ -3687,13 +3762,21 @@ ${cleanTip}`,
     let promptEn = scenario.initialPrompt;
     let promptDe = scenario.initialPromptDe;
 
-    if (userName) {
-      promptEn = promptEn.replace(/\{name\}/g, userName).replace(/Istvan/g, userName);
-      promptDe = promptDe.replace(/\{name\}/g, userName).replace(/Istvan/g, userName);
+    const partnerMeta = getCurrentPartnerMeta();
+    const partnerFirstName = partnerMeta.name.split(' ')[0].replace(/[^A-Za-zÄÖÜäöüß]/g, '');
+
+    if (scenarioId === 'beginner') {
+      if (partnerMeta.isMale) {
+        promptEn = `Hello ${userName ? userName + '! ' : ''}Welcome! 😊 I am ${partnerFirstName}, your personal English coach. We can practice speaking, learn IT vocabulary, or prepare for daily standups. What would you like to talk about today?`;
+        promptDe = `Hallo ${userName ? userName + '! ' : ''}Willkommen! 😊 Ich bin ${partnerFirstName}, dein persönlicher Englisch-Coach. Wir können lockeren Smalltalk üben, IT-Begriffe lernen oder Daily Standups trainieren. Worüber möchtest du heute sprechen?`;
+      } else {
+        promptEn = `Hello ${userName ? userName + '! ' : ''}Welcome! 😊 I am ${partnerFirstName}, your friendly English tutor. In this chat, there is zero pressure: we can talk about everyday life, hobbies, or learn new words together. What would you like to talk about today?`;
+        promptDe = `Hallo ${userName ? userName + '! ' : ''}Willkommen! 😊 Ich bin ${partnerFirstName}, deine freundliche Sprachbegleiterin. Hier gibt es null Leistungsdruck: Wir können über den Alltag, Hobbys plaudern oder gemeinsam neue Wörter lernen. Worüber möchtest du heute sprechen?`;
+      }
     } else {
-      if (scenarioId === 'beginner') {
-        promptEn = `Hello and welcome! 😊 I am Emma, your friendly English tutor. In this chat, there is zero pressure: we can talk about everyday life, hobbies, or learn new words. Before we begin: what is your name?`;
-        promptDe = `Hallo und herzlich willkommen! 😊 Ich bin Emma, deine freundliche Sprachbegleiterin. Hier gibt es null Leistungsdruck: Wir können über den Alltag, Hobbys plaudern oder neue Wörter lernen. Bevor wir starten: Wie lautet dein Name?`;
+      if (userName) {
+        promptEn = promptEn.replace(/\{name\}/g, userName).replace(/Istvan/g, userName);
+        promptDe = promptDe.replace(/\{name\}/g, userName).replace(/Istvan/g, userName);
       } else {
         promptEn = promptEn.replace(/\{name\}/g, '').replace(/Istvan/g, '').replace(/\s+,/g, ',').replace(/\s{2,}/g, ' ');
         promptDe = promptDe.replace(/\{name\}/g, '').replace(/Istvan/g, '').replace(/\s+,/g, ',').replace(/\s{2,}/g, ' ');
@@ -3947,8 +4030,8 @@ ${cleanTip}`,
     const scenario = DIALOG_SCENARIOS[scenarioId] || DIALOG_SCENARIOS.standup;
     let analysis = SentenceDoctor.analyze(text);
 
-    // Wenn der Nutzer gerade seinen Namen korrigiert oder genannt hat, keinen Grammatik-Fehler anzeigen!
-    const isNameMessage = /\b(nicht\s+[A-Za-z]+\s+sondern|meine?\s+(richtige[rn]?\s+)?na[h]?me|ich\s+hei[sß]+e|my\s+name\s+is|call\s+me)\b/i.test(text);
+    // Wenn der Nutzer seinen Namen nennt, korrigiert oder nach seinem Namen fragt, keinen Fehler anzeigen!
+    const isNameMessage = /\b(nicht\s+[A-Za-z]+\s+sondern|meine?\s+(richtige[rn]?\s+)?na[h]?me|ich\s+hei[sß]+e|my\s+name\s+is|call\s+me|wie\s+hei[sß]+e\s+ich|what\s+is\s+my\s+name|wei[sß]+t\s+du\s+wie\s+ich|sag\s+mir\s+meinen\s+namen)\b/i.test(text);
     if (isNameMessage && analysis) {
       analysis = null;
     }
