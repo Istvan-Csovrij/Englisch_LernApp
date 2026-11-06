@@ -325,7 +325,7 @@ function initApp() {
 
   function getSelectedAvatarId() {
     try {
-      return localStorage.getItem('fiae_selected_avatar') || 'istvan_3d';
+      return localStorage.getItem('fiae_selected_avatar') || 'future_male';
     } catch (e) {
       return 'istvan_3d';
     }
@@ -3556,8 +3556,8 @@ ${cleanTip}`,
         const chosenId = card.dataset.avatarId;
         setSelectedAvatarId(chosenId);
         showToast(`🎭 Avatar aktiviert: ${AVATAR_OPTIONS[chosenId].name}`);
+        updateHeaderPartnerCard();
         resetDialogScenario(currentScenarioId);
-        updateGenderTogglePills();
         modal.style.display = 'none';
       });
     });
@@ -3781,6 +3781,29 @@ ${cleanTip}`,
     switchDialogScenario('beginner');
   }
 
+  function updateHeaderPartnerCard() {
+    const avatarEl = document.getElementById('scenarioAvatar');
+    const nameEl = document.getElementById('scenarioPartnerName');
+    const roleEl = document.getElementById('scenarioPartnerRole');
+
+    if (avatarEl) {
+      avatarEl.innerHTML = `
+        ${renderPartnerAvatarHtml(currentScenarioId)}
+        <div class="speaking-badge" title="Spricht gerade">
+          <span class="wave-bar"></span>
+          <span class="wave-bar"></span>
+          <span class="wave-bar"></span>
+        </div>
+      `;
+    }
+
+    const partnerMeta = getCurrentPartnerMeta();
+    if (nameEl) nameEl.textContent = partnerMeta.name;
+    if (roleEl) roleEl.textContent = partnerMeta.role;
+
+    updateGenderTogglePills();
+  }
+
   function updateGenderTogglePills() {
     const meta = getCurrentPartnerMeta();
     const btnMale = document.getElementById('btnChooseMale');
@@ -3804,36 +3827,15 @@ ${cleanTip}`,
       setSelectedAvatarId('future_male');
       showToast('👨 Gesprächspartner: Leo (Männerstimme aktiv)');
     }
-    updateGenderTogglePills();
+    updateHeaderPartnerCard();
     resetDialogScenario(currentScenarioId);
   }
 
   function switchDialogScenario(scenarioId) {
     currentScenarioId = scenarioId;
     DialogEngine.reset(scenarioId);
-    const scenario = DIALOG_SCENARIOS[scenarioId] || DIALOG_SCENARIOS.standup;
 
-    const avatarEl = document.getElementById('scenarioAvatar');
-    const nameEl = document.getElementById('scenarioPartnerName');
-    const roleEl = document.getElementById('scenarioPartnerRole');
-
-    if (avatarEl) {
-      avatarEl.innerHTML = `
-        ${renderPartnerAvatarHtml(scenarioId)}
-        <div class="speaking-badge" title="Spricht gerade">
-          <span class="wave-bar"></span>
-          <span class="wave-bar"></span>
-          <span class="wave-bar"></span>
-        </div>
-      `;
-    }
-
-    const partnerMeta = getCurrentPartnerMeta();
-    if (nameEl) nameEl.textContent = partnerMeta.name;
-    if (roleEl) roleEl.textContent = partnerMeta.role;
-
-    // Wenn noch keine Nachrichten für dieses Szenario da sind, Begrüßung erstellen
-    updateGenderTogglePills();
+    updateHeaderPartnerCard();
 
     if (!dialogHistories[scenarioId] || dialogHistories[scenarioId].length === 0) {
       resetDialogScenario(scenarioId);
