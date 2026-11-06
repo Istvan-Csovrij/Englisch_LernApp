@@ -240,16 +240,16 @@ function initApp() {
     },
     future_male: {
       id: 'future_male',
-      name: 'Istvan (Zukunfts-Coach)',
+      name: 'Leo (Zukunfts-Coach)',
       tag: '🚀 Zukunfts-Coach',
-      desc: 'Futuristischer KI-Coach nach Istvans Vorbild im High-Tech Smart-Suit',
+      desc: 'Futuristischer männlicher KI-Coach im High-Tech Smart-Suit',
       src: 'avatar_future_male.jpg',
       type: 'image',
       gender: 'male'
     },
     istvan_3d: {
       id: 'istvan_3d',
-      name: 'Istvan (3D Business)',
+      name: 'Leo (3D Business)',
       tag: '👔 Business',
       desc: '3D Pixar-Style Coach im Business-Hemd mit Krawatte',
       src: 'avatar_istvan_3d.jpg',
@@ -267,7 +267,7 @@ function initApp() {
     },
     istvan_real: {
       id: 'istvan_real',
-      name: 'Istvan (Original-Foto)',
+      name: 'Leo (Foto-Coach)',
       tag: '📸 Foto',
       desc: 'Authentisches Porträtfoto von Istvan im Business-Look',
       src: 'avatar_istvan_real.jpg',
@@ -296,7 +296,7 @@ function initApp() {
     }
     if (avatarId === 'future_male') {
       return {
-        name: 'Istvan (Futuristischer KI-Coach)',
+        name: 'Leo (Futuristischer KI-Coach)',
         role: 'Rolle: Dein zukunftsweisender Englisch- & FIAE-Coach',
         isMale: true
       };
@@ -310,7 +310,7 @@ function initApp() {
     }
     if (avatarId === 'istvan_3d' || avatarId === 'istvan_real') {
       return {
-        name: 'Istvan (Englisch & FIAE Coach)',
+        name: 'Leo (Englisch & FIAE Coach)',
         role: 'Rolle: Dein persönlicher Englisch-Tutor & Entwickler-Partner',
         isMale: true
       };
@@ -2542,12 +2542,14 @@ function initApp() {
 
       if (isAskingOwnName) {
         const uName = this.getUserName();
+        const pMeta = getCurrentPartnerMeta();
+        const pName = pMeta.name.split(' ')[0].replace(/[^A-Za-zÄÖÜäöüß]/g, '');
         if (uName) {
           return {
             id: 'intent_user_name_inquiry',
             isNameInquiry: true,
-            en: `Of course I know your name! You are ${uName}. I always address you as ${uName}! What would you like to practice today, ${uName}?`,
-            de: `Natürlich kenne ich deinen Namen! Du bist ${uName}. Dein Name ist bei mir fest gespeichert und ich spreche dich immer gerne als ${uName} an! Was möchtest du heute üben?`,
+            en: `Of course I know your name! You are ${uName}, and I am ${pName} (your English coach). Great to have you here, ${uName}! What would you like to practice today?`,
+            de: `Natürlich kenne ich deinen Namen! Du bist ${uName}, und ich bin ${pName} (dein persönlicher Englisch-Coach). Dein Name ist fest gespeichert! Was möchtest du heute üben, ${uName}?`,
             suggestions: [
               "Can you teach me 2 new English words?",
               "Can you correct my sentences when I write?",
@@ -3692,7 +3694,7 @@ ${cleanTip}`,
       showToast('👩 Gesprächspartnerin: Nova (Damenstimme aktiv)');
     } else {
       setSelectedAvatarId('future_male');
-      showToast('👨 Gesprächspartner: Istvan (Männerstimme aktiv)');
+      showToast('👨 Gesprächspartner: Leo (Männerstimme aktiv)');
     }
     updateGenderTogglePills();
     switchDialogScenario(currentScenarioId);
@@ -3767,11 +3769,15 @@ ${cleanTip}`,
 
     if (scenarioId === 'beginner') {
       if (partnerMeta.isMale) {
-        promptEn = `Hello ${userName ? userName + '! ' : ''}Welcome! 😊 I am ${partnerFirstName}, your personal English coach. We can practice speaking, learn IT vocabulary, or prepare for daily standups. What would you like to talk about today?`;
-        promptDe = `Hallo ${userName ? userName + '! ' : ''}Willkommen! 😊 Ich bin ${partnerFirstName}, dein persönlicher Englisch-Coach. Wir können lockeren Smalltalk üben, IT-Begriffe lernen oder Daily Standups trainieren. Worüber möchtest du heute sprechen?`;
+        const uGreeting = userName ? `Hello ${userName}! ` : 'Hello and welcome! ';
+        promptEn = `${uGreeting}😊 I am ${partnerFirstName}, your personal English coach. We can practice speaking, learn IT vocabulary, or prepare for daily standups. What would you like to talk about today?`;
+        const uGreetingDe = userName ? `Hallo ${userName}! ` : 'Hallo und herzlich willkommen! ';
+        promptDe = `${uGreetingDe}😊 Ich bin ${partnerFirstName}, dein persönlicher Englisch-Coach. Wir können lockeren Smalltalk üben, IT-Begriffe lernen oder Daily Standups trainieren. Worüber möchtest du heute sprechen?`;
       } else {
-        promptEn = `Hello ${userName ? userName + '! ' : ''}Welcome! 😊 I am ${partnerFirstName}, your friendly English tutor. In this chat, there is zero pressure: we can talk about everyday life, hobbies, or learn new words together. What would you like to talk about today?`;
-        promptDe = `Hallo ${userName ? userName + '! ' : ''}Willkommen! 😊 Ich bin ${partnerFirstName}, deine freundliche Sprachbegleiterin. Hier gibt es null Leistungsdruck: Wir können über den Alltag, Hobbys plaudern oder gemeinsam neue Wörter lernen. Worüber möchtest du heute sprechen?`;
+        const uGreeting = userName ? `Hello ${userName}! ` : 'Hello and welcome! ';
+        promptEn = `${uGreeting}😊 I am ${partnerFirstName}, your friendly English tutor. In this chat, there is zero pressure: we can talk about everyday life, hobbies, or learn new words together. What would you like to talk about today?`;
+        const uGreetingDe = userName ? `Hallo ${userName}! ` : 'Hallo und herzlich willkommen! ';
+        promptDe = `${uGreetingDe}😊 Ich bin ${partnerFirstName}, deine freundliche Sprachbegleiterin. Hier gibt es null Leistungsdruck: Wir können über den Alltag, Hobbys plaudern oder gemeinsam neue Wörter lernen. Worüber möchtest du heute sprechen?`;
       }
     } else {
       if (userName) {
@@ -3810,8 +3816,10 @@ ${cleanTip}`,
           'Can we just practice without names?'
         ];
       }
+      const pMeta = getCurrentPartnerMeta();
+      const pName = pMeta.name.split(' ')[0].replace(/[^A-Za-zÄÖÜäöüß]/g, '');
       return [
-        `Hello Emma! My name is ${uName}.`,
+        `Hello ${pName}! My name is ${uName}.`,
         'Can you teach me some useful everyday English words?',
         'Can you correct my English when I make mistakes?'
       ];
