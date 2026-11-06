@@ -3438,3 +3438,75 @@ button, .nav-icon-btn, .action-btn, .cat-btn, .card-audio-btn, .card-mic-btn {
   margin: 0;
   line-height: 1.35;
 }
+
+
+/* ============================================================ */
+/* V21: USER NAME MODAL & FUTURISTIC AVATAR STYLES              */
+/* ============================================================ */
+.user-name-modal-card {
+  max-width: 440px !important;
+  width: 90%;
+}
+
+.user-name-input-field {
+  width: 100%;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1.5px solid rgba(56, 189, 248, 0.4);
+  border-radius: var(--radius-sm);
+  color: #ffffff;
+  font-size: 1.05rem;
+  padding: 10px 14px;
+  outline: none;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.user-name-input-field:focus {
+  border-color: #38bdf8;
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.35);
+  background: rgba(15, 23, 42, 0.95);
+}
+
+.user-modal-btn {
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.user-modal-btn.save-btn {
+  background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.4);
+}
+
+.user-modal-btn.save-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.6);
+}
+
+.user-modal-btn.cancel-btn {
+  background: rgba(255, 255, 255, 0.08);
+  color: #cbd5e1;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.user-modal-btn.cancel-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+}
+
+.user-modal-btn.reset-btn {
+  background: rgba(239, 68, 68, 0.15);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  margin-right: auto;
+}
+
+.user-modal-btn.reset-btn:hover {
+  background: rgba(239, 68, 68, 0.25);
+  color: #ffffff;
+}

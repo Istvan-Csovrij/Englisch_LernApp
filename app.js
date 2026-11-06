@@ -229,10 +229,28 @@ function initApp() {
   // AVATAR DEFINITIONS & SWITCHER (ISTVAN 3D, ROBOT, REAL, EMMA)
   // ============================================================
   const AVATAR_OPTIONS = {
+    future_female: {
+      id: 'future_female',
+      name: 'Nova (Zukunfts-Tutorin)',
+      tag: '🚀 Damen-Avatar',
+      desc: 'Futuristische weibliche KI-Tutorin im Cyber-Suit mit leuchtenden Akzenten',
+      src: 'avatar_future_female.jpg',
+      type: 'image',
+      gender: 'female'
+    },
+    future_male: {
+      id: 'future_male',
+      name: 'Istvan (Zukunfts-Coach)',
+      tag: '🚀 Zukunfts-Coach',
+      desc: 'Futuristischer KI-Coach nach Istvans Vorbild im High-Tech Smart-Suit',
+      src: 'avatar_future_male.jpg',
+      type: 'image',
+      gender: 'male'
+    },
     istvan_3d: {
       id: 'istvan_3d',
-      name: 'Istvan (3D Avatar)',
-      tag: '✨ Empfohlen',
+      name: 'Istvan (3D Business)',
+      tag: '👔 Business',
       desc: '3D Pixar-Style Coach im Business-Hemd mit Krawatte',
       src: 'avatar_istvan_3d.jpg',
       type: 'image',
@@ -241,16 +259,16 @@ function initApp() {
     robot: {
       id: 'robot',
       name: 'Cyber-Bot (AI-Robot)',
-      tag: '🤖 Futuristisch',
-      desc: 'Moderner KI-Robot-Tutor mit leuchtendem Cyan-Visier',
+      tag: '🤖 AI Robot',
+      desc: 'Freundlicher KI-Roboter mit blau leuchtendem Visier',
       src: 'avatar_robot.jpg',
       type: 'image',
       gender: 'male'
     },
     istvan_real: {
       id: 'istvan_real',
-      name: 'Istvan (Echtes Foto)',
-      tag: '📸 Original',
+      name: 'Istvan (Original-Foto)',
+      tag: '📸 Foto',
       desc: 'Authentisches Porträtfoto von Istvan im Business-Look',
       src: 'avatar_istvan_real.jpg',
       type: 'image',
@@ -266,6 +284,44 @@ function initApp() {
       gender: 'female'
     }
   };
+
+  function getCurrentPartnerMeta() {
+    const avatarId = getSelectedAvatarId();
+    if (avatarId === 'future_female') {
+      return {
+        name: 'Nova (Futuristische KI-Tutorin)',
+        role: 'Rolle: Deine futuristische Englisch-Tutorin & KI-Begleiterin',
+        isMale: false
+      };
+    }
+    if (avatarId === 'future_male') {
+      return {
+        name: 'Istvan (Futuristischer KI-Coach)',
+        role: 'Rolle: Dein zukunftsweisender Englisch- & FIAE-Coach',
+        isMale: true
+      };
+    }
+    if (avatarId === 'robot') {
+      return {
+        name: 'Cyber-Bot (AI Robot Tutor)',
+        role: 'Rolle: Futuristischer KI-Roboter & Sprachassistent',
+        isMale: true
+      };
+    }
+    if (avatarId === 'istvan_3d' || avatarId === 'istvan_real') {
+      return {
+        name: 'Istvan (Englisch & FIAE Coach)',
+        role: 'Rolle: Dein persönlicher Englisch-Tutor & Entwickler-Partner',
+        isMale: true
+      };
+    }
+    const curScenario = (typeof DIALOG_SCENARIOS !== 'undefined' && DIALOG_SCENARIOS[currentScenarioId]) ? DIALOG_SCENARIOS[currentScenarioId] : null;
+    return {
+      name: curScenario ? curScenario.partnerName : 'Emma (Tutorin)',
+      role: curScenario ? `Rolle: ${curScenario.partnerRole}` : 'Rolle: Geduldige Englisch-Tutorin für Alltag & Smalltalk',
+      isMale: curScenario ? (curScenario.gender === 'male') : false
+    };
+  }
 
   function getSelectedAvatarId() {
     try {
@@ -513,10 +569,8 @@ function initApp() {
 
       // Stimme mit Gender-Support für Dialogpartner & gewählten Avatar ermitteln
       const activeAv = getSelectedAvatarId();
-      const curScenario = (typeof DIALOG_SCENARIOS !== 'undefined' && DIALOG_SCENARIOS[currentScenarioId]) ? DIALOG_SCENARIOS[currentScenarioId] : null;
-      const preferMale = (activeAv === 'robot' || activeAv === 'istvan_3d' || activeAv === 'istvan_real') 
-        ? true 
-        : (activeAv === 'emma' ? false : (curScenario ? (curScenario.gender === 'male') : false));
+      const meta = getCurrentPartnerMeta();
+      const preferMale = meta.isMale;
       const voice = getBestEnglishVoice(preferMale);
 
       if (voice) {
@@ -1668,6 +1722,24 @@ function initApp() {
 
     translateGermanInput(german) {
       const g = german.toLowerCase();
+      if (g.includes('richtige') && (g.includes('name') || g.includes('nahme'))) {
+        return 'My real name is ' + (getUserName() || 'Istvan') + '.';
+      }
+      if (g.includes('nicht') && g.includes('sondern')) {
+        return 'My name is ' + (getUserName() || 'Istvan') + ', not the previous spelling.';
+      }
+      if (g.includes('wie sagt man') || g.includes('wie heisst') || g.includes('wie schreibt')) {
+        return 'How do you say that in English?';
+      }
+      if (g.includes('korrigier') || g.includes('fehler')) {
+        return 'Could you please check my sentences and correct any grammar mistakes?';
+      }
+      if (g.includes('hilfe') || g.includes('hilf mir') || g.includes('kannst du mir helfen')) {
+        return 'Could you please help me with this English sentence?';
+      }
+      if (g.includes('verstehe') && g.includes('nicht')) {
+        return 'I do not quite understand that, could you please explain it more simply?';
+      }
       if (g.includes('datenbank') || g.includes('sql') || g.includes('abfrage')) {
         return 'I worked on optimizing our SQL database queries.';
       }
@@ -2379,25 +2451,90 @@ function initApp() {
       const meta = this.getPartnerMeta(scenarioId);
       const userName = this.getUserName();
 
-      // 0A. Benutzer stellt sich mit Namen vor ("My name is ...", "I am ...", "Ich heiße ...")
-      const nameMatch = rawInput.match(/\b(my\s+name\s+is|i\s+am|call\s+me|ich\s+hei[sß]+e|mein\s+name\s+ist|nenne?\s+mich)\s+([A-Za-zÄÖÜäöüß]+)\b/i);
-      const isSoloName = !userName && /^[A-Za-zÄÖÜäöüß]{2,20}$/.test(rawInput.trim()) && !/^(hello|hi|yes|no|okay|cool|super|good|nice|what|who|how|why)$/i.test(rawInput.trim());
+      // 0A. Intelligente Erkennung von Name & Namens-Korrektur ("meine richtige nahme ist...", "nicht X sondern Y", etc.)
+      let detectedNewName = null;
+      let isExplicitCorrection = false;
 
-      if (nameMatch || isSoloName) {
-        let extractedName = nameMatch ? nameMatch[2] : rawInput.trim();
-        extractedName = extractedName.charAt(0).toUpperCase() + extractedName.slice(1).toLowerCase();
+      // 1. Muster: "nicht Isht sondern Istvan" / "not X but Y" / "heiße nicht X sondern Y"
+      const nichtSondern = rawInput.match(/\b(?:nicht|not)\s+[A-Za-zÄÖÜäöüß]+\s+(?:sondern|but)\s+([A-Za-zÄÖÜäöüß]{2,25})\b/i);
+      if (nichtSondern) {
+        detectedNewName = nichtSondern[1];
+        isExplicitCorrection = true;
+      }
+
+      // 2. Muster: "meine richtige nahme/name ist Istvan", "mein richtiger name ist Istvan"
+      if (!detectedNewName) {
+        const richtigeName = rawInput.match(/\b(?:meine?|mein)\s+(?:richtige[rn]?\s+)?na[h]?me\s+(?:ist|lautet|heisst)\s+([A-Za-zÄÖÜäöüß]{2,25})\b/i);
+        if (richtigeName) {
+          detectedNewName = richtigeName[1];
+          isExplicitCorrection = true;
+        }
+      }
+
+      // 3. Muster: "my name is...", "call me...", "ich heiße eigentlich...", "nenne mich..."
+      if (!detectedNewName) {
+        const stdName = rawInput.match(/\b(?:my\s+(?:real\s+)?name\s+is|call\s+me|ich\s+hei[sß]+e(?:\s+eigentlich)?|mein\s+name\s+ist|nenne?\s+mich|ich\s+bin|i\s+am)\s+([A-Za-zÄÖÜäöüß]{2,25})\b/i);
+        if (stdName) {
+          detectedNewName = stdName[1];
+          if (/eigentlich|real/i.test(rawInput)) isExplicitCorrection = true;
+        }
+      }
+
+      // 4. Einzellwort-Name
+      if (!detectedNewName) {
+        const cleanTrim = rawInput.trim();
+        const isCommonWord = /^(hello|hi|yes|no|okay|cool|super|good|nice|what|who|how|why|thanks|thank|bitte|danke|hallo|nein|ja|morning|fine|great)$/i.test(cleanTrim);
+        if (/^[A-Za-zÄÖÜäöüß]{2,20}$/.test(cleanTrim) && !isCommonWord) {
+          if (!userName || /^[A-Z][a-zäöüß]+$/.test(cleanTrim)) {
+            detectedNewName = cleanTrim;
+          }
+        }
+      }
+
+      if (detectedNewName) {
+        let extractedName = detectedNewName.charAt(0).toUpperCase() + detectedNewName.slice(1).toLowerCase();
         this.setUserName(extractedName);
+        if (typeof setUserName === 'function') {
+          setUserName(extractedName);
+        }
 
-        return {
-          id: 'intent_name_saved',
-          en: `Nice to meet you, ${extractedName}! What would you like to talk about today?`,
-          de: `Schön dich kennenzulernen, ${extractedName}! Worüber möchtest du heute sprechen?`,
-          suggestions: [
-            "Can you teach me some new conversational words?",
-            "How old are you, and what are your hobbies?",
-            "Can you correct my English when I make mistakes?"
-          ]
-        };
+        // Verlauf bereinigen: Falsche Schreibweisen ersetzen
+        if (typeof dialogHistories !== 'undefined' && dialogHistories[scenarioId]) {
+          dialogHistories[scenarioId].forEach(msg => {
+            if (msg.type === 'partner') {
+              msg.textEn = (msg.textEn || '').replace(/\b(Ishta|Isht)\b/g, extractedName);
+              msg.textDe = (msg.textDe || '').replace(/\b(Ishta|Isht)\b/g, extractedName);
+            }
+          });
+        }
+
+        const partnerTitle = getCurrentPartnerMeta().name;
+
+        if (isExplicitCorrection) {
+          return {
+            id: 'intent_name_corrected',
+            isNameUpdate: true,
+            en: `Thank you for the correction! I have updated your name to ${extractedName}. Great to talk with you, ${extractedName}! What would you like to practice today?`,
+            de: `Danke für die Richtigstellung! Ich habe deinen Namen sofort auf ${extractedName} korrigiert. Schön, mit dir zu sprechen, ${extractedName}! Worüber möchtest du heute sprechen?`,
+            suggestions: [
+              "Can you teach me some new conversational words?",
+              "How can I practice my daily speaking?",
+              "Can you correct my sentences when I write?"
+            ]
+          };
+        } else {
+          return {
+            id: 'intent_name_saved',
+            isNameUpdate: true,
+            en: `Nice to meet you, ${extractedName}! I am ${partnerTitle.split(' ')[0]}. What would you like to talk about today?`,
+            de: `Schön dich kennenzulernen, ${extractedName}! Ich bin ${partnerTitle.split(' ')[0]}. Worüber möchtest du heute sprechen?`,
+            suggestions: [
+              "Can you teach me some new conversational words?",
+              "How old are you, and what are your hobbies?",
+              "Can you correct my English when I make mistakes?"
+            ]
+          };
+        }
       }
 
       // 0B. Benutzer bittet explizit um Fehler-Korrektur ("sag mir meine fehler", "korrigiere mich", "what were my mistakes", etc.)
@@ -3144,6 +3281,80 @@ ${cleanTip}`,
     }
   }
 
+  function openUserNameModal() {
+    let modal = document.getElementById('userNameModal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'userNameModal';
+      modal.className = 'app-modal-overlay';
+      modal.innerHTML = `
+        <div class="app-modal-card user-name-modal-card">
+          <div class="app-modal-header">
+            <h3>👤 Deinen Namen einstellen</h3>
+            <button class="modal-close-btn" id="btnCloseUserNameModal">✕</button>
+          </div>
+          <p class="app-modal-desc">
+            Wie möchtest du von deinem KI-Tutor im Chat angesprochen werden?
+          </p>
+          <div style="margin: 16px 0;">
+            <input type="text" id="modalInputUserName" class="user-name-input-field" placeholder="Z. B. Istvan" maxlength="30" autocomplete="given-name">
+          </div>
+          <div style="display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap;">
+            <button class="user-modal-btn reset-btn" id="btnResetUserNameModal" title="Name entfernen">🗑️ Zurücksetzen</button>
+            <button class="user-modal-btn cancel-btn" id="btnCancelUserNameModal">Abbrechen</button>
+            <button class="user-modal-btn save-btn" id="btnSaveUserNameModal">💾 Speichern</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.style.display = 'none';
+      });
+      modal.querySelector('#btnCloseUserNameModal').addEventListener('click', () => {
+        modal.style.display = 'none';
+      });
+      modal.querySelector('#btnCancelUserNameModal').addEventListener('click', () => {
+        modal.style.display = 'none';
+      });
+
+      modal.querySelector('#btnSaveUserNameModal').addEventListener('click', () => {
+        const input = document.getElementById('modalInputUserName');
+        const val = input ? input.value.trim() : '';
+        if (val) {
+          setUserName(val);
+          showToast(`👤 Name gespeichert: ${val}`);
+        } else {
+          setUserName('');
+          showToast('👤 Name zurückgesetzt');
+        }
+        modal.style.display = 'none';
+        switchDialogScenario(currentScenarioId);
+      });
+
+      modal.querySelector('#btnResetUserNameModal').addEventListener('click', () => {
+        setUserName('');
+        showToast('👤 Name zurückgesetzt');
+        modal.style.display = 'none';
+        switchDialogScenario(currentScenarioId);
+      });
+
+      const inp = modal.querySelector('#modalInputUserName');
+      inp.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          modal.querySelector('#btnSaveUserNameModal').click();
+        }
+      });
+    }
+
+    const inp = modal.querySelector('#modalInputUserName');
+    if (inp) {
+      inp.value = getUserName() || '';
+      setTimeout(() => inp.focus(), 60);
+    }
+    modal.style.display = 'flex';
+  }
+
   function openAvatarPickerModal() {
     let modal = document.getElementById('avatarPickerModal');
     if (!modal) {
@@ -3347,13 +3558,7 @@ ${cleanTip}`,
     const btnEditUserName = document.getElementById('btnEditUserName');
     if (btnEditUserName) {
       btnEditUserName.addEventListener('click', () => {
-        const current = getUserName();
-        const newName = prompt('Wie lautet dein Name? (Wird für die persönliche Anrede im Chat genutzt):', current);
-        if (newName !== null) {
-          setUserName(newName);
-          showToast(newName.trim() ? `👤 Name gespeichert: ${newName.trim()}` : '👤 Name zurückgesetzt');
-          resetDialogScenario(currentScenarioId);
-        }
+        openUserNameModal();
       });
     }
 
@@ -3440,17 +3645,9 @@ ${cleanTip}`,
       `;
     }
 
-    const currentAvatarId = getSelectedAvatarId();
-    if (currentAvatarId === 'robot') {
-      if (nameEl) nameEl.textContent = 'Cyber-Bot (AI Robot Tutor)';
-      if (roleEl) roleEl.textContent = 'Rolle: Futuristischer KI-Assistent & Sprach-Coach';
-    } else if (currentAvatarId === 'istvan_3d' || currentAvatarId === 'istvan_real') {
-      if (nameEl) nameEl.textContent = 'Istvan (Englisch & FIAE Coach)';
-      if (roleEl) roleEl.textContent = 'Rolle: Dein persönlicher Englisch-Tutor & Entwickler-Partner';
-    } else {
-      if (nameEl) nameEl.textContent = scenario.partnerName;
-      if (roleEl) roleEl.textContent = `Rolle: ${scenario.partnerRole}`;
-    }
+    const partnerMeta = getCurrentPartnerMeta();
+    if (nameEl) nameEl.textContent = partnerMeta.name;
+    if (roleEl) roleEl.textContent = partnerMeta.role;
 
     // Wenn noch keine Nachrichten für dieses Szenario da sind, Begrüßung erstellen
     if (!dialogHistories[scenarioId] || dialogHistories[scenarioId].length === 0) {
@@ -3468,7 +3665,7 @@ ${cleanTip}`,
       const firstQ = VocabQuizEngine.start();
       const initialPartnerMsg = {
         type: 'partner',
-        sender: scenario.partnerName,
+        sender: getCurrentPartnerMeta().name,
         textEn: formatReplyText(`Hello{name}! Let's test your vocabulary. ${firstQ.en}`),
         textDe: formatReplyText(`Hallo{name}! 🎯 In diesem Modus teste ich deinen Wortschatz. Ich nenne dir englische IT- & Fachbegriffe und du nennst mir die deutsche Bedeutung!
 
@@ -3505,7 +3702,7 @@ ${cleanTip}`,
 
     const initialPartnerMsg = {
       type: 'partner',
-      sender: scenario.partnerName,
+      sender: getCurrentPartnerMeta().name,
       textEn: promptEn,
       textDe: promptDe,
       suggestions: getInitialSuggestions(scenarioId)
@@ -3748,7 +3945,13 @@ ${cleanTip}`,
 
     // 3. Normales Szenario: Satz analysieren (Grammatik & Satzkorrektur)
     const scenario = DIALOG_SCENARIOS[scenarioId] || DIALOG_SCENARIOS.standup;
-    const analysis = SentenceDoctor.analyze(text);
+    let analysis = SentenceDoctor.analyze(text);
+
+    // Wenn der Nutzer gerade seinen Namen korrigiert oder genannt hat, keinen Grammatik-Fehler anzeigen!
+    const isNameMessage = /\b(nicht\s+[A-Za-z]+\s+sondern|meine?\s+(richtige[rn]?\s+)?na[h]?me|ich\s+hei[sß]+e|my\s+name\s+is|call\s+me)\b/i.test(text);
+    if (isNameMessage && analysis) {
+      analysis = null;
+    }
 
     // User-Nachricht speichern
     if (!dialogHistories[scenarioId]) dialogHistories[scenarioId] = [];
@@ -3805,7 +4008,7 @@ ${partnerReply.de}`;
 
     dialogHistories[scenarioId].push({
       type: 'partner',
-      sender: scenario.partnerName,
+      sender: getCurrentPartnerMeta().name,
       textEn: partnerReply.en,
       textDe: partnerReply.de,
       suggestions: partnerReply.suggestions || [
