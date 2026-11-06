@@ -22,16 +22,36 @@
 
   <meta name="apple-mobile-web-app-title" content="English Master">
 
-  <link rel="stylesheet" href="style.css?v=20261105_v17">
+  <link rel="stylesheet" href="style.css?v=20261106_v18">
 
   <script>
 
-    // Force immediate Service Worker and Cache update on mobile
-
+    // Auto-Update & Cache Sync: Whenever a new version is installed, reload immediately!
     if ('serviceWorker' in navigator) {
+      var refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function() {
+        if (!refreshing) {
+          refreshing = true;
+          window.location.reload();
+        }
+      });
+
       navigator.serviceWorker.getRegistrations().then(function(registrations) {
         for (var reg of registrations) {
           reg.update();
+          if (reg.waiting) {
+            reg.waiting.postMessage('SKIP_WAITING');
+          }
+          reg.addEventListener('updatefound', function() {
+            var worker = reg.installing;
+            if (worker) {
+              worker.addEventListener('statechange', function() {
+                if (worker.state === 'installed' && navigator.serviceWorker.controller) {
+                  worker.postMessage('SKIP_WAITING');
+                }
+              });
+            }
+          });
         }
       });
     }
@@ -1250,9 +1270,9 @@
 
   <!-- Scripts -->
 
-  <script src="data.js?v=20261105_v17"></script>
+  <script src="data.js?v=20261106_v18"></script>
 
-  <script src="app.js?v=20261105_v17"></script>
+  <script src="app.js?v=20261106_v18"></script>
 
 </body>
 

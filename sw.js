@@ -1,5 +1,5 @@
-// Service Worker: Offline-Support für Englisch-LernApp (v17 - Bulletproof Cache & Fallbacks)
-const CACHE_NAME = 'english-master-cache-v17';
+// Service Worker: Offline-Support für Englisch-LernApp (v18 - Auto-Update & Bulletproof)
+const CACHE_NAME = 'english-master-cache-v18';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -12,12 +12,19 @@ const ASSETS_TO_CACHE = [
   './qr_code.png'
 ];
 
+// Allow clients to trigger skipWaiting immediately
+self.addEventListener('message', (event) => {
+  if (event.data === 'SKIP_WAITING' || (event.data && event.data.action === 'skipWaiting')) {
+    self.skipWaiting();
+  }
+});
+
 // Install: Cache essential assets and activate immediately
 self.addEventListener('install', (event) => {
   self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[Service Worker] Caching offline assets for v17...');
+      console.log('[Service Worker] Caching offline assets for v18...');
       return cache.addAll(ASSETS_TO_CACHE);
     }).catch((err) => {
       console.warn('[Service Worker] Non-fatal cache.addAll warning:', err);
@@ -58,7 +65,7 @@ self.addEventListener('fetch', (event) => {
           return networkResponse;
         }
 
-        // If server returned non-200 (e.g. temporary 404/503 during deploy), fall back to cache
+        // If server returned non-200, fall back to cache
         return caches.match(event.request, { ignoreSearch: true }).then((cached) => {
           if (cached) return cached;
           return networkResponse;

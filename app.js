@@ -128,6 +128,16 @@ function initApp() {
     return VOICE_PROFILES[activeVoiceProfileId] || VOICE_PROFILES.soft;
   }
 
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
 
   // ============================================================
   // BUST PORTRAIT AVATARS (CHEST TO HEAD) & SPEAKING ANIMATION
@@ -1987,7 +1997,7 @@ function initApp() {
           {
             id: 'arch_clean_3',
             en: 'Decoupled services are much easier to maintain and test.',
-            de: 'Entkoppelte Services sind viel einfacher zu warten und zu testen.'
+            de: 'Entkoppelte Services sind viel einfacher zu warten und zu testen.',
             suggestions: [
               'I use standard HTTP codes: 200 for OK, 201 for Created, 400 for Bad Request, and 404 for Not Found.',
               'I design standardized JSON response envelopes containing data, error messages, and pagination metadata.',
@@ -2034,7 +2044,7 @@ function initApp() {
           {
             id: 'st_coffee_2',
             en: 'Any fun plans for the upcoming weekend, or just relaxing?',
-            de: 'Schöne Pläne fürs Wochenende oder einfach nur entspannen?'
+            de: 'Schöne Pläne fürs Wochenende oder einfach nur entspannen?',
             suggestions: [
               'I want to enjoy some outdoor sunshine and produce new music on Sunday.',
               'I might check out an online developer talk about modern cloud architecture.',
@@ -2049,7 +2059,7 @@ function initApp() {
           {
             id: 'trv_lon_1',
             en: 'Good evening! I can check your hotel reservation. What is your name?',
-            de: 'Guten Abend! Ich kann deine Hotelreservierung prüfen. Wie lautet dein Name?'
+            de: 'Guten Abend! Ich kann deine Hotelreservierung prüfen. Wie lautet dein Name?',
             suggestions: [
               'Thank you! Here is my passport and booking confirmation.',
               'Could you tell me what time complimentary breakfast is served in the morning?',
@@ -2059,7 +2069,7 @@ function initApp() {
           {
             id: 'trv_lon_2',
             en: 'Welcome to London! Breakfast is served from 7 to 10 in the morning.',
-            de: 'Willkommen in London! Frühstück gibt es morgens von 7 bis 10 Uhr.'
+            de: 'Willkommen in London! Frühstück gibt es morgens von 7 bis 10 Uhr.',
             suggestions: [
               'That is very clear and convenient, thank you for the directions!',
               'Can I pay on the Underground with my contactless credit card or phone?',
@@ -2069,7 +2079,7 @@ function initApp() {
           {
             id: 'trv_lon_3',
             en: 'The nearest tube station is Piccadilly Circus, just a two-minute walk away.',
-            de: 'Die nächste U-Bahn-Station ist Piccadilly Circus, nur zwei Minuten zu Fuß.'
+            de: 'Die nächste U-Bahn-Station ist Piccadilly Circus, nur zwei Minuten zu Fuß.',
             suggestions: [
               'That sounds wonderful, I will definitely check out The George tonight.',
               'Thank you very much for your outstanding British hospitality!',
@@ -2084,7 +2094,7 @@ function initApp() {
           {
             id: 'fr_1',
             en: 'That is very interesting{name}! Tell me more about that.',
-            de: 'Das ist sehr interessant{name}! Erzähl mir mehr darüber.'
+            de: 'Das ist sehr interessant{name}! Erzähl mir mehr darüber.',
             suggestions: [
               'In my daily routine, I balance intensive coding with continuous learning.',
               'I focus on writing readable code with clean architecture and automated tests.',
@@ -2094,7 +2104,7 @@ function initApp() {
           {
             id: 'fr_2',
             en: 'You are expressing yourself very clearly! What would you like to talk about next?',
-            de: 'Du drückst dich sehr verständlich aus! Worüber möchtest du als Nächstes sprechen?'
+            de: 'Du drückst dich sehr verständlich aus! Worüber möchtest du als Nächstes sprechen?',
             suggestions: [
               'I am fascinated by scalable backend microservices and efficient database design.',
               'I love how agile Scrum frameworks enable collaborative and iterative development.',
@@ -2104,7 +2114,7 @@ function initApp() {
           {
             id: 'fr_3',
             en: 'Great conversation{name}! Feel free to ask me anything.',
-            de: 'Tolles Gespräch{name}! Du kannst mich jederzeit alles fragen.'
+            de: 'Tolles Gespräch{name}! Du kannst mich jederzeit alles fragen.',
             suggestions: [
               'My next milestone is acing my Fachinformatiker AP 1 certification exam.',
               'I want to expand my English IT vocabulary to collaborate in international teams.',
