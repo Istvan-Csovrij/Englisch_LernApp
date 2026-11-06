@@ -22,7 +22,7 @@
 
   <meta name="apple-mobile-web-app-title" content="English Master">
 
-  <link rel="stylesheet" href="style.css?v=20261106_v19">
+  <link rel="stylesheet" href="style.css?v=20261106_v20">
 
   <script>
 
@@ -824,48 +824,8 @@
 
       <div class="scenario-header-card" id="scenarioHeaderCard">
 
-        <div class="scenario-avatar" id="scenarioAvatar">
-          <svg class="avatar-bust-svg female" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <linearGradient id="femBgInit" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#4f46e5" stop-opacity="0.3"/>
-                <stop offset="100%" stop-color="#ec4899" stop-opacity="0.3"/>
-              </linearGradient>
-              <linearGradient id="femHairInit" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#7c2d12"/>
-                <stop offset="100%" stop-color="#451a03"/>
-              </linearGradient>
-              <linearGradient id="femSkinInit" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stop-color="#fed7aa"/>
-                <stop offset="100%" stop-color="#fdba74"/>
-              </linearGradient>
-              <linearGradient id="femClothInit" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#6366f1"/>
-                <stop offset="100%" stop-color="#a855f7"/>
-              </linearGradient>
-            </defs>
-            <circle cx="60" cy="60" r="56" fill="url(#femBgInit)"/>
-            <path d="M32 45 C32 20, 88 20, 88 45 C88 75, 84 95, 80 102 C75 92, 70 85, 60 85 C50 85, 45 92, 40 102 C36 95, 32 75, 32 45 Z" fill="url(#femHairInit)"/>
-            <path d="M22 120 C22 94, 42 84, 60 84 C78 84, 98 94, 98 120 Z" fill="url(#femClothInit)"/>
-            <path d="M52 84 L60 100 L68 84 Z" fill="url(#femSkinInit)"/>
-            <path d="M54 90 Q60 96 66 90" stroke="#fef08a" stroke-width="1.5" fill="none"/>
-            <path d="M52 68 L52 86 L68 86 L68 68 Z" fill="url(#femSkinInit)"/>
-            <path d="M52 74 Q60 80 68 74 L68 68 L52 68 Z" fill="#fb923c" opacity="0.25"/>
-            <ellipse cx="60" cy="52" rx="19" ry="22" fill="url(#femSkinInit)"/>
-            <circle cx="48" cy="58" r="4.5" fill="#f43f5e" opacity="0.25"/>
-            <circle cx="72" cy="58" r="4.5" fill="#f43f5e" opacity="0.25"/>
-            <path d="M47 43 Q52 40 56 44" stroke="#451a03" stroke-width="1.8" fill="none" stroke-linecap="round"/>
-            <path d="M64 44 Q68 40 73 43" stroke="#451a03" stroke-width="1.8" fill="none" stroke-linecap="round"/>
-            <ellipse cx="51.5" cy="49.5" rx="3" ry="3.5" fill="#1e293b"/>
-            <circle cx="50.5" cy="48" r="1.2" fill="#ffffff"/>
-            <ellipse cx="68.5" cy="49.5" rx="3" ry="3.5" fill="#1e293b"/>
-            <circle cx="67.5" cy="48" r="1.2" fill="#ffffff"/>
-            <path d="M60 51 L59 56 L62 56" stroke="#ea580c" stroke-width="1.2" fill="none" stroke-linecap="round"/>
-            <path class="avatar-mouth" d="M53 62 Q60 67 67 62" stroke="#e11d48" stroke-width="2.2" fill="none" stroke-linecap="round"/>
-            <path d="M34 42 C36 24, 76 20, 86 35 C88 48, 86 64, 84 72 C80 50, 78 38, 62 38 C46 38, 40 46, 36 60 C34 54, 33 48, 34 42 Z" fill="url(#femHairInit)"/>
-            <circle cx="41" cy="55" r="2" fill="#fef08a"/>
-            <circle cx="79" cy="55" r="2" fill="#fef08a"/>
-          </svg>
+        <div class="scenario-avatar" id="scenarioAvatar" title="Tippen zum Anhalten oder Wiederholen der Sprache">
+          <img class="avatar-bust-img" id="scenarioAvatarImg" src="avatar_istvan_3d.jpg" alt="Istvan Tutor Avatar">
           <div class="speaking-badge" title="Spricht gerade">
             <span class="wave-bar"></span>
             <span class="wave-bar"></span>
@@ -875,15 +835,18 @@
 
         <div class="scenario-meta">
 
-          <h3 class="scenario-partner-name" id="scenarioPartnerName">Emma (Lernpartnerin & Tutorin)</h3>
+          <h3 class="scenario-partner-name" id="scenarioPartnerName">Istvan (Englisch & FIAE Coach)</h3>
 
-          <p class="scenario-partner-role" id="scenarioPartnerRole">Rolle: Geduldige Englisch-Tutorin für Alltag & Smalltalk</p>
+          <p class="scenario-partner-role" id="scenarioPartnerRole">Rolle: Dein persönlicher Englisch-Tutor & Entwickler-Partner</p>
 
         </div>
 
         <div class="scenario-actions-group">
           <button class="scenario-audio-toggle-btn" id="btnToggleScenarioAudio" title="Aktuelle Sprache anhalten oder Nachricht nochmals anhören">
             🔊 Anhören
+          </button>
+          <button class="scenario-avatar-btn" id="btnOpenAvatarPicker" title="Wähle deinen Lieblings-Avatar (Istvan 3D, Robot, echtes Foto)">
+            🎭 Avatar wählen
           </button>
           <button class="scenario-voice-btn" id="btnOpenVoicePicker" title="Wähle deine bevorzugte, weiche englische Stimme">
             🎙️ Stimme wählen
@@ -1273,9 +1236,9 @@
 
   <!-- Scripts -->
 
-  <script src="data.js?v=20261106_v19"></script>
+  <script src="data.js?v=20261106_v20"></script>
 
-  <script src="app.js?v=20261106_v19"></script>
+  <script src="app.js?v=20261106_v20"></script>
 
 </body>
 

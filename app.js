@@ -225,6 +225,72 @@ function initApp() {
     <ellipse cx="80" cy="50" rx="3" ry="5" fill="url(#maleSkin)"/>
   </svg>`;
 
+  // ============================================================
+  // AVATAR DEFINITIONS & SWITCHER (ISTVAN 3D, ROBOT, REAL, EMMA)
+  // ============================================================
+  const AVATAR_OPTIONS = {
+    istvan_3d: {
+      id: 'istvan_3d',
+      name: 'Istvan (3D Avatar)',
+      tag: '✨ Empfohlen',
+      desc: '3D Pixar-Style Coach im Business-Hemd mit Krawatte',
+      src: 'avatar_istvan_3d.jpg',
+      type: 'image',
+      gender: 'male'
+    },
+    robot: {
+      id: 'robot',
+      name: 'Cyber-Bot (AI-Robot)',
+      tag: '🤖 Futuristisch',
+      desc: 'Moderner KI-Robot-Tutor mit leuchtendem Cyan-Visier',
+      src: 'avatar_robot.jpg',
+      type: 'image',
+      gender: 'male'
+    },
+    istvan_real: {
+      id: 'istvan_real',
+      name: 'Istvan (Echtes Foto)',
+      tag: '📸 Original',
+      desc: 'Authentisches Porträtfoto von Istvan im Business-Look',
+      src: 'avatar_istvan_real.jpg',
+      type: 'image',
+      gender: 'male'
+    },
+    emma: {
+      id: 'emma',
+      name: 'Emma (Klassisch)',
+      tag: '👩 Klassisch',
+      desc: 'Geduldige Vektor-Tutorin für Alltag & Smalltalk',
+      type: 'svg',
+      svg: FEMALE_BUST_SVG,
+      gender: 'female'
+    }
+  };
+
+  function getSelectedAvatarId() {
+    try {
+      return localStorage.getItem('fiae_selected_avatar') || 'istvan_3d';
+    } catch (e) {
+      return 'istvan_3d';
+    }
+  }
+
+  function setSelectedAvatarId(avatarId) {
+    try {
+      localStorage.setItem('fiae_selected_avatar', avatarId);
+    } catch (e) {}
+  }
+
+  function renderPartnerAvatarHtml(scenarioId) {
+    const avatarId = getSelectedAvatarId();
+    const opt = AVATAR_OPTIONS[avatarId] || AVATAR_OPTIONS.istvan_3d;
+    if (opt.type === 'image') {
+      return `<img class="avatar-bust-img" id="scenarioAvatarImg" src="${opt.src}" alt="${escapeHtml(opt.name)}">`;
+    } else {
+      return opt.svg || FEMALE_BUST_SVG;
+    }
+  }
+
   function getPartnerAvatarSvg(scenarioId) {
     const sc = (typeof DIALOG_SCENARIOS !== 'undefined' && DIALOG_SCENARIOS[scenarioId]) ? DIALOG_SCENARIOS[scenarioId] : null;
     const isFemale = sc ? (sc.gender === 'female') : (scenarioId === 'beginner' || scenarioId === 'standup' || scenarioId === 'architecture');
@@ -445,9 +511,12 @@ function initApp() {
       utterance.pitch = profile.pitch;
       utterance.volume = profile.volume;
 
-      // Stimme mit Gender-Support für Dialogpartner ermitteln
+      // Stimme mit Gender-Support für Dialogpartner & gewählten Avatar ermitteln
+      const activeAv = getSelectedAvatarId();
       const curScenario = (typeof DIALOG_SCENARIOS !== 'undefined' && DIALOG_SCENARIOS[currentScenarioId]) ? DIALOG_SCENARIOS[currentScenarioId] : null;
-      const preferMale = curScenario ? (curScenario.gender === 'male') : false;
+      const preferMale = (activeAv === 'robot' || activeAv === 'istvan_3d' || activeAv === 'istvan_real') 
+        ? true 
+        : (activeAv === 'emma' ? false : (curScenario ? (curScenario.gender === 'male') : false));
       const voice = getBestEnglishVoice(preferMale);
 
       if (voice) {
@@ -3075,6 +3144,74 @@ ${cleanTip}`,
     }
   }
 
+  function openAvatarPickerModal() {
+    let modal = document.getElementById('avatarPickerModal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'avatarPickerModal';
+      modal.className = 'app-modal-overlay';
+      modal.innerHTML = `
+        <div class="app-modal-card avatar-picker-card">
+          <div class="app-modal-header">
+            <h3>🎭 Tutor-Avatar wählen</h3>
+            <button class="modal-close-btn" id="btnCloseAvatarModal">✕</button>
+          </div>
+          <p class="app-modal-desc">
+            Wähle das Aussehen deines Gesprächspartners (3D Avatar, AI Robot oder echtes Foto):
+          </p>
+          <div class="avatar-grid-container" id="avatarGridContainer">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.style.display = 'none';
+      });
+      modal.querySelector('#btnCloseAvatarModal').addEventListener('click', () => {
+        modal.style.display = 'none';
+      });
+    }
+
+    const grid = modal.querySelector('#avatarGridContainer');
+    const currentId = getSelectedAvatarId();
+    grid.innerHTML = Object.values(AVATAR_OPTIONS).map(opt => {
+      const isSelected = opt.id === currentId;
+      const previewHtml = opt.type === 'image'
+        ? `<img class="avatar-card-preview-img" src="${opt.src}" alt="${escapeHtml(opt.name)}">`
+        : `<div class="avatar-card-preview-svg">${opt.svg}</div>`;
+
+      return `
+        <div class="avatar-option-card ${isSelected ? 'active-avatar' : ''}" data-avatar-id="${opt.id}">
+          <div class="avatar-card-thumb-wrap">
+            ${previewHtml}
+            ${isSelected ? '<span class="avatar-active-badge">Aktiv</span>' : ''}
+          </div>
+          <div class="avatar-card-info">
+            <div class="avatar-card-title-row">
+              <strong>${escapeHtml(opt.name)}</strong>
+              <span class="avatar-card-tag">${escapeHtml(opt.tag)}</span>
+            </div>
+            <p class="avatar-card-desc">${escapeHtml(opt.desc)}</p>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    grid.querySelectorAll('.avatar-option-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const chosenId = card.dataset.avatarId;
+        setSelectedAvatarId(chosenId);
+        showToast(`🎭 Avatar aktiviert: ${AVATAR_OPTIONS[chosenId].name}`);
+        switchDialogScenario(currentScenarioId);
+        modal.style.display = 'none';
+      });
+    });
+
+    modal.style.display = 'flex';
+  }
+
   function openVoicePickerModal() {
     let modal = document.getElementById('voicePickerModal');
     if (!modal) {
@@ -3254,6 +3391,13 @@ ${cleanTip}`,
       });
     }
 
+    const btnOpenAvatarPicker = document.getElementById('btnOpenAvatarPicker');
+    if (btnOpenAvatarPicker) {
+      btnOpenAvatarPicker.addEventListener('click', () => {
+        openAvatarPickerModal();
+      });
+    }
+
     const btnOpenVoicePicker = document.getElementById('btnOpenVoicePicker');
     if (btnOpenVoicePicker) {
       btnOpenVoicePicker.addEventListener('click', () => {
@@ -3287,7 +3431,7 @@ ${cleanTip}`,
 
     if (avatarEl) {
       avatarEl.innerHTML = `
-        ${getPartnerAvatarSvg(scenarioId)}
+        ${renderPartnerAvatarHtml(scenarioId)}
         <div class="speaking-badge" title="Spricht gerade">
           <span class="wave-bar"></span>
           <span class="wave-bar"></span>
@@ -3295,8 +3439,18 @@ ${cleanTip}`,
         </div>
       `;
     }
-    if (nameEl) nameEl.textContent = scenario.partnerName;
-    if (roleEl) roleEl.textContent = `Rolle: ${scenario.partnerRole}`;
+
+    const currentAvatarId = getSelectedAvatarId();
+    if (currentAvatarId === 'robot') {
+      if (nameEl) nameEl.textContent = 'Cyber-Bot (AI Robot Tutor)';
+      if (roleEl) roleEl.textContent = 'Rolle: Futuristischer KI-Assistent & Sprach-Coach';
+    } else if (currentAvatarId === 'istvan_3d' || currentAvatarId === 'istvan_real') {
+      if (nameEl) nameEl.textContent = 'Istvan (Englisch & FIAE Coach)';
+      if (roleEl) roleEl.textContent = 'Rolle: Dein persönlicher Englisch-Tutor & Entwickler-Partner';
+    } else {
+      if (nameEl) nameEl.textContent = scenario.partnerName;
+      if (roleEl) roleEl.textContent = `Rolle: ${scenario.partnerRole}`;
+    }
 
     // Wenn noch keine Nachrichten für dieses Szenario da sind, Begrüßung erstellen
     if (!dialogHistories[scenarioId] || dialogHistories[scenarioId].length === 0) {

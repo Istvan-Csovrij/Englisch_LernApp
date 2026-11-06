@@ -1,5 +1,5 @@
-// Service Worker: Offline-Support für Englisch-LernApp (v19 - Soft Voice & Speech Controls)
-const CACHE_NAME = 'english-master-cache-v19';
+// Service Worker: Offline-Support für Englisch-LernApp (v20 - Soft Voice & Speech Controls)
+const CACHE_NAME = 'english-master-cache-v20';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -9,7 +9,10 @@ const ASSETS_TO_CACHE = [
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
-  './qr_code.png'
+  './qr_code.png',
+  './avatar_istvan_3d.jpg',
+  './avatar_robot.jpg',
+  './avatar_istvan_real.jpg'
 ];
 
 // Allow clients to trigger skipWaiting immediately
@@ -24,7 +27,7 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[Service Worker] Caching offline assets for v19...');
+      console.log('[Service Worker] Caching offline assets for v20...');
       return cache.addAll(ASSETS_TO_CACHE);
     }).catch((err) => {
       console.warn('[Service Worker] Non-fatal cache.addAll warning:', err);
