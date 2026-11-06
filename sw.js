@@ -1,5 +1,5 @@
-// Service Worker: Offline-Support für Englisch-LernApp (v18 - Auto-Update & Bulletproof)
-const CACHE_NAME = 'english-master-cache-v18';
+// Service Worker: Offline-Support für Englisch-LernApp (v19 - Soft Voice & Speech Controls)
+const CACHE_NAME = 'english-master-cache-v19';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -24,7 +24,7 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[Service Worker] Caching offline assets for v18...');
+      console.log('[Service Worker] Caching offline assets for v19...');
       return cache.addAll(ASSETS_TO_CACHE);
     }).catch((err) => {
       console.warn('[Service Worker] Non-fatal cache.addAll warning:', err);

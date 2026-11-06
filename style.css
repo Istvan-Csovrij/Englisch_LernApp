@@ -3233,3 +3233,51 @@ button, .nav-icon-btn, .action-btn, .cat-btn, .card-audio-btn, .card-mic-btn {
     transform: scaleY(1.35);
   }
 }
+
+/* ============================================================ */
+/* V19: PLAY/PAUSE/STOP TOGGLE BUTTONS & SOFT SPEECH CONTROLS   */
+/* ============================================================ */
+.scenario-audio-toggle-btn {
+  background: rgba(14, 165, 233, 0.15);
+  border: 1px solid rgba(14, 165, 233, 0.4);
+  color: #38bdf8;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.2s ease;
+}
+
+.scenario-audio-toggle-btn:hover {
+  background: rgba(14, 165, 233, 0.28);
+  color: #ffffff;
+  border-color: #38bdf8;
+  transform: translateY(-1px);
+}
+
+/* Aktiver Sprech-Zustand für Buttons (Stop/Anhalten) */
+.is-speaking-btn {
+  background: rgba(239, 68, 68, 0.22) !important;
+  border-color: #ef4444 !important;
+  color: #fca5a5 !important;
+  animation: speaking-btn-pulse 1.1s infinite ease-in-out !important;
+}
+
+@keyframes speaking-btn-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.55);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 0 5px rgba(239, 68, 68, 0);
+    transform: scale(1.02);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+    transform: scale(1);
+  }
+}

@@ -95,29 +95,29 @@ function initApp() {
   const VOICE_PROFILES = {
     soft: {
       id: 'soft',
-      name: '🌸 Weich & Natürlich',
-      label: 'Weich',
-      desc: 'Sanfte Aussprache, warmes Lerntempo & natürliche Betonung',
-      rate: 0.94,
-      pitch: 0.98,
+      name: '🌸 Weich, Freundlich & Natürlich',
+      label: 'Weich (0.82x)',
+      desc: 'Sanftes, warmes Lerntempo (0.82x), melodische & sympathische Aussprache',
+      rate: 0.82,
+      pitch: 1.04,
       volume: 0.95
     },
     clear: {
       id: 'clear',
-      name: '💼 Klar & Business',
-      label: 'Klar',
+      name: '💼 Klar & Verständlich',
+      label: 'Klar (0.86x)',
       desc: 'Deutliche Business-Artikulation für IT & Vorstellungsgespräche',
-      rate: 0.96,
-      pitch: 1.00,
+      rate: 0.86,
+      pitch: 1.02,
       volume: 0.95
     },
     slow: {
       id: 'slow',
-      name: '🐢 Ruhig & Lerntempo',
-      label: 'Ruhig',
-      desc: 'Entspanntes Lerntempo (0.82x) für Anfänger & Hörübungen',
-      rate: 0.82,
-      pitch: 1.02,
+      name: '🐢 Sehr Ruhig & Sanft',
+      label: 'Ruhig (0.74x)',
+      desc: 'Entspanntes, langsames Lerntempo (0.74x) für Einsteiger & Hörübungen',
+      rate: 0.74,
+      pitch: 1.05,
       volume: 0.90
     }
   };
@@ -267,7 +267,57 @@ function initApp() {
     }
   }
 
-  function getBestEnglishVoice() {
+  function scoreVoice(v, preferMale = false) {
+    const name = (v.name || '').toLowerCase();
+    const uri = (v.voiceURI || '').toLowerCase();
+    const lang = (v.lang || '').toLowerCase().replace('_', '-');
+    let score = 0;
+
+    // Nur englische Stimmen
+    if (!lang.startsWith('en') && !name.includes('english')) return -2000;
+
+    // 1. Online / Neural / Natural / Premium Stimmen (extrem menschlich, sanft und weich)
+    if (name.includes('natural') || uri.includes('natural')) score += 800;
+    if (name.includes('neural') || uri.includes('neural')) score += 750;
+    if (name.includes('online') || uri.includes('online')) score += 650;
+    if (name.includes('premium') || uri.includes('premium')) score += 600;
+    if (name.includes('enhanced') || uri.includes('enhanced')) score += 550;
+
+    // 2. Google High Quality & Network Stimmen (auf Android/Chrome ultra weich)
+    if (name.includes('google us english') || name.includes('google uk english')) score += 420;
+    if (uri.includes('network') || name.includes('network')) score += 450;
+    if (name.includes('google')) score += 200;
+
+    // 3. Sympathische weibliche vs männliche Stimmen nach Szenario
+    if (preferMale) {
+      if (name.includes('guy') || name.includes('male') || name.includes('daniel') || name.includes('oliver') || name.includes('george') || name.includes('tom')) score += 320;
+      if (name.includes('female') || name.includes('jenny') || name.includes('aria') || name.includes('samantha')) score -= 180;
+    } else {
+      // Weibliche Stimmen (Emma & Standard)
+      if (name.includes('jenny')) score += 380;
+      if (name.includes('aria')) score += 340;
+      if (name.includes('samantha')) score += 310;
+      if (name.includes('ava') || name.includes('zoe')) score += 290;
+      if (name.includes('female') || name.includes('karen') || name.includes('victoria') || name.includes('susan')) score += 240;
+      if (name.includes('guy') || name.includes('male') || name.includes('david')) score -= 220;
+    }
+
+    // 4. US / UK Dialekt-Bonus
+    if (lang === 'en-us') score += 35;
+    if (lang === 'en-gb') score += 25;
+
+    // 5. Harte, mechanische Roboter-Desktop-Stimmen MASSIV abwerten!
+    if (name.includes('desktop') || uri.includes('desktop')) score -= 800;
+    if (name.includes('david')) score -= 500;
+    if (name.includes('zira')) score -= 400;
+    if (name.includes('mark')) score -= 500;
+    if (name.includes('hazel')) score -= 500;
+    if (name.includes('espeak')) score -= 1000;
+
+    return score;
+  }
+
+  function getBestEnglishVoice(preferMale = false) {
     if (!('speechSynthesis' in window)) return null;
     try {
       updateVoicesCache();
@@ -281,44 +331,14 @@ function initApp() {
         if (found) return found;
       }
 
-      const enVoices = voices.filter(v => v.lang && v.lang.toLowerCase().startsWith('en'));
+      const enVoices = voices.filter(v => {
+        const l = (v.lang || '').toLowerCase().replace('_', '-');
+        const n = (v.name || '').toLowerCase();
+        return l.startsWith('en') || n.includes('english');
+      });
       if (!enVoices.length) return voices[0] || null;
 
-      function scoreVoice(v) {
-        const name = (v.name || '').toLowerCase();
-        const uri = (v.voiceURI || '').toLowerCase();
-        let score = 0;
-
-        // 1. Online / Neural / Natural Stimmen haben oberste Priorität (klingen ultra-weich und menschlich)
-        if (name.includes('natural') || uri.includes('natural')) score += 500;
-        if (name.includes('online') || uri.includes('online')) score += 350;
-        if (name.includes('neural') || uri.includes('neural')) score += 400;
-
-        // 2. Bekannte sehr flüssige menschliche Stimmen
-        if (name.includes('jenny')) score += 250;
-        if (name.includes('aria')) score += 220;
-        if (name.includes('google us english') || name.includes('google uk english female')) score += 260;
-        if (name.includes('google')) score += 180;
-        if (name.includes('samantha')) score += 150;
-        if (name.includes('ava')) score += 120;
-        if (name.includes('guy')) score += 110;
-
-        // 3. Harte Roboter-Desktop-Stimmen MASSIV abwerten!
-        if (name.includes('desktop') || uri.includes('desktop')) score -= 500;
-        if (name.includes('david')) score -= 300;
-        if (name.includes('zira')) score -= 250;
-        if (name.includes('mark')) score -= 300;
-        if (name.includes('hazel')) score -= 300;
-        if (name.includes('espeak')) score -= 500;
-
-        // 4. US / UK Dialekt-Bonus
-        if (v.lang === 'en-US' || v.lang === 'en_US') score += 15;
-        if (v.lang === 'en-GB' || v.lang === 'en_GB') score += 10;
-
-        return score;
-      }
-
-      const sorted = [...enVoices].sort((a, b) => scoreVoice(b) - scoreVoice(a));
+      const sorted = [...enVoices].sort((a, b) => scoreVoice(b, preferMale) - scoreVoice(a, preferMale));
       return sorted[0] || enVoices[0];
     } catch (e) {
       return null;
@@ -346,7 +366,59 @@ function initApp() {
       .trim();
   }
 
-  function speakEnglish(text, customRate = null, onEndCallback = null) {
+  // --- INTERAKTIVE SPRACHSTEUERUNG (ANHALTEN & WIEDER STARTEN) ---
+  let activeSpeakingBtn = null;
+  let activeSpeakingOriginalHTML = null;
+  let lastSpokenText = '';
+
+  function resetSpeakingBtn() {
+    if (activeSpeakingBtn && activeSpeakingOriginalHTML !== null) {
+      activeSpeakingBtn.innerHTML = activeSpeakingOriginalHTML;
+      activeSpeakingBtn.classList.remove('is-speaking-btn');
+      activeSpeakingBtn = null;
+      activeSpeakingOriginalHTML = null;
+    }
+    const mainToggle = document.getElementById('btnToggleScenarioAudio');
+    if (mainToggle) {
+      mainToggle.innerHTML = '🔊 Vorlesen';
+      mainToggle.classList.remove('is-speaking-btn');
+    }
+  }
+
+  function stopSpeaking() {
+    try {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+    } catch (e) {}
+    setAvatarSpeaking(false);
+    resetSpeakingBtn();
+  }
+
+  function isSpeakingNow() {
+    return !!(window.speechSynthesis && window.speechSynthesis.speaking);
+  }
+
+  function toggleSpeakEnglish(text, triggerBtn = null, customRate = null, onEndCallback = null) {
+    if (!('speechSynthesis' in window)) {
+      showToast('Sprachausgabe im Browser nicht unterstützt.');
+      return;
+    }
+
+    // Wenn gerade gesprochen wird:
+    if (window.speechSynthesis.speaking) {
+      const isSameBtn = (triggerBtn && triggerBtn === activeSpeakingBtn);
+      stopSpeaking();
+      showToast('⏹️ Sprachausgabe angehalten');
+      if (isSameBtn || !triggerBtn) {
+        return;
+      }
+    }
+
+    speakEnglish(text, customRate, onEndCallback, triggerBtn);
+  }
+
+  function speakEnglish(text, customRate = null, onEndCallback = null, triggerBtn = null) {
     if (!('speechSynthesis' in window)) {
       showToast('Sprachausgabe im Browser nicht unterstützt.');
       return;
@@ -354,37 +426,60 @@ function initApp() {
     try {
       if (window.speechSynthesis.speaking) {
         window.speechSynthesis.cancel();
-        setAvatarSpeaking(false);
       }
+      setAvatarSpeaking(false);
+      resetSpeakingBtn();
 
       // WICHTIG: Text vollständig von Emojis, Smileys und Formatierungen befreien!
       const speechText = cleanTextForSpeech(text);
       if (!speechText) return;
 
+      lastSpokenText = speechText;
+
       const profile = getActiveVoiceProfile();
       const utterance = new SpeechSynthesisUtterance(speechText);
       utterance.lang = 'en-US';
 
-      // Tempo & Tonhöhe aus Profil oder benutzerdefiniert
+      // Tempo & Tonhöhe aus Profil oder benutzerdefiniert (Standard: 0.82x angenehm ruhig & weich)
       utterance.rate = (typeof customRate === 'number' && customRate > 0) ? customRate : profile.rate;
       utterance.pitch = profile.pitch;
       utterance.volume = profile.volume;
 
-      const voice = getBestEnglishVoice();
+      // Stimme mit Gender-Support für Dialogpartner ermitteln
+      const curScenario = (typeof DIALOG_SCENARIOS !== 'undefined' && DIALOG_SCENARIOS[currentScenarioId]) ? DIALOG_SCENARIOS[currentScenarioId] : null;
+      const preferMale = curScenario ? (curScenario.gender === 'male') : false;
+      const voice = getBestEnglishVoice(preferMale);
+
       if (voice) {
         utterance.voice = voice;
-        // Anti-Roboter-Weichzeichner falls nur alte Desktop-Stimme vorhanden ist:
         const vName = (voice.name || '').toLowerCase();
-        if (vName.includes('desktop') || vName.includes('zira') || vName.includes('david')) {
-          utterance.rate = 0.94;
-          utterance.pitch = 0.95;
+        // Anti-Roboter Filter für starre Desktop-Stimmen:
+        // Tonhöhe leicht anheben (1.04) und Tempo beruhigen (0.80), um metallisches Dröhnen zu eliminieren
+        if (vName.includes('desktop') || vName.includes('zira') || vName.includes('david') || vName.includes('espeak')) {
+          utterance.rate = Math.min(utterance.rate, 0.80);
+          utterance.pitch = 1.04;
+          utterance.volume = 0.90;
         }
       }
 
       setAvatarSpeaking(true);
 
+      if (triggerBtn) {
+        activeSpeakingBtn = triggerBtn;
+        activeSpeakingOriginalHTML = triggerBtn.innerHTML;
+        triggerBtn.innerHTML = '⏹️ Anhalten';
+        triggerBtn.classList.add('is-speaking-btn');
+      }
+
+      const mainToggle = document.getElementById('btnToggleScenarioAudio');
+      if (mainToggle) {
+        mainToggle.innerHTML = '⏹️ Anhalten';
+        mainToggle.classList.add('is-speaking-btn');
+      }
+
       utterance.onend = () => {
         setAvatarSpeaking(false);
+        resetSpeakingBtn();
         window._activeUtterance = null;
         if (typeof onEndCallback === 'function') {
           onEndCallback();
@@ -393,15 +488,18 @@ function initApp() {
 
       utterance.onerror = (e) => {
         setAvatarSpeaking(false);
+        resetSpeakingBtn();
         window._activeUtterance = null;
         console.warn('SpeechSynthesis error:', e);
       };
 
-      // Keep reference to prevent mobile garbage-collection cutoffs
+      // Referenz halten gegen Garbage-Collection Cutoffs
       window._activeUtterance = utterance;
       window.speechSynthesis.speak(utterance);
     } catch (err) {
       console.warn('speakEnglish error:', err);
+      resetSpeakingBtn();
+      setAvatarSpeaking(false);
     }
   }
 
@@ -427,10 +525,16 @@ function initApp() {
 
   function testCurrentVoice() {
     const p = getActiveVoiceProfile();
+    const btn = document.getElementById('btnVoiceTest');
+    if (isSpeakingNow()) {
+      stopSpeaking();
+      showToast('⏹️ Sprachausgabe angehalten');
+      return;
+    }
     const v = getBestEnglishVoice();
     const vName = v ? v.name.split('-')[0].trim() : 'Standard';
     showToast(`🔊 ${p.name} (${vName})`);
-    speakEnglish("Hello! Your English voice is now soft, smooth, and friendly. Let's practice English together!");
+    toggleSpeakEnglish("Hello! My voice is now soft, warm, and friendly. You can tap anytime to pause or replay!", btn, p.rate);
   }
 
   if ('speechSynthesis' in window) {
@@ -762,8 +866,9 @@ function initApp() {
 
   document.getElementById('cardSpeakBtn').addEventListener('click', (e) => {
     e.stopPropagation();
+    const btn = e.currentTarget;
     const card = filteredVocab[currentCardIndex];
-    speakEnglish(card.english, 0.9);
+    toggleSpeakEnglish(card.english, btn, 0.82);
   });
 
   // Direct pronunciation check on Flashcard
@@ -861,10 +966,11 @@ function initApp() {
     document.getElementById('speechFeedback').style.display = 'none';
   }
 
-  document.getElementById('btnPlaySpeechAudio').addEventListener('click', () => {
+  document.getElementById('btnPlaySpeechAudio').addEventListener('click', (e) => {
+    const btn = e.currentTarget;
     const sp = filteredSpeech[currentSpeechIndex];
-    const rate = parseFloat(document.getElementById('voiceSpeedSelect').value || '0.75');
-    speakEnglish(sp.sentenceEn, rate);
+    const rate = parseFloat(document.getElementById('voiceSpeedSelect').value || '0.78');
+    toggleSpeakEnglish(sp.sentenceEn, btn, rate);
   });
 
   document.getElementById('btnStartRecord').addEventListener('click', () => {
@@ -3114,6 +3220,40 @@ ${cleanTip}`,
       });
     }
 
+    const btnToggleScenarioAudio = document.getElementById('btnToggleScenarioAudio');
+    if (btnToggleScenarioAudio) {
+      btnToggleScenarioAudio.addEventListener('click', () => {
+        if (isSpeakingNow()) {
+          stopSpeaking();
+          showToast('⏹️ Sprache angehalten');
+        } else {
+          // Letzte Partner-Nachricht oder Willkommenssatz wiederholen
+          const history = dialogHistories[currentScenarioId] || [];
+          const lastPartner = [...history].reverse().find(m => m.type === 'partner');
+          const toSpeak = (lastPartner && lastPartner.textEn) ? lastPartner.textEn : (DIALOG_SCENARIOS[currentScenarioId]?.initialPrompt || 'Hello!');
+          toggleSpeakEnglish(toSpeak, btnToggleScenarioAudio);
+        }
+      });
+    }
+
+    // Avatar direkt klickbar: Tippen stoppt die Sprache oder spielt sie wieder ab!
+    const avatarEl = document.getElementById('scenarioAvatar');
+    if (avatarEl) {
+      avatarEl.style.cursor = 'pointer';
+      avatarEl.title = 'Tippen zum Anhalten oder Wiederholen der Sprache';
+      avatarEl.addEventListener('click', () => {
+        if (isSpeakingNow()) {
+          stopSpeaking();
+          showToast('⏹️ Sprache angehalten');
+        } else {
+          const history = dialogHistories[currentScenarioId] || [];
+          const lastPartner = [...history].reverse().find(m => m.type === 'partner');
+          const toSpeak = (lastPartner && lastPartner.textEn) ? lastPartner.textEn : (DIALOG_SCENARIOS[currentScenarioId]?.initialPrompt || 'Hello!');
+          toggleSpeakEnglish(toSpeak, btnToggleScenarioAudio);
+        }
+      });
+    }
+
     const btnOpenVoicePicker = document.getElementById('btnOpenVoicePicker');
     if (btnOpenVoicePicker) {
       btnOpenVoicePicker.addEventListener('click', () => {
@@ -3312,8 +3452,9 @@ ${cleanTip}`,
         `;
 
         msgDiv.querySelector('.chat-audio-btn').addEventListener('click', (e) => {
-          const textToSpeak = decodeURIComponent(e.currentTarget.dataset.speak);
-          speakEnglish(textToSpeak);
+          const btn = e.currentTarget;
+          const textToSpeak = decodeURIComponent(btn.dataset.speak);
+          toggleSpeakEnglish(textToSpeak, btn);
         });
 
         chatLog.appendChild(msgDiv);
@@ -3355,8 +3496,9 @@ ${cleanTip}`,
           const listenBtn = docCard.querySelector('.chat-audio-btn');
           if (listenBtn) {
             listenBtn.addEventListener('click', (e) => {
-              const textToSpeak = decodeURIComponent(e.currentTarget.dataset.speak);
-              speakEnglish(textToSpeak);
+              const btn = e.currentTarget;
+              const textToSpeak = decodeURIComponent(btn.dataset.speak);
+              toggleSpeakEnglish(textToSpeak, btn, 0.80);
             });
           }
 
