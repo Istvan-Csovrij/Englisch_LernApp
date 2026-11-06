@@ -3569,3 +3569,63 @@ button, .nav-icon-btn, .action-btn, .cat-btn, .card-audio-btn, .card-mic-btn {
   color: #ffffff;
   box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
 }
+
+/* ============================================================
+   Gymnasium Grade Level Selector for Internationalwirtschaft (v27)
+   ============================================================ */
+.grade-level-selector-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  border-radius: var(--radius-md);
+  padding: 8px 14px;
+  margin-bottom: 12px;
+  gap: 10px;
+  flex-wrap: wrap;
+  animation: fadeInDown 0.3s ease;
+}
+
+.grade-toggle-label {
+  font-size: 0.84rem;
+  color: #fcd34d;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.grade-toggle-pills {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.grade-pill {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1.5px solid rgba(255, 255, 255, 0.15);
+  color: #cbd5e1;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.grade-pill:hover {
+  background: rgba(245, 158, 11, 0.2);
+  border-color: rgba(245, 158, 11, 0.5);
+  color: #ffffff;
+}
+
+.grade-pill.active {
+  background: linear-gradient(135deg, rgba(217, 119, 6, 0.45) 0%, rgba(245, 158, 11, 0.55) 100%);
+  border-color: #fbbf24;
+  color: #ffffff;
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.4);
+}

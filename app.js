@@ -287,6 +287,22 @@ function initApp() {
 
   function getCurrentPartnerMeta() {
     const avatarId = getSelectedAvatarId();
+    if (currentScenarioId === 'economics') {
+      const grade = (typeof getEconomicsGrade === 'function') ? getEconomicsGrade() : '11';
+      const gradeLabel = grade === '11' ? 'Kl. 11: Grundlagen & Globalisierung' : (grade === '12' ? 'Kl. 12: Freihandel, Zölle & Lieferketten' : 'Kl. 13: Makroökonomie & Abitur-Debatten');
+      if (avatarId === 'future_female') {
+        return {
+          name: 'Nova (Wirtschafts-Dozentin)',
+          role: `Rolle: Gymnasiale Fachlehrerin für Internationale Wirtschaft (${gradeLabel})`,
+          isMale: false
+        };
+      }
+      return {
+        name: 'Leo (Wirtschafts-Coach)',
+        role: `Rolle: Gymnasial-Dozent für Internationale Wirtschaft (${gradeLabel})`,
+        isMale: true
+      };
+    }
     if (avatarId === 'future_female') {
       return {
         name: 'Nova (Futuristische KI-Tutorin)',
@@ -336,6 +352,37 @@ function initApp() {
       localStorage.setItem('fiae_selected_avatar', avatarId);
     } catch (e) {}
   }
+  function getEconomicsGrade() {
+    try {
+      return localStorage.getItem('fiae_economics_grade') || '11';
+    } catch (e) {
+      return '11';
+    }
+  }
+
+  function setEconomicsGrade(grade) {
+    try {
+      localStorage.setItem('fiae_economics_grade', grade);
+    } catch (e) {}
+    updateEconomicsGradePills();
+    updateHeaderPartnerCard();
+    resetDialogScenario('economics');
+    const label = grade === '11' ? '📘 Klasse 11 (Grundlagen)' : (grade === '12' ? '📙 Klasse 12 (Freihandel & Zölle)' : '🎓 Klasse 13 & Abitur');
+    showToast(`🎓 Gymnasiale Stufe aktiv: ${label}`);
+  }
+
+  function updateEconomicsGradePills() {
+    const curGrade = getEconomicsGrade();
+    const pills = document.querySelectorAll('#economicsGradePills .grade-pill');
+    pills.forEach(pill => {
+      if (pill.dataset.grade === curGrade) {
+        pill.classList.add('active');
+      } else {
+        pill.classList.remove('active');
+      }
+    });
+  }
+
 
   function renderPartnerAvatarHtml(scenarioId) {
     const avatarId = getSelectedAvatarId();
@@ -1756,6 +1803,24 @@ function initApp() {
       if (g.includes('bewerbung') || g.includes('vorstellung') || g.includes('warum')) {
         return 'I would love to work with your agile team because I am passionate about modern software development.';
       }
+      if (g.includes('zoll') || g.includes('zölle') || g.includes('protektionismus')) {
+        return 'What are the economic consequences of protective tariffs and trade wars?';
+      }
+      if (g.includes('lieferkette') || g.includes('lieferketten')) {
+        return 'How can global companies make their international supply chains more resilient?';
+      }
+      if (g.includes('globalisierung') || g.includes('welthandel')) {
+        return 'What are the main drivers and challenges of economic globalization?';
+      }
+      if (g.includes('komparativ') || g.includes('kostenvorteil') || g.includes('ricardo')) {
+        return 'Can you explain the theory of comparative advantage according to David Ricardo?';
+      }
+      if (g.includes('wechselkurs') || g.includes('währung') || g.includes('inflation')) {
+        return 'How do central bank interest rates influence international currency exchange rates?';
+      }
+      if (g.includes('abitur') || g.includes('klausur') || g.includes('prüfung')) {
+        return 'Could you give me an Abitur-level essay prompt analyzing modern geoeconomics?';
+      }
       if (g.includes('wochenende') || g.includes('pause') || g.includes('musik')) {
         return 'I am taking a quick coffee break and look forward to producing electronic music this weekend.';
       }
@@ -1889,6 +1954,168 @@ function initApp() {
 
     // Antwort-Katalog mit Dutzenden dynamischen Antwort-Zweigen
     scenarios: {
+      economics: {
+        comparative_advantage: [
+          {
+            id: 'econ_ricardo_1',
+            en: 'David Ricardo\'s theory of comparative advantage is fascinating{name}! Even if Country A produces everything more efficiently than Country B in absolute terms, both nations gain if each specializes in goods with the lowest opportunity cost. Would you like a classic example with wine and cloth?',
+            de: 'David Ricardos Theorie des komparativen Kostenvorteils ist faszinierend{name}! Selbst wenn Land A absolut alles effizienter produziert als Land B, profitieren beide, wenn sich jedes auf Güter mit den geringsten Opportunitätskosten spezialisiert. Möchtest du ein klassisches Beispiel mit Wein und Tuch?',
+            suggestions: [
+              'Yes, please explain the wine and cloth example!',
+              'What is the exact difference between absolute and comparative advantage?',
+              'How do opportunity costs determine trading prices?'
+            ]
+          },
+          {
+            id: 'econ_ricardo_2',
+            en: 'Imagine England needs 100 hours for cloth and 120 for wine, while Portugal needs 90 for cloth and 80 for wine. Portugal has an absolute advantage in both! But Portugal\'s relative advantage is greatest in wine, so England specializes in cloth. By exchanging goods, both get more total output. Isn\'t that an elegant economic insight?',
+            de: 'Stell dir vor: England braucht 100 Stunden für Tuch und 120 für Wein, während Portugal 90 für Tuch und 80 für Wein benötigt. Portugal hat bei beidem einen absoluten Vorteil! Aber Portugals relativer Vorteil ist beim Wein am größten, also spezialisiert sich England auf Tuch. Durch den Tausch haben beide insgesamt mehr Güter. Ist das nicht eine elegante ökonomische Erkenntnis?',
+            suggestions: [
+              'That makes sense! So trade is not a zero-sum game.',
+              'Does comparative advantage still hold in modern digital economies?',
+              'What are the critical assumptions behind Ricardo\'s model?'
+            ]
+          }
+        ],
+        trade_balance: [
+          {
+            id: 'econ_balance_1',
+            en: 'The balance of trade measures exports minus imports{name}. If a nation exports more value than it imports, it runs a trade surplus (like Germany). If imports exceed exports, it runs a trade deficit (like the US). How do you think a strong or weak currency influences this balance?',
+            de: 'Die Handelsbilanz misst Exporte abzüglich Importe{name}. Exportiert ein Land mehr Wert als es importiert, erzielt es einen Handelsbilanzüberschuss (wie Deutschland). Übersteigen die Importe die Exporte, entsteht ein Handelsbilanzdefizit (wie in den USA). Wie beeinflusst deiner Meinung nach eine starke oder schwache Währung diese Bilanz?',
+            suggestions: [
+              'A weaker currency makes domestic exports cheaper on global markets.',
+              'A stronger currency makes imported goods and raw materials more affordable.',
+              'What happens when exchange rates fluctuate unpredictably?'
+            ]
+          }
+        ],
+        tariffs_protectionism: [
+          {
+            id: 'econ_tariff_1',
+            en: 'Tariffs are a central debate topic in Grade 12{name}! While tariffs shield domestic manufacturers from low-price foreign competitors, they also create deadweight economic loss, raise prices for consumers, and provoke retaliatory tariffs in a trade war. How would you argue this in an exam?',
+            de: 'Zölle sind ein zentrales Schwerpunktthema der 12. Klasse{name}! Zwar schützen Zölle heimische Hersteller vor billigerer Auslandskonkurrenz, sie verursachen aber auch Wohlfahrtsverluste, verteuern Produkte für Verbraucher und provozieren Vergeltungszölle in einem Handelskrieg. Wie würdest du das in einer Klausur argumentieren?',
+            suggestions: [
+              'On the one hand, tariffs protect domestic jobs; on the other, they fuel inflation.',
+              'Retaliatory tariffs can harm export-oriented industries significantly.',
+              'Are non-tariff trade barriers like strict quotas more effective than tariffs?'
+            ]
+          },
+          {
+            id: 'econ_tariff_2',
+            en: 'Exactly right! Non-tariff trade barriers include import quotas, administrative red tape, and strict technical standards. Often governments argue for national security or environmental standards to disguise protectionist motives. What is your view on this tension?',
+            de: 'Vollkommen richtig! Nicht-tarifäre Handelshemmnisse umfassen Importquoten, bürokratische Hürden und strenge Produktnormen. Oft führen Regierungen nationale Sicherheit oder Umweltstandards an, um protektionistische Absichten zu verschleiern. Wie beurteilst du dieses Spannungsverhältnis?',
+            suggestions: [
+              'National security is sometimes a valid concern for critical semiconductors.',
+              'Consumers usually bear the ultimate cost of protectionist policies.',
+              'Can the WTO prevent countries from abusing national security exceptions?'
+            ]
+          }
+        ],
+        supply_chains: [
+          {
+            id: 'econ_supply_1',
+            en: 'Supply chain resilience has transformed from a corporate detail into a premier geopolitical issue{name}! Decades of extreme Just-in-Time optimization reduced storage costs, but created extreme vulnerability to single-source bottlenecks. Have you heard of nearshoring and friendshoring?',
+            de: 'Lieferketten-Resilienz hat sich von einem Unternehmensdetail zu einem geopolitischen Top-Thema entwickelt{name}! Jahrzehntelange extreme Just-in-Time-Optimierung senkte zwar Lagerkosten, schuf aber extreme Anfälligkeit für Engpässe bei einzelnen Lieferanten. Hast du schon von Nearshoring und Friendshoring gehört?',
+            suggestions: [
+              'Nearshoring means bringing production closer to home markets.',
+              'Friendshoring restricts sourcing to politically trusted allied nations.',
+              'How do these strategies affect overall production costs?'
+            ]
+          },
+          {
+            id: 'econ_supply_2',
+            en: 'Spot on! Nearshoring and friendshoring prioritize reliability and security over sheer low wages. However, diversifying supply chains also incurs higher capital expenditure and operational costs. For an Abitur analysis, you should highlight this exact trade-off between resilience and cost efficiency.',
+            de: 'Volltreffer! Nearshoring und Friendshoring priorisieren Verlässlichkeit und Sicherheit vor reinen Niedriglöhnen. Die Diversifizierung von Lieferketten verursacht jedoch auch höhere Investitionen und Betriebskosten. Für eine Abitur-Analyse solltest du genau diesen Trade-off zwischen Resilienz und Kosteneffizienz herausarbeiten.',
+            suggestions: [
+              'How does the European Supply Chain Due Diligence Act impact MNCs?',
+              'Let\'s discuss how raw material dependencies (like lithium) affect Europe.',
+              'Can automated robotics make domestic re-industrialization viable?'
+            ]
+          }
+        ],
+        fdi_multinationals: [
+          {
+            id: 'econ_fdi_1',
+            en: 'Foreign Direct Investment (FDI) is crucial for emerging economies{name}. When multinational corporations establish factories abroad, they bring capital, technological know-how, and jobs. But critics point out issues like profit repatriation and local wage exploitation. What is your evaluation?',
+            de: 'Ausländische Direktinvestitionen (FDI) sind für Schwellenländer entscheidend{name}. Wenn multinationale Konzerne Fabriken im Ausland bauen, bringen sie Kapital, technologisches Know-how und Arbeitsplätze. Kritiker bemängeln jedoch Gewinnabflüsse und Ausbeutung von Arbeitskräften. Wie beurteilst du das?',
+            suggestions: [
+              'FDI can accelerate industrial development and build infrastructure.',
+              'Host countries must enforce labor standards and environmental regulations.',
+              'What distinguishes portfolio investment from Foreign Direct Investment?'
+            ]
+          }
+        ],
+        sustainability_fairtrade: [
+          {
+            id: 'econ_sustain_1',
+            en: 'In modern Gymnasium economics, trade and ecological responsibility are inseparable{name}! Instruments like the EU\'s Carbon Border Adjustment Mechanism (CBAM) impose a carbon price on imports of steel and cement. Is this green innovation or disguised protectionism?',
+            de: 'In der modernen Gymnasialökonomie sind Außenhandel und ökologische Verantwortung untrennbar{name}! Instrumente wie der CO2-Grenzausgleich der EU (CBAM) belegen Importe von Stahl und Zement mit einem CO2-Preis. Ist das grüne Innovation oder verdeckter Protektionismus?',
+            suggestions: [
+              'CBAM prevents carbon leakage and levels the playing field for clean industry.',
+              'Developing countries argue they lack capital for instant decarbonization.',
+              'How do Fair Trade premiums benefit smallholder farmers worldwide?'
+            ]
+          }
+        ],
+        monetary_centralbanks: [
+          {
+            id: 'econ_monetary_1',
+            en: 'Now entering Grade 13 & Abitur territory{name}! The US Dollar acts as the primary global reserve currency. When the Federal Reserve raises benchmark interest rates to curb US inflation, global capital rushes into dollar-denominated assets. What happens to debt-burdened emerging economies as a result?',
+            de: 'Jetzt betreten wir das Terrain von Klasse 13 und Abitur{name}! Der US-Dollar fungiert als wichtigste weltweite Leitwährung. Wenn die Federal Reserve die Leitzinsen zur Inflationsbekämpfung anhebt, strömt globales Kapital in Dollar-Anlagen. Was passiert infolgedessen mit hochverschuldeten Schwellenländern?',
+            suggestions: [
+              'Their debt servicing costs in dollars rise dramatically, risking currency crises.',
+              'Their central banks are often forced to raise rates, slowing domestic growth.',
+              'How does the European Central Bank balance inflation and eurozone cohesion?'
+            ]
+          }
+        ],
+        institutions_treaties: [
+          {
+            id: 'econ_wto_1',
+            en: 'Multilateralism under the World Trade Organization (WTO) is a cornerstone of the Abitur curriculum{name}. The WTO operates on principles of Most-Favored-Nation treatment and national treatment. However, its dispute settlement Appellate Body has faced severe gridlock. Why is this dangerous for smaller trading nations?',
+            de: 'Der Multilateralismus der Welthandelsorganisation (WTO) ist ein Eckpfeiler des Abiturlehrplans{name}. Die WTO basiert auf den Prinzipien der Meistbegünstigung und Inländerbehandlung. Allerdings leidet ihr Berufungsgremium unter Blockaden. Warum ist das für kleinere Handelsnationen gefährlich?',
+            suggestions: [
+              'Without binding WTO arbitration, the rule of law is replaced by power politics.',
+              'Regional trade agreements like the EU Single Market or USMCA gain importance.',
+              'What are the four fundamental freedoms of the European Single Market?'
+            ]
+          }
+        ],
+        geopolitics_decoupling: [
+          {
+            id: 'econ_decoupling_1',
+            en: 'This is the hottest Abitur debate today{name}: Geoeconomic Decoupling versus De-risking! Major powers are imposing semiconductor export controls and screening outbound investments. Is pure free-market globalization giving way to a fragmented world of regional trade blocs?',
+            de: 'Das ist die aktuellste Abitur-Debatte{name}: Geoeconomic Decoupling versus De-risking! Großmächte verhängen Halbleiter-Exportkontrollen und überprüfen Auslandsinvestitionen. Weicht die reine Freihandels-Globalisierung einer fragmentierten Welt regionaler Handelsblöcke?',
+            suggestions: [
+              'Complete decoupling is unrealistic, but de-risking critical tech is necessary.',
+              'Fragmenting the world into rival economic blocs reduces global wealth and innovation.',
+              'How can export nations like Germany maintain strategic autonomy?'
+            ]
+          }
+        ],
+        abitur_exam_debates: [
+          {
+            id: 'econ_abitur_1',
+            en: 'Let\'s construct an exemplary Abitur exam response{name}! When answering evaluative exam questions ("Beurteilen Sie..."), always follow the Dialectical Structure: Thesis (Pros/Benefits), Antithesis (Cons/Risks), and Synthesis with your differentiated judgment. Would you like to practice an essay question now?',
+            de: 'Lass uns eine vorbildliche Abitur-Antwort aufbauen{name}! Bei Beurteilungsaufgaben ("Beurteilen Sie...") folgst du immer der dialektischen Struktur: These (Vorteile/Chancen), Antithese (Nachteile/Risiken) und Synthese mit deinem differenzierten Urteil. Möchtest du jetzt eine Prüfungsfrage trainieren?',
+            suggestions: [
+              'Yes! Prompt me with a typical Abitur question on globalization.',
+              'What connecting phrases demonstrate C1 academic English in an economics exam?',
+              'How do examiners evaluate macroeconomic synthesis?'
+            ]
+          },
+          {
+            id: 'econ_abitur_2',
+            en: 'Here is your official Abitur essay prompt: "Assess the statement: In an era of geopolitical rivalry, unilateral protective tariffs are the only viable tool to protect a nation\'s industrial sovereignty." How would you begin your thesis?',
+            de: 'Hier ist deine offizielle Abitur-Essay-Aufgabe: "Beurteilen Sie die Aussage: In Zeiten geopolitischer Rivalitäten sind einseitige Schutzzölle das einzige wirksame Mittel zum Schutz nationaler Industriesouveränität." Wie würdest du deine These beginnen?',
+            suggestions: [
+              'On the one hand, protecting key tech sectors shields critical infrastructure.',
+              'Conversely, unilateral tariffs invite retaliation, raise costs, and violate WTO rules.',
+              'Consequently, strategic de-risking and multilateral partnerships are far superior to tariffs.'
+            ]
+          }
+        ]
+      },
       beginner: {
         personal: [
           {
@@ -2399,6 +2626,16 @@ function initApp() {
       const pFirstName = p.name.split(' ')[0].replace(/[^A-Za-zÄÖÜäöüß]/g, '');
       const pCleanRole = p.role.replace(/^Rolle:\s*/, '');
 
+      if (scenarioId === 'economics') {
+        const grade = (typeof getEconomicsGrade === 'function') ? getEconomicsGrade() : '11';
+        return {
+          name: pFirstName,
+          fullName: p.name,
+          role: pCleanRole,
+          desc: `Internationalwirtschaft (Klasse ${grade})`,
+          isMale: p.isMale
+        };
+      }
       if (scenarioId === 'beginner' || scenarioId === 'free') {
         return {
           name: pFirstName,
@@ -2798,7 +3035,59 @@ ${cleanTip}`,
 
       // 2. Asking for Partner's Age / "How old are you?" / "What is your age?" / "Wie alt bist du?"
       if (/\b(how\s+old(\s+(are\s+you|r\s+u|is\s+she|is\s+he))?|what\s+is\s+your\s+age|whats\s+your\s+age|your\s+age|ur\s+age|wie\s+alt\s+bist\s+du)\b/i.test(norm)) {
-        if (scenarioId === 'beginner') {
+        if (scenarioId === 'economics') {
+        const grade = (typeof getEconomicsGrade === 'function') ? getEconomicsGrade() : '11';
+        if (grade === '11') {
+          return {
+            id: 'econ_fallback_11_' + this.state.turnCount,
+            en: `Excellent economic observation${this.salutation()}! In Grade 11, we focus on the fundamental mechanics of trade: why countries exchange goods, how exchange rates fluctuate, and how specialization generates wealth. What concept would you like to explore next?`,
+            de: `Hervorragende volkswirtschaftliche Beobachtung${this.salutation()}! In Klasse 11 konzentrieren wir uns auf die Grundmechanismen des Handels: Warum Staaten Güter tauschen, wie Wechselkurse schwanken und wie Spezialisierung Wohlstand schafft. Welches Konzept möchtest du vertiefen?`,
+            suggestions: [
+              "Can you explain opportunity costs with an everyday example?",
+              "What happens when the Euro becomes stronger against the US Dollar?",
+              "Why do multinational companies open production sites in developing countries?"
+            ]
+          };
+        } else if (grade === '12') {
+          return {
+            id: 'econ_fallback_12_' + this.state.turnCount,
+            en: `Very perceptive point${this.salutation()}! For Grade 12, we critically evaluate both sides: while protectionist tariffs shield domestic workers, they also invite retaliatory trade barriers and raise consumer inflation. How would you weigh these opposing interests?`,
+            de: `Sehr scharfsinniger Punkt${this.salutation()}! Für die 12. Klasse müssen wir beide Seiten kritisch abwägen: Während Schutzzölle heimische Arbeitsplätze sichern, provozieren sie auch Vergeltungsmaßnahmen und erhöhen die Inflation für Verbraucher. Wie würdest du diese Interessen gewichten?`,
+            suggestions: [
+              "Protectionism protects domestic jobs, but increases prices for consumers.",
+              "Nearshoring helps avoid long shipping routes and political risks.",
+              "Can you give me an example of non-tariff trade barriers?"
+            ]
+          };
+        } else {
+          return {
+            id: 'econ_fallback_13_' + this.state.turnCount,
+            en: `A sophisticated macroeconomic observation${this.salutation()}! In Abitur examinations, examiners look for rigorous argumentation: linking monetary policy, geopolitical de-risking, and multilateral WTO rules. Let\'s formulate a well-structured thesis on this topic!`,
+            de: `Eine anspruchsvolle makroökonomische Beobachtung${this.salutation()}! In Abiturprüfungen erwarten Prüfer eine präzise Argumentation: Die Verknüpfung von Geldpolitik, geopolitischem De-risking und multilateralen WTO-Regeln. Lass uns dazu eine strukturierte These formulieren!`,
+            suggestions: [
+              "On the one hand, open markets maximize efficiency, but on the other, they create dependencies.",
+              "How does central bank interest rate policy combat imported inflation?",
+              "Let\'s practice a typical oral Abitur exam question on modern trade policy."
+            ]
+          };
+        }
+      }
+
+      if (scenarioId === 'economics') {
+      const grade = getEconomicsGrade();
+      const uGreeting = userName ? `Hello ${userName}! ` : 'Hello and welcome! ';
+      const uGreetingDe = userName ? `Hallo ${userName}! ` : 'Hallo und herzlich willkommen! ';
+      if (grade === '11') {
+        promptEn = `${uGreeting}I am ${partnerFirstName}, your International Economics coach for Gymnasium Grade 11. Today we explore foundational trade concepts: Why do nations trade, and how does David Ricardo\'s comparative advantage work? What would you like to discuss first?`;
+        promptDe = `${uGreetingDe}Ich bin ${partnerFirstName}, dein Coach für Internationale Wirtschaft im Gymnasium Klasse 11. Heute behandeln wir die Grundlagen des Welthandels: Warum betreiben Staaten Außenhandel und wie funktioniert der komparative Kostenvorteil nach David Ricardo? Worüber möchtest du zuerst sprechen?`;
+      } else if (grade === '12') {
+        promptEn = `${uGreeting}I am ${partnerFirstName}, your Economics tutor for Grade 12 (Qualification Phase 1). In this course, we examine contentious trade policies: free trade versus protectionism, customs tariffs, supply chain resilience, and ESG standards. Which economic challenge shall we examine?`;
+        promptDe = `${uGreetingDe}Ich bin ${partnerFirstName}, dein Wirtschafts-Tutor für Klasse 12 (Qualifikationsphase 1). In diesem Halbjahr analysieren wir wirtschaftspolitische Kontroversen: Freihandel vs. Protektionismus, Schutzzölle, Lieferketten-Resilienz und ESG-Standards. Welche wirtschaftliche Herausforderung wollen wir untersuchen?`;
+      } else {
+        promptEn = `${uGreeting}I am ${partnerFirstName}, your Grade 13 & Abitur Economics lecturer. Here we prepare for high-level Abitur examinations: central bank monetary policies, global currency fluctuations, WTO arbitration, and geoeconomic decoupling. Which Abitur debate or exam topic would you like to practice today?`;
+        promptDe = `${uGreetingDe}Ich bin ${partnerFirstName}, dein Fachdozent für Klasse 13 und die Abiturprüfung. Hier trainieren wir für anspruchsvolle Abitur-Klausuren und mündliche Prüfungen: Geldpolitik der Zentralbanken, Währungskrisen, WTO-Schlichtung und geoeconomische Entkopplung. Welche Abitur-Debatte möchtest du heute durchgehen?`;
+      }
+    } else if (scenarioId === 'beginner') {
           return {
             id: 'intent_age_beginner',
             en: `I am 28 years old. How old are you${this.salutation()}?`,
@@ -3160,6 +3449,40 @@ ${cleanTip}`,
       }
       if (lower.includes('blocker') || lower.includes('blocked') || lower.includes('stuck') || lower.includes('help')) {
         topicList.push('blocker');
+      }
+
+      // Internationalwirtschaft (Gymnasium & Abitur) Themen-Erkennung
+      if (scenarioId === 'economics') {
+        if (lower.includes('ricardo') || lower.includes('comparative') || lower.includes('advantage') || lower.includes('opportunity cost') || lower.includes('smith') || lower.includes('autarky') || lower.includes('specialize') || lower.includes('wine') || lower.includes('cloth')) {
+          topicList.push('comparative_advantage');
+        }
+        if (lower.includes('export') || lower.includes('import') || lower.includes('surplus') || lower.includes('deficit') || lower.includes('trade balance') || lower.includes('currency') || lower.includes('exchange rate') || lower.includes('dollar') || lower.includes('euro')) {
+          topicList.push('trade_balance');
+        }
+        if (lower.includes('tariff') || lower.includes('tariffs') || lower.includes('protect') || lower.includes('protectionism') || lower.includes('quota') || lower.includes('subsid') || lower.includes('trade war') || lower.includes('retaliat') || lower.includes('barrier')) {
+          topicList.push('tariffs_protectionism');
+        }
+        if (lower.includes('supply chain') || lower.includes('resilience') || lower.includes('disrupt') || lower.includes('nearshor') || lower.includes('reshor') || lower.includes('logistics') || lower.includes('just-in-time') || lower.includes('bottleneck')) {
+          topicList.push('supply_chains');
+        }
+        if (lower.includes('fdi') || lower.includes('direct investment') || lower.includes('multinational') || lower.includes('mnc') || lower.includes('emerging market') || lower.includes('developing')) {
+          topicList.push('fdi_multinationals');
+        }
+        if (lower.includes('sustainab') || lower.includes('fair trade') || lower.includes('esg') || lower.includes('cbam') || lower.includes('carbon') || lower.includes('climate') || lower.includes('green')) {
+          topicList.push('sustainability_fairtrade');
+        }
+        if (lower.includes('fed') || lower.includes('federal reserve') || lower.includes('ecb') || lower.includes('central bank') || lower.includes('monetary') || lower.includes('interest rate') || lower.includes('inflation')) {
+          topicList.push('monetary_centralbanks');
+        }
+        if (lower.includes('wto') || lower.includes('imf') || lower.includes('world bank') || lower.includes('single market') || lower.includes('four freedoms') || lower.includes('usmca') || lower.includes('treaty') || lower.includes('bloc')) {
+          topicList.push('institutions_treaties');
+        }
+        if (lower.includes('geopolitic') || lower.includes('decoupling') || lower.includes('de-risking') || lower.includes('derisking') || lower.includes('sanction') || lower.includes('semiconductor') || lower.includes('friendshoring') || lower.includes('autonomy')) {
+          topicList.push('geopolitics_decoupling');
+        }
+        if (lower.includes('abitur') || lower.includes('exam') || lower.includes('essay') || lower.includes('debate') || lower.includes('argument') || lower.includes('thesis') || lower.includes('synthes') || lower.includes('klausur')) {
+          topicList.push('abitur_exam_debates');
+        }
       }
 
       // 3. Kandidaten aus dem Szenario sammeln
@@ -3639,6 +3962,14 @@ ${cleanTip}`,
       });
     }
 
+    // Gymnasiale Klassenstufen-Buttons (Internationalwirtschaft)
+    const gradePills = document.querySelectorAll('#economicsGradePills .grade-pill');
+    gradePills.forEach(pill => {
+      pill.addEventListener('click', () => {
+        setEconomicsGrade(pill.dataset.grade);
+      });
+    });
+
     // Szenario-Buttons
     if (scenarioBar) {
       scenarioBar.querySelectorAll('.scenario-btn').forEach(btn => {
@@ -3835,6 +4166,14 @@ ${cleanTip}`,
     currentScenarioId = scenarioId;
     DialogEngine.reset(scenarioId);
 
+    const gradeBar = document.getElementById('economicsGradeBar');
+    if (gradeBar) {
+      gradeBar.style.display = (scenarioId === 'economics') ? 'flex' : 'none';
+      if (scenarioId === 'economics') {
+        updateEconomicsGradePills();
+      }
+    }
+
     updateHeaderPartnerCard();
 
     if (!dialogHistories[scenarioId] || dialogHistories[scenarioId].length === 0) {
@@ -3918,6 +4257,28 @@ ${cleanTip}`,
   }
 
   function getInitialSuggestions(scenarioId) {
+    if (scenarioId === 'economics') {
+      const grade = getEconomicsGrade();
+      if (grade === '11') {
+        return [
+          'Can you explain David Ricardo\'s comparative advantage in simple words?',
+          'Why do nations trade instead of producing everything alone?',
+          'What is the difference between a trade surplus and a trade deficit?'
+        ];
+      }
+      if (grade === '12') {
+        return [
+          'What are the economic arguments for and against protective tariffs?',
+          'How can multinational companies improve their supply chain resilience?',
+          'What role does Foreign Direct Investment (FDI) play in emerging markets?'
+        ];
+      }
+      return [
+        'Let\'s practice an Abitur debate: Is economic globalization in retreat?',
+        'How do central bank interest rates influence international currency exchange rates?',
+        'Analyze the role of the WTO in resolving modern geoeconomic disputes.'
+      ];
+    }
     if (scenarioId === 'beginner') {
       const uName = getUserName();
       if (!uName) {

@@ -8,7 +8,8 @@ const CATEGORIES = {
   fiae: { id: 'fiae', name: 'FIAE AP 1 & IT', icon: '💻' },
   business: { id: 'business', name: 'Job & Business', icon: '💼' },
   conversation: { id: 'conversation', name: 'Smalltalk & Alltag', icon: '💬' },
-  travel: { id: 'travel', name: 'Urlaub & Reise', icon: '✈️' }
+  travel: { id: 'travel', name: 'Urlaub & Reise', icon: '✈️' },
+  economics: { id: 'economics', name: '🌍 Internationalwirtschaft', icon: '🌍' }
 };
 
 const VOCAB_DATA = [
@@ -685,6 +686,187 @@ const VOCAB_DATA = [
     exampleEn: 'Our final project submission deadline for the FIAE examination committee is next month.',
     exampleDe: 'Unsere finale Projektabgabefrist für den FIAE-Prüfungsausschuss ist nächsten Monat.',
     svg: '<svg viewBox="0 0 100 100"><rect x="20" y="20" width="60" height="60" rx="6" fill="none" stroke="#ef4444" stroke-width="4"/><line x1="20" y1="38" x2="80" y2="38" stroke="#ef4444" stroke-width="4"/><circle cx="50" cy="58" r="10" fill="#ef4444"/></svg>'
+  },
+  // --- INTERNATIONALWIRTSCHAFT (GYMNASIUM KLASSE 11, 12, 13 & ABITUR) ---
+  {
+    id: 'econ_1',
+    category: 'economics',
+    categoryName: '🌍 Internationalwirtschaft (Kl. 11)',
+    english: 'Comparative Advantage',
+    phonetic: 'kəm-pær-ə-tɪv əd-væn-tɪdʒ',
+    german: 'Komparativer Kostenvorteil (David Ricardo)',
+    definition: 'The ability of an economy to produce a good or service at a lower opportunity cost than its trading partners.',
+    exampleEn: 'According to David Ricardo, nations gain from free trade by specializing where they have a comparative advantage.',
+    exampleDe: 'Nach David Ricardo profitieren Nationen vom Freihandel, indem sie sich dort spezialisieren, wo sie einen komparativen Kostenvorteil besitzen.',
+    svg: '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="38" fill="none" stroke="#38bdf8" stroke-width="4"/><path d="M30 65 L45 45 L60 55 L75 35" fill="none" stroke="#38bdf8" stroke-width="4"/><circle cx="75" cy="35" r="4" fill="#38bdf8"/></svg>'
+  },
+  {
+    id: 'econ_2',
+    category: 'economics',
+    categoryName: '🌍 Internationalwirtschaft (Kl. 11)',
+    english: 'Balance of Trade',
+    phonetic: 'bæl-əns əv treyd',
+    german: 'Handelsbilanz (Außenhandelsbilanz)',
+    definition: 'The difference in monetary value between a nation\'s exports and imports over a given period.',
+    exampleEn: 'A persistent trade surplus means that a country exports more goods than it imports from abroad.',
+    exampleDe: 'Ein dauerhafter Handelsbilanzüberschuss bedeutet, dass ein Land mehr Güter exportiert als es aus dem Ausland importiert.',
+    svg: '<svg viewBox="0 0 100 100"><line x1="50" y1="20" x2="50" y2="80" stroke="#f59e0b" stroke-width="4"/><line x1="25" y1="35" x2="75" y2="35" stroke="#f59e0b" stroke-width="4"/><path d="M20 55 L30 35 L40 55 Z" fill="#f59e0b"/><path d="M60 55 L70 35 L80 55 Z" fill="#f59e0b"/></svg>'
+  },
+  {
+    id: 'econ_3',
+    category: 'economics',
+    categoryName: '🌍 Internationalwirtschaft (Kl. 11)',
+    english: 'Exchange Rate Fluctuations',
+    phonetic: 'ɪks-cheyndʒ reyt flʌk-tʃu-ey-shənz',
+    german: 'Wechselkursschwankungen & Währungsrisiken',
+    definition: 'Changes in the market value of one national currency relative to another, affecting import and export prices.',
+    exampleEn: 'A depreciation of the Euro makes European exports cheaper for buyers paying in US Dollars.',
+    exampleDe: 'Eine Abwertung des Euro macht europäische Exporte für Käufer günstiger, die in US-Dollar bezahlen.',
+    svg: '<svg viewBox="0 0 100 100"><circle cx="35" cy="50" r="18" fill="none" stroke="#10b981" stroke-width="3"/><text x="30" y="56" fill="#10b981" font-size="18" font-weight="bold">€</text><circle cx="65" cy="50" r="18" fill="none" stroke="#38bdf8" stroke-width="3"/><text x="60" y="56" fill="#38bdf8" font-size="18" font-weight="bold">$</text><path d="M42 35 L58 35" stroke="#cbd5e1" stroke-width="2"/><path d="M58 65 L42 65" stroke="#cbd5e1" stroke-width="2"/></svg>'
+  },
+  {
+    id: 'econ_4',
+    category: 'economics',
+    categoryName: '🌍 Internationalwirtschaft (Kl. 11)',
+    english: 'Multinational Corporation (MNC)',
+    phonetic: 'mʌl-ti-næ-ʃən-əl kor-pə-rey-ʃən',
+    german: 'Multinationaler Konzern (MNC / Transnationales Unternehmen)',
+    definition: 'An enterprise that produces goods or markets services across multiple sovereign nations.',
+    exampleEn: 'Multinational corporations leverage global value chains to optimize manufacturing costs and access foreign markets.',
+    exampleDe: 'Multinationale Konzerne nutzen globale Wertschöpfungsketten, um Fertigungskosten zu optimieren und Auslandsmärkte zu erschließen.',
+    svg: '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="32" fill="none" stroke="#a855f7" stroke-width="3"/><ellipse cx="50" cy="50" rx="32" ry="14" fill="none" stroke="#a855f7" stroke-width="2"/><line x1="50" y1="18" x2="50" y2="82" stroke="#a855f7" stroke-width="2"/></svg>'
+  },
+  {
+    id: 'econ_5',
+    category: 'economics',
+    categoryName: '🌍 Internationalwirtschaft (Kl. 11)',
+    english: 'International Division of Labor',
+    phonetic: 'ɪn-tər-næ-ʃən-əl dɪ-vɪ-ʒən əv ley-bər',
+    german: 'Internationale Arbeitsteilung',
+    definition: 'The spatial allocation of production stages and services across borders according to regional cost and resource benefits.',
+    exampleEn: 'The international division of labor increases productivity, but creates complex geopolitical interdependencies.',
+    exampleDe: 'Die internationale Arbeitsteilung steigert die Produktivität, schafft aber auch komplexe geopolitische Abhängigkeiten.',
+    svg: '<svg viewBox="0 0 100 100"><circle cx="28" cy="38" r="12" fill="#3b82f6"/><circle cx="72" cy="38" r="12" fill="#10b981"/><circle cx="50" cy="72" r="12" fill="#f59e0b"/><line x1="28" y1="38" x2="72" y2="38" stroke="#cbd5e1" stroke-width="2"/><line x1="28" y1="38" x2="50" y2="72" stroke="#cbd5e1" stroke-width="2"/><line x1="72" y1="38" x2="50" y2="72" stroke="#cbd5e1" stroke-width="2"/></svg>'
+  },
+  {
+    id: 'econ_6',
+    category: 'economics',
+    categoryName: '🌍 Internationalwirtschaft (Kl. 12)',
+    english: 'Protective Tariffs & Customs Duties',
+    phonetic: 'prə-tek-tɪv tær-ɪfs ænd kʌs-təmz dju-tiz',
+    german: 'Schutzzölle & Zollabgaben',
+    definition: 'Taxes levied on foreign imported goods designed to protect domestic manufacturers from cheaper external competitors.',
+    exampleEn: 'Economists caution that high protective tariffs raise consumer prices and provoke retaliatory trade measures.',
+    exampleDe: 'Ökonomen warnen davor, dass hohe Schutzzölle die Verbraucherpreise verteuern und Vergeltungsmaßnahmen im Handel provozieren.',
+    svg: '<svg viewBox="0 0 100 100"><rect x="25" y="30" width="50" height="45" rx="4" fill="none" stroke="#ef4444" stroke-width="4"/><path d="M25 45 L75 45" stroke="#ef4444" stroke-width="3"/><path d="M40 20 L50 30 L60 20" stroke="#ef4444" stroke-width="3" fill="none"/></svg>'
+  },
+  {
+    id: 'econ_7',
+    category: 'economics',
+    categoryName: '🌍 Internationalwirtschaft (Kl. 12)',
+    english: 'Trade Protectionism vs. Free Trade',
+    phonetic: 'treyd prə-tek-ʃən-ɪ-zəm vər-səs fri treyd',
+    german: 'Protektionismus versus Freihandel',
+    definition: 'The fundamental controversy between shielding domestic jobs through barriers versus opening markets for overall economic welfare.',
+    exampleEn: 'In Grade 12 exams, students analyze whether protectionism helps sunset industries or stifles technological innovation.',
+    exampleDe: 'In Klausuren der 12. Klasse analysieren Schüler, ob Protektionismus veralteten Branchen hilft oder Innovationen hemmt.',
+    svg: '<svg viewBox="0 0 100 100"><path d="M30 30 L30 70 M70 30 L70 70" stroke="#f97316" stroke-width="4"/><path d="M30 50 L70 50" stroke="#f97316" stroke-width="4" stroke-dasharray="4,4"/><circle cx="50" cy="50" r="10" fill="#f97316"/></svg>'
+  },
+  {
+    id: 'econ_8',
+    category: 'economics',
+    categoryName: '🌍 Internationalwirtschaft (Kl. 12)',
+    english: 'Supply Chain Resilience',
+    phonetic: 'sə-play cheyn rɪ-zɪl-jəns',
+    german: 'Lieferketten-Widerstandskraft (Resilienz)',
+    definition: 'The capacity of global procurement and logistics networks to anticipate, withstand, and quickly overcome unforeseen shocks.',
+    exampleEn: 'Supply chain resilience requires companies to diversify suppliers rather than relying on a single overseas source.',
+    exampleDe: 'Lieferketten-Resilienz erfordert von Unternehmen, Zulieferer zu diversifizieren, anstatt sich auf eine einzige Quelle in Übersee zu verlassen.',
+    svg: '<svg viewBox="0 0 100 100"><rect x="15" y="42" width="20" height="16" rx="2" fill="none" stroke="#06b6d4" stroke-width="3"/><rect x="42" y="42" width="20" height="16" rx="2" fill="none" stroke="#06b6d4" stroke-width="3"/><rect x="68" y="42" width="20" height="16" rx="2" fill="none" stroke="#06b6d4" stroke-width="3"/><line x1="35" y1="50" x2="42" y2="50" stroke="#06b6d4" stroke-width="3"/><line x1="62" y1="50" x2="68" y2="50" stroke="#06b6d4" stroke-width="3"/></svg>'
+  },
+  {
+    id: 'econ_9',
+    category: 'economics',
+    categoryName: '🌍 Internationalwirtschaft (Kl. 12)',
+    english: 'Foreign Direct Investment (FDI)',
+    phonetic: 'for-ən dɪ-rekt ɪn-vest-mənt',
+    german: 'Ausländische Direktinvestition (ADI / FDI)',
+    definition: 'Long-term investments by foreign enterprises into physical capital, factories, or controlling stakes in another nation\'s economy.',
+    exampleEn: 'Foreign Direct Investment facilitates technology transfer, builds local infrastructure, and creates employment in emerging markets.',
+    exampleDe: 'Ausländische Direktinvestitionen fördern den Technologietransfer, bauen lokale Infrastruktur auf und schaffen Arbeitsplätze in Schwellenländern.',
+    svg: '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="32" fill="none" stroke="#10b981" stroke-width="3"/><path d="M50 30 L50 62 M38 52 L50 64 L62 52" stroke="#10b981" stroke-width="4" fill="none"/></svg>'
+  },
+  {
+    id: 'econ_10',
+    category: 'economics',
+    categoryName: '🌍 Internationalwirtschaft (Kl. 12)',
+    english: 'Offshoring vs. Nearshoring',
+    phonetic: 'ɔf-ʃɔr-ɪŋ vər-səs nɪər-ʃɔr-ɪŋ',
+    german: 'Offshoring vs. Nearshoring (Standortstrategien)',
+    definition: 'The decision whether to relocate manufacturing to distant low-wage continents or to retain production in geographically neighboring countries.',
+    exampleEn: 'Many European automotive firms now favor nearshoring to Eastern Europe to reduce transport lead times and shipping risks.',
+    exampleDe: 'Viele europäische Automobilkonzerne bevorzugen jetzt Nearshoring nach Osteuropa, um Lieferzeiten und Transportrisiken zu senken.',
+    svg: '<svg viewBox="0 0 100 100"><path d="M20 50 Q50 25 80 50" fill="none" stroke="#6366f1" stroke-width="3"/><circle cx="20" cy="50" r="5" fill="#6366f1"/><circle cx="80" cy="50" r="5" fill="#6366f1"/><circle cx="50" cy="38" r="5" fill="#ec4899"/></svg>'
+  },
+  {
+    id: 'econ_11',
+    category: 'economics',
+    categoryName: '🌍 Internationalwirtschaft (Kl. 13 & Abitur)',
+    english: 'Current Account Deficit',
+    phonetic: 'kʌr-ənt ə-kownt def-ə-sɪt',
+    german: 'Leistungsbilanzdefizit',
+    definition: 'A macroeconomic condition where a nation absorbs more goods, services, and transfers from the world than it sells, financed by net capital inflows.',
+    exampleEn: 'Financing a prolonged current account deficit can increase foreign debt and leave a national currency vulnerable to speculative runs.',
+    exampleDe: 'Die Finanzierung eines anhaltenden Leistungsbilanzdefizits kann die Auslandsverschuldung erhöhen und die Währung anfällig für Spekulationen machen.',
+    svg: '<svg viewBox="0 0 100 100"><rect x="25" y="25" width="50" height="50" rx="4" fill="none" stroke="#ef4444" stroke-width="3"/><path d="M35 45 L65 45 M50 35 L50 55" stroke="#ef4444" stroke-width="3"/><text x="42" y="68" fill="#ef4444" font-weight="bold" font-size="14">- Δ</text></svg>'
+  },
+  {
+    id: 'econ_12',
+    category: 'economics',
+    categoryName: '🌍 Internationalwirtschaft (Kl. 13 & Abitur)',
+    english: 'World Trade Organization (WTO)',
+    phonetic: 'wɜrld treyd ɔr-gən-aɪ-zey-ʃən',
+    german: 'Welthandelsorganisation & Streitschlichtung',
+    definition: 'The global multilateral forum that negotiates trade rules, promotes tariff reductions, and mediates international commercial disputes.',
+    exampleEn: 'The paralysis of the WTO Appellate Body has complicated the rules-based settlement of international trade conflicts.',
+    exampleDe: 'Die Blockade des Berufungsgremiums der WTO erschwert die regelbasierte Beilegung internationaler Handelskonflikte.',
+    svg: '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="32" fill="none" stroke="#38bdf8" stroke-width="3"/><line x1="20" y1="50" x2="80" y2="50" stroke="#38bdf8" stroke-width="2"/><ellipse cx="50" cy="50" rx="20" ry="32" fill="none" stroke="#38bdf8" stroke-width="2"/></svg>'
+  },
+  {
+    id: 'econ_13',
+    category: 'economics',
+    categoryName: '🌍 Internationalwirtschaft (Kl. 13 & Abitur)',
+    english: 'Geoeconomic Decoupling & De-Risking',
+    phonetic: 'dʒi-oʊ-i-kə-nɑ-mɪk di-kʌp-lɪŋ ænd di-rɪsk-ɪŋ',
+    german: 'Geoeconomische Entkopplung & Risikominimierung',
+    definition: 'Strategies adopted by major powers to disengage or safeguard critical technology, chip manufacturing, and raw material inputs from systemic rivals.',
+    exampleEn: 'Policymakers emphasize targeted de-risking in strategic high-tech sectors instead of complete macroeconomic decoupling.',
+    exampleDe: 'Politische Entscheidungsträger betonen gezieltes De-risking in strategischen Hightech-Branchen statt einer vollständigen makroökonomischen Entkopplung.',
+    svg: '<svg viewBox="0 0 100 100"><circle cx="35" cy="50" r="14" fill="none" stroke="#f43f5e" stroke-width="3"/><circle cx="65" cy="50" r="14" fill="none" stroke="#3b82f6" stroke-width="3"/><line x1="44" y1="40" x2="56" y2="60" stroke="#f59e0b" stroke-width="4"/></svg>'
+  },
+  {
+    id: 'econ_14',
+    category: 'economics',
+    categoryName: '🌍 Internationalwirtschaft (Kl. 13 & Abitur)',
+    english: 'Monetary Policy & Inflation Dynamics',
+    phonetic: 'mɑ-nə-ter-i pɑ-lə-si ænd ɪn-fley-ʃən day-næ-mɪks',
+    german: 'Geldpolitik & Zinssteuerung (FED & EZB)',
+    definition: 'Central bank interventions through benchmark interest rate adjustments and quantitative measures to maintain international price and currency stability.',
+    exampleEn: 'When the Federal Reserve initiates aggressive monetary tightening, it can precipitate capital flight from emerging market currencies.',
+    exampleDe: 'Wenn die Federal Reserve aggressive Zinserhöhungen einleitet, kann dies zu Kapitalflucht aus den Währungen der Schwellenländer führen.',
+    svg: '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="32" fill="none" stroke="#10b981" stroke-width="3"/><text x="44" y="58" font-size="22" font-weight="bold" fill="#10b981">%</text></svg>'
+  },
+  {
+    id: 'econ_15',
+    category: 'economics',
+    categoryName: '🌍 Internationalwirtschaft (Kl. 13 & Abitur)',
+    english: 'European Single Market & Four Freedoms',
+    phonetic: 'sɪŋ-gəl mɑr-kɪt ænd fɔr fri-dəmz',
+    german: 'EU-Binnenmarkt & Die Vier Grundfreiheiten',
+    definition: 'The unified economic territory guaranteeing unhindered circulation of goods, services, capital, and labor among all member states.',
+    exampleEn: 'The four freedoms of the European Single Market generate immense scale efficiencies for continental exporters.',
+    exampleDe: 'Die vier Grundfreiheiten des EU-Binnenmarkts generieren enorme Größenvorteile für kontinentale Exporteure.',
+    svg: '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="34" fill="none" stroke="#eab308" stroke-width="3"/><circle cx="50" cy="24" r="3" fill="#eab308"/><circle cx="68" cy="32" r="3" fill="#eab308"/><circle cx="76" cy="50" r="3" fill="#eab308"/><circle cx="68" cy="68" r="3" fill="#eab308"/><circle cx="50" cy="76" r="3" fill="#eab308"/><circle cx="32" cy="68" r="3" fill="#eab308"/><circle cx="24" cy="50" r="3" fill="#eab308"/><circle cx="32" cy="32" r="3" fill="#eab308"/></svg>'
   }
 ];
 
@@ -969,6 +1151,33 @@ const SPEECH_DATA = [
     phonetic: 'aw-to-mey-ted ju-nit tests gif as kon-fi-dens wen ri-fäk-tor-ing leg-a-si kowd.',
     german: 'Automatisierte Unit-Tests geben uns Sicherheit bei der Überarbeitung von Altsystemen.',
     context: 'Bedeutung von Testautomatisierung erklären.'
+  },
+  {
+    id: 'sp_econ_1',
+    category: 'economics',
+    categoryName: 'Internationalwirtschaft (Kl. 11)',
+    english: 'Comparative advantage demonstrates that specialization and international trade raise global living standards.',
+    phonetic: 'kəm-pær-ə-tɪv əd-væn-tɪdʒ dem-ən-streits ðæt spe-ʃəl-aɪ-zey-ʃən ænd ɪn-tər-næ-ʃən-əl treyd reyz glow-bəl lɪv-ɪŋ stæn-dərdz.',
+    german: 'Der komparative Kostenvorteil beweist, dass Spezialisierung und Welthandel den globalen Lebensstandard anheben.',
+    context: 'Grundlagen des Welthandels im Gymnasium Klasse 11 erklären.'
+  },
+  {
+    id: 'sp_econ_2',
+    category: 'economics',
+    categoryName: 'Internationalwirtschaft (Kl. 12)',
+    english: 'Imposing retaliatory tariffs elevates consumer price levels and disrupts integrated international supply chains.',
+    phonetic: 'ɪm-pow-zɪŋ rɪ-tæl-i-ə-tor-i tær-ɪfs el-ə-veyts kən-sju-mər prays lev-əlz ænd dɪs-rʌpts ɪn-tə-grey-tɪd ɪn-tər-næ-ʃən-əl sə-play cheynz.',
+    german: 'Die Erhebung von Vergeltungszöllen erhöht das Verbraucherpreisniveau und stört integrierte internationale Lieferketten.',
+    context: 'Folgen von Handelsprotektionismus in Klasse 12 debattieren.'
+  },
+  {
+    id: 'sp_econ_3',
+    category: 'economics',
+    categoryName: 'Internationalwirtschaft (Kl. 13 & Abitur)',
+    english: 'Modern geoeconomics balances national economic security through de-risking against the efficiency gains of open markets.',
+    phonetic: 'mɑ-dərn dʒi-oʊ-i-kə-nɑ-mɪks bæl-əns-ɪz næ-ʃən-əl i-kə-nɑ-mɪk sɪ-kjʊ-rɪ-ti θru di-rɪsk-ɪŋ ə-genst ði ɪ-fɪ-ʃən-si geynz əv ow-pən mɑr-kɪts.',
+    german: 'Moderne Geoeconomie wiegt nationale Wirtschaftssicherheit durch De-risking gegen die Effizienzvorteile offener Märkte ab.',
+    context: 'Anspruchsvolle Abitur-Prüfungsargumentation strukturieren.'
   }
 ];
 
@@ -1409,6 +1618,39 @@ const CLOZE_DATA = [
     ],
     "hint": "Häufigkeitsadverbien wie always, usually, often stehen direkt VOR dem Hauptverb!",
     "explanation": "Adverbien der Häufigkeit (always, often, usually) stehen im SVO-Satzbau direkt vor dem Vollverb ('I always check...')."
+  },
+  {
+    "id": "cloze_econ_1",
+    "category": "economics",
+    "categoryName": "Internationalwirtschaft (Kl. 11)",
+    "sentence": "Under the principle of {comparative} advantage, a country maximizes welfare by producing goods with the lowest opportunity cost.",
+    "options": ["comparative", "absolute", "unlimited", "monetary"],
+    "correct": "comparative",
+    "translation": "Nach dem Prinzip des komparativen Kostenvorteils maximiert ein Land seinen Wohlstand, indem es Güter mit den geringsten Opportunitätskosten herstellt.",
+    "hint": "Denke an David Ricardos berühmtes Modell aus dem 19. Jahrhundert!",
+    "explanation": "'Comparative advantage' beschreibt den Vorteil bei relativen (nicht absoluten) Opportunitätskosten."
+  },
+  {
+    "id": "cloze_econ_2",
+    "category": "economics",
+    "categoryName": "Internationalwirtschaft (Kl. 12)",
+    "sentence": "Governments frequently utilize customs {tariffs} to shield strategic domestic industries from low-cost foreign competitors.",
+    "options": ["tariffs", "currencies", "incomes", "dividends"],
+    "correct": "tariffs",
+    "translation": "Regierungen setzen häufig Schutzzölle (tariffs) ein, um strategische heimische Branchen vor billigerer ausländischer Konkurrenz zu schützen.",
+    "hint": "Das englische Fachwort für Zölle / Einfuhrabgaben.",
+    "explanation": "'Tariffs' sind Schutzzölle, die an der Landesgrenze auf importierte Waren erhoben werden."
+  },
+  {
+    "id": "cloze_econ_3",
+    "category": "economics",
+    "categoryName": "Internationalwirtschaft (Kl. 13 & Abitur)",
+    "sentence": "Rather than seeking total decoupling, European leaders advocate for strategic {de-risking} in critical supply networks.",
+    "options": ["de-risking", "inflation", "subsidies", "stagnation"],
+    "correct": "de-risking",
+    "translation": "Statt einer vollständigen Entkopplung befürworten europäische Staatschefs strategisches De-risking in kritischen Liefernetzwerken.",
+    "hint": "Ein moderner geopolitischer Begriff zur Risikominimierung ohne radikale Abschottung.",
+    "explanation": "'De-risking' bedeutet gezielte Diversifizierung kritischer Abhängigkeiten bei gleichzeitigem Offenhalten des Handels."
   }
 ];
 
@@ -1860,6 +2102,53 @@ const STORY_DATA = [
         de: 'Alle fühlen sich sicher und freuen sich darauf, den neuen zweiwöchigen Entwicklungssprint zu starten!'
       }
     ]
+  },
+  {
+    id: 'story-econ-1',
+    category: 'economics',
+    categoryName: 'Internationalwirtschaft',
+    title: 'Global Trade in Transition: From Ricardo to Geoeconomics',
+    level: 'Gymnasium Oberstufe & Abitur (Kl. 11-13)',
+    duration: '3:30 min',
+    description: 'Ein didaktischer Hörtext über die Evolution des Welthandels: von David Ricardos komparativen Vorteilen über Freihandel und Schutzzölle bis hin zur modernen geoeconomischen Abitur-Debatte.',
+    segments: [
+      {
+        startTime: 0,
+        endTime: 7,
+        en: 'For more than two centuries, the theory of comparative advantage has served as the intellectual foundation of global commerce.',
+        de: 'Seit mehr als zwei Jahrhunderten bildet die Theorie des komparativen Kostenvorteils das intellektuelle Fundament des Welthandels.'
+      },
+      {
+        startTime: 7,
+        endTime: 15,
+        en: 'First formulated by British economist David Ricardo in 1817, it demonstrates that all trading nations benefit when each specializes in what it produces most efficiently.',
+        de: 'Erstmals 1817 vom britischen Ökonomen David Ricardo formuliert, beweist sie, dass alle Handelspartner profitieren, wenn sich jeder auf das spezialisiert, was er am effizientesten herstellt.'
+      },
+      {
+        startTime: 15,
+        endTime: 23,
+        en: 'In the late twentieth century, rapid container shipping, digital communications, and multilateral agreements under the WTO accelerated globalization.',
+        de: 'Im späten zwanzigsten Jahrhundert beschleunigten Containerschifffahrt, digitale Kommunikation und multilaterale Verträge der WTO die Globalisierung.'
+      },
+      {
+        startTime: 23,
+        endTime: 31,
+        en: 'Multinational corporations dispersed production stages across continents to achieve unprecedented economies of scale.',
+        de: 'Multinationale Konzerne verteilten Produktionsschritte über Kontinente, um beispiellose Größenvorteile zu erzielen.'
+      },
+      {
+        startTime: 31,
+        endTime: 39,
+        en: 'However, recent global disruptions and geopolitical rivalries have highlighted the inherent vulnerabilities of extended supply chains.',
+        de: 'Jüngste weltweite Erschütterungen und geopolitische Rivalitäten haben jedoch die Verletzlichkeit ausgedehnter Lieferketten offengelegt.'
+      },
+      {
+        startTime: 39,
+        endTime: 48,
+        en: 'Today, the debate in Grade 13 and Abitur examinations centers on whether de-risking and nearshoring can balance national security with open market prosperity.',
+        de: 'Heute dreht sich die Debatte in der 13. Klasse und im Abitur darum, ob De-risking und Nearshoring nationale Sicherheit mit dem Wohlstand offener Märkte vereinen können.'
+      }
+    ]
   }
 ];
 
@@ -1867,6 +2156,22 @@ const STORY_DATA = [
 // 5. DIALOG- & KONVERSATIONS-SZENARIEN (MIT SPRECHEN & KORREKTUR)
 // ============================================================
 const DIALOG_SCENARIOS = {
+  economics: {
+    id: 'economics',
+    gender: 'male',
+    title: '🌍 Internationalwirtschaft (Gymnasium & Abi)',
+    icon: '🌍',
+    partnerName: 'Prof. Sterling (Wirtschafts-Coach)',
+    partnerRole: 'Gymnasial-Coach für Internationale Wirtschaft & Abitur',
+    initialPrompt: 'Welcome {name}! I am your International Economics coach for Gymnasium and Abitur. Which grade level would you like to focus on: Grade 11 (Fundamentals & Globalization), Grade 12 (Free Trade, Tariffs & Supply Chains), or Grade 13 (Monetary Policy & Abitur Debates)?',
+    initialPromptDe: 'Willkommen {name}! Ich bin dein Coach für Internationale Wirtschaft (Gymnasium & Abitur). Auf welche Klassenstufe möchtest du dich konzentrieren: Klasse 11 (Grundlagen & Globalisierung), Klasse 12 (Freihandel, Zölle & Lieferketten) oder Klasse 13 (Währungspolitik & Abitur-Debatten)?',
+    contextKeywords: [
+      'trade', 'globalization', 'economy', 'economic', 'export', 'import', 'tariff', 'tariffs',
+      'protectionism', 'ricardo', 'advantage', 'supply chain', 'currency', 'exchange rate',
+      'inflation', 'wto', 'imf', 'market', 'fdi', 'multinational', 'decoupling', 'abitur',
+      'grade', 'klasse', 'subsidies', 'deficit', 'surplus', 'gdp', 'growth'
+    ]
+  },
   beginner: {
     id: 'beginner',
     gender: 'female',
