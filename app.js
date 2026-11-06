@@ -1895,7 +1895,7 @@ function initApp() {
             en: 'Nice to meet you{name}! How was your day today?',
             de: 'Schön dich kennenzulernen{name}! Wie war dein Tag heute?',
             suggestions: [
-              'Hello Emma, my name is Alex!',
+              'Hello, my name is Alex!',
               'I am a junior software developer.',
               'What is your favorite topic to talk about?'
             ]
@@ -2394,18 +2394,36 @@ function initApp() {
     },
 
     getPartnerMeta(scenarioId) {
+      const p = (typeof getCurrentPartnerMeta === 'function') ? getCurrentPartnerMeta() : { name: 'Nova', role: 'Englisch-Tutorin', isMale: false };
+      const pFirstName = p.name.split(' ')[0].replace(/[^A-Za-zÄÖÜäöüß]/g, '');
+      const pCleanRole = p.role.replace(/^Rolle:\s*/, '');
+
+      if (scenarioId === 'beginner' || scenarioId === 'free') {
+        return {
+          name: pFirstName,
+          fullName: p.name,
+          role: pCleanRole,
+          desc: 'Anfänger & Plaudern',
+          isMale: p.isMale
+        };
+      }
+
       const meta = {
-        beginner: { name: 'Emma', role: 'Geduldige Englisch-Tutorin für Alltag & Smalltalk', desc: 'Anfänger & Plaudern' },
         standup: { name: 'Sarah', role: 'Scrum Master & Agile Coach', desc: 'Daily Scrum Standup' },
         interview: { name: 'Mr. Davis', role: 'Lead Software Architect', desc: 'IT-Vorstellungsgespräch' },
         support: { name: 'Alex', role: 'Senior Product Manager', desc: 'Bug-Report & Ticket Support' },
         architecture: { name: 'David', role: 'Senior Cloud Solutions Architect', desc: 'System-Architektur Review' },
         smalltalk: { name: 'Mark', role: 'Senior Developer & Teammate', desc: 'Kaffeepause & Smalltalk' },
         travel: { name: 'James', role: 'Head Concierge at Royal Grand Hotel', desc: 'Hotel & London Reisen' },
-        free: { name: 'AI English Coach', role: 'Persönlicher Sprachtrainer', desc: 'Freie Konversation' },
         quiz: { name: 'Prof. Miller', role: 'Vokabel-Coach', desc: 'Vokabel-Prüfer & Quiz' }
       };
-      return meta[scenarioId] || meta.beginner || meta.standup;
+      return meta[scenarioId] || {
+        name: pFirstName,
+        fullName: p.name,
+        role: pCleanRole,
+        desc: 'Konversation',
+        isMale: p.isMale
+      };
     },
 
     normalizeInput(raw) {
@@ -2618,7 +2636,7 @@ ${cleanTip}`,
             suggestions: [
               "Yesterday I worked on my programming project.",
               "I want learn more English words for my job.",
-              "How old you are Emma?"
+              `How old are you, ${meta.name}?`
             ]
           };
         }
@@ -2629,15 +2647,15 @@ ${cleanTip}`,
           /\bwho\s+(are\s+you|is\s+this|am\s+i\s+talking\s+to)\b/i.test(norm) ||
           /\bwhats\s+your\s+name\b/i.test(norm) ||
           /\bname\s*\?/i.test(norm)) {
-        if (scenarioId === 'beginner') {
+        if (scenarioId === 'beginner' || scenarioId === 'free') {
           return {
             id: 'intent_name_beginner',
             en: `My name is ${meta.name}, your ${meta.role}. How are you doing today?`,
             de: `Mein Name ist ${meta.name}, deine ${meta.role}. Wie geht es dir heute?`,
             suggestions: [
-              "Nice to meet you Emma! I am ready to practice.",
-              "Hello Emma! What are your favorite topics?",
-              "Can you teach me some easy English words?"
+              `Nice to meet you, ${meta.name}! I am ready to practice.`,
+              `Hello ${meta.name}! What are your favorite topics?`,
+              `Can you teach me some easy English words?`
             ]
           };
         } else if (scenarioId === 'standup') {
@@ -3087,7 +3105,7 @@ ${cleanTip}`,
             suggestions: [
               "And how about you? What are you doing today?",
               "Can you teach me 2 useful English words?",
-              "What is your favorite hobby, Emma?"
+              `What is your favorite hobby, ${meta.name}?`
             ]
           },
           {
@@ -3449,7 +3467,8 @@ ${cleanTip}`,
         const chosenId = card.dataset.avatarId;
         setSelectedAvatarId(chosenId);
         showToast(`🎭 Avatar aktiviert: ${AVATAR_OPTIONS[chosenId].name}`);
-        switchDialogScenario(currentScenarioId);
+        resetDialogScenario(currentScenarioId);
+        updateGenderTogglePills();
         modal.style.display = 'none';
       });
     });
@@ -3697,7 +3716,7 @@ ${cleanTip}`,
       showToast('👨 Gesprächspartner: Leo (Männerstimme aktiv)');
     }
     updateGenderTogglePills();
-    switchDialogScenario(currentScenarioId);
+    resetDialogScenario(currentScenarioId);
   }
 
   function switchDialogScenario(scenarioId) {
