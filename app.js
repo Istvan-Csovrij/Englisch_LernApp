@@ -95,29 +95,29 @@ function initApp() {
   const VOICE_PROFILES = {
     soft: {
       id: 'soft',
-      name: '🌸 Weich, Freundlich & Natürlich',
-      label: 'Weich (0.82x)',
-      desc: 'Sanftes, warmes Lerntempo (0.82x), melodische & sympathische Aussprache',
-      rate: 0.82,
-      pitch: 1.04,
+      name: '🌸 Natürlich, Lebendig & Menschlich',
+      label: 'Natürlich (0.94x)',
+      desc: 'Natürliches Konversationstempo (0.94x), geschmeidige Aussprache & adaptive Gender-Tonhöhe',
+      rate: 0.94,
+      pitch: 1.05,
       volume: 0.95
     },
     clear: {
       id: 'clear',
-      name: '💼 Klar & Verständlich',
-      label: 'Klar (0.86x)',
-      desc: 'Deutliche Business-Artikulation für IT & Vorstellungsgespräche',
-      rate: 0.86,
+      name: '💼 Klar & Dynamisch',
+      label: 'Klar (0.98x)',
+      desc: 'Flottes, professionelles Sprechtempo (0.98x) für IT- & Businesstalk',
+      rate: 0.98,
       pitch: 1.02,
       volume: 0.95
     },
     slow: {
       id: 'slow',
-      name: '🐢 Sehr Ruhig & Sanft',
-      label: 'Ruhig (0.74x)',
-      desc: 'Entspanntes, langsames Lerntempo (0.74x) für Einsteiger & Hörübungen',
-      rate: 0.74,
-      pitch: 1.05,
+      name: '🐢 Ruhig & Bedacht',
+      label: 'Ruhig (0.84x)',
+      desc: 'Entspanntes Lerntempo (0.84x) für detailgenaues Hinhören',
+      rate: 0.84,
+      pitch: 1.04,
       volume: 0.90
     }
   };
@@ -459,28 +459,28 @@ function initApp() {
 
     // 3. Sympathische weibliche vs männliche Stimmen nach Szenario
     if (preferMale) {
-      if (name.includes('guy') || name.includes('male') || name.includes('daniel') || name.includes('oliver') || name.includes('george') || name.includes('tom')) score += 320;
-      if (name.includes('female') || name.includes('jenny') || name.includes('aria') || name.includes('samantha')) score -= 180;
+      if (name.includes('guy') || name.includes('male') || name.includes('christopher') || name.includes('eric') || name.includes('ryan') || name.includes('daniel') || name.includes('oliver') || name.includes('george') || name.includes('tom')) score += 450;
+      if (name.includes('david')) score += 350;
+      if (name.includes('female') || name.includes('jenny') || name.includes('aria') || name.includes('samantha') || name.includes('zira') || name.includes('hazel')) score -= 500;
     } else {
-      // Weibliche Stimmen (Emma & Standard)
-      if (name.includes('jenny')) score += 380;
-      if (name.includes('aria')) score += 340;
-      if (name.includes('samantha')) score += 310;
-      if (name.includes('ava') || name.includes('zoe')) score += 290;
-      if (name.includes('female') || name.includes('karen') || name.includes('victoria') || name.includes('susan')) score += 240;
-      if (name.includes('guy') || name.includes('male') || name.includes('david')) score -= 220;
+      // Weibliche Stimmen (Nova & Standard)
+      if (name.includes('jenny')) score += 450;
+      if (name.includes('aria')) score += 420;
+      if (name.includes('samantha')) score += 380;
+      if (name.includes('ava') || name.includes('zoe') || name.includes('stephanie')) score += 360;
+      if (name.includes('female') || name.includes('karen') || name.includes('victoria') || name.includes('susan')) score += 320;
+      if (name.includes('zira')) score += 280;
+      if (name.includes('guy') || name.includes('male') || name.includes('david') || name.includes('christopher')) score -= 500;
     }
 
     // 4. US / UK Dialekt-Bonus
     if (lang === 'en-us') score += 35;
     if (lang === 'en-gb') score += 25;
 
-    // 5. Harte, mechanische Roboter-Desktop-Stimmen MASSIV abwerten!
-    if (name.includes('desktop') || uri.includes('desktop')) score -= 800;
-    if (name.includes('david')) score -= 500;
-    if (name.includes('zira')) score -= 400;
-    if (name.includes('mark')) score -= 500;
-    if (name.includes('hazel')) score -= 500;
+    // 5. Harte, mechanische Roboter-Desktop-Stimmen mäßig gewichten, aber desktop-spezifisch nutzbar halten
+    if (name.includes('desktop') || uri.includes('desktop')) score -= 150;
+    if (name.includes('mark')) score -= 300;
+    if (name.includes('hazel')) score -= 300;
     if (name.includes('espeak')) score -= 1000;
 
     return score;
@@ -609,28 +609,48 @@ function initApp() {
       const utterance = new SpeechSynthesisUtterance(speechText);
       utterance.lang = 'en-US';
 
-      // Tempo & Tonhöhe aus Profil oder benutzerdefiniert (Standard: 0.82x angenehm ruhig & weich)
-      utterance.rate = (typeof customRate === 'number' && customRate > 0) ? customRate : profile.rate;
-      utterance.pitch = profile.pitch;
-      utterance.volume = profile.volume;
-
       // Stimme mit Gender-Support für Dialogpartner & gewählten Avatar ermitteln
-      const activeAv = getSelectedAvatarId();
       const meta = getCurrentPartnerMeta();
       const preferMale = meta.isMale;
       const voice = getBestEnglishVoice(preferMale);
 
+      // Basis-Tempo aus gewähltem Profil (oder customRate falls übergeben)
+      // Standard: 0.94x - flüssig, natürlich und nicht mehr zu langsam!
+      let targetRate = (typeof customRate === 'number' && customRate > 0) ? customRate : profile.rate;
+      let targetPitch = profile.pitch;
+
+      if (preferMale) {
+        // MÄNNLICHE STIMME (Leo):
+        // Nutzerwunsch: "man soll etwas tiefer und jugendlicher angehört werden"
+        // -> Tonhöhe auf 0.92 (warmer, sonorer Bariton)
+        // -> Tempo auf 0.95x - 0.96x (flüssig, aktiv, jugendlich und frisch)
+        targetPitch = 0.92;
+        targetRate = Math.max(targetRate, 0.95);
+      } else {
+        // WEIBLICHE STIMME (Nova):
+        // Nutzerwunsch: "frau stimme soll etwas mehr weiblich sein"
+        // -> Tonhöhe auf 1.16 (deutlich femininer, heller, weich und melodisch)
+        // -> Tempo auf 0.93x - 0.94x (natürlich-fließendes, sympathisches Konversationstempo)
+        targetPitch = 1.16;
+        targetRate = Math.max(targetRate, 0.93);
+      }
+
       if (voice) {
         utterance.voice = voice;
         const vName = (voice.name || '').toLowerCase();
-        // Anti-Roboter Filter für starre Desktop-Stimmen:
-        // Tonhöhe leicht anheben (1.04) und Tempo beruhigen (0.80), um metallisches Dröhnen zu eliminieren
-        if (vName.includes('desktop') || vName.includes('zira') || vName.includes('david') || vName.includes('espeak')) {
-          utterance.rate = Math.min(utterance.rate, 0.80);
-          utterance.pitch = 1.04;
-          utterance.volume = 0.90;
+        // Gezieltes Feintuning für Windows-SAPI Desktop-Stimmen (David & Zira):
+        if (vName.includes('david')) {
+          targetPitch = 0.91; // Sonor-jugendlich, kein metallisches Dröhnen
+          targetRate = 0.95;  // Natürlich flüssiges Tempo
+        } else if (vName.includes('zira')) {
+          targetPitch = 1.18; // Spürbar femininer & weicher Klang
+          targetRate = 0.94;  // Natürlich flüssiges Tempo
         }
       }
+
+      utterance.rate = targetRate;
+      utterance.pitch = targetPitch;
+      utterance.volume = profile.volume || 0.95;
 
       setAvatarSpeaking(true);
 
@@ -701,10 +721,15 @@ function initApp() {
       showToast('⏹️ Sprachausgabe angehalten');
       return;
     }
-    const v = getBestEnglishVoice();
-    const vName = v ? v.name.split('-')[0].trim() : 'Standard';
-    showToast(`🔊 ${p.name} (${vName})`);
-    toggleSpeakEnglish("Hello! My voice is now soft, warm, and friendly. You can tap anytime to pause or replay!", btn, p.rate);
+    const meta = getCurrentPartnerMeta();
+    const v = getBestEnglishVoice(meta.isMale);
+    const vName = v ? v.name.split('-')[0].trim() : (meta.isMale ? 'Leo' : 'Nova');
+    showToast(`🔊 ${meta.name} (${vName})`);
+    if (meta.isMale) {
+      toggleSpeakEnglish("Hello! I am Leo, your personal coach. My voice is now deeper, youthful, and speaking at a natural pace!", btn, p.rate);
+    } else {
+      toggleSpeakEnglish("Hello! I am Nova, your English tutor. My voice is now softer, more feminine, and speaking at a natural pace!", btn, p.rate);
+    }
   }
 
   if ('speechSynthesis' in window) {
