@@ -3798,3 +3798,45 @@ button, .nav-icon-btn, .action-btn, .cat-btn, .card-audio-btn, .card-mic-btn {
   }
 }
 
+/* ============================================================
+   v35: DIALOG MICROPHONE LANGUAGE TOGGLE BUTTON (🇬🇧 EN / 🇩🇪 DE)
+   ============================================================ */
+.dialog-mic-lang-btn {
+  background: rgba(56, 189, 248, 0.14);
+  border: 1.5px solid rgba(56, 189, 248, 0.45);
+  color: #7dd3fc;
+  border-radius: 12px;
+  padding: 0 11px;
+  height: 44px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.dialog-mic-lang-btn:hover {
+  background: rgba(56, 189, 248, 0.26);
+  border-color: #38bdf8;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.dialog-mic-lang-btn.lang-de {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.25) 0%, rgba(239, 68, 68, 0.25) 100%);
+  border-color: #fbbf24;
+  color: #fde68a;
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.25);
+}
+
+.dialog-mic-lang-btn.lang-de:hover {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.38) 0%, rgba(239, 68, 68, 0.38) 100%);
+  color: #ffffff;
+}
+
+

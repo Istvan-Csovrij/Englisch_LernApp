@@ -770,7 +770,7 @@ function initApp() {
     }
   }
 
-  // --- SPEECH RECOGNITION (SPRACHE PRÜFEN & KONTROLLIEREN - v34 PAUSE-RESILIENT & FUZZY MATCHING) ---
+  // --- SPEECH RECOGNITION (SPRACHE PRÜFEN & KONTROLLIEREN - v35 BILINGUAL EN/DE MIC & PAUSE-RESILIENT) ---
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   let recognition = null;
   let isRecording = false;
@@ -778,6 +778,43 @@ function initApp() {
   let isDialogRecording = false;
   let manualDialogStopRequested = false;
   let dialogSpeechFinalAccumulator = '';
+  let dialogMicLang = localStorage.getItem('fiae_dialog_mic_lang') || 'en-US';
+
+  function updateDialogMicLangUI() {
+    const btnLang = document.getElementById('btnDialogMicLang');
+    const input = document.getElementById('dialogTextInput');
+    const hint = document.getElementById('dialogInputHint');
+    const isDe = dialogMicLang === 'de-DE';
+    if (btnLang) {
+      btnLang.innerHTML = isDe ? '🇩🇪 DE' : '🇬🇧 EN';
+      btnLang.classList.toggle('lang-de', isDe);
+      btnLang.title = isDe
+        ? 'Mikrofon hört aktuell auf DEUTSCH (Tippen für Englisch 🇬🇧)'
+        : 'Mikrofon hört aktuell auf ENGLISCH (Tippen für Deutsch 🇩🇪)';
+    }
+    if (input && !isDialogRecording) {
+      input.placeholder = isDe
+        ? "Sprich oder schreibe auf Deutsch oder Englisch... (z. B. 'Verstehst du Deutsch?')"
+        : "Antworte auf Englisch oder Deutsch... (z. B. 'Can you understand German?')";
+    }
+    if (hint && !isDialogRecording) {
+      hint.innerHTML = isDe
+        ? '🎙️ Mikrofon-Sprache: <strong>🇩🇪 Deutsch</strong> (Tippe auf 🇩🇪 DE zum Umschalten auf 🇬🇧 EN)'
+        : '🎙️ Mikrofon-Sprache: <strong>🇬🇧 Englisch</strong> (Tippe auf 🇬🇧 EN neben dem Mikrofon, wenn du Deutsch sprechen möchtest!)';
+    }
+  }
+
+  function toggleDialogMicLang() {
+    dialogMicLang = (dialogMicLang === 'de-DE') ? 'en-US' : 'de-DE';
+    localStorage.setItem('fiae_dialog_mic_lang', dialogMicLang);
+    updateDialogMicLangUI();
+    if (isRecording && activeMicTarget === 'dialogChat') {
+      try { recognition.stop(); } catch (e) {}
+    }
+    showToast(dialogMicLang === 'de-DE'
+      ? '🇩🇪 Mikrofon versteht jetzt Deutsch!'
+      : '🇬🇧 Mikrofon versteht jetzt Englisch!');
+  }
 
   if (SpeechRecognition) {
     recognition = new SpeechRecognition();
@@ -870,13 +907,17 @@ function initApp() {
       // der Nutzer aber noch nicht auf "Stoppen & Abschicken" geklickt hat -> nahtlos weiterhören!
       if (activeMicTarget === 'dialogChat' && isDialogRecording && !manualDialogStopRequested) {
         try {
+          recognition.lang = dialogMicLang;
           recognition.start();
           return;
         } catch (e) {
           // Falls direkter Neustart fehlschlägt, nach 120ms erneut versuchen
           setTimeout(() => {
             if (isDialogRecording && !manualDialogStopRequested) {
-              try { recognition.start(); } catch (err) {}
+              try {
+                recognition.lang = dialogMicLang;
+                recognition.start();
+              } catch (err) {}
             }
           }, 120);
           return;
@@ -905,8 +946,7 @@ function initApp() {
     const dialogMic = document.getElementById('btnDialogMic');
     if (dialogMic) dialogMic.classList.remove('recording');
     showDialogRecordingBar(false);
-    const hint = document.getElementById('dialogInputHint');
-    if (hint) hint.textContent = '✍️ Tippe deine Antwort ein oder tippe auf das 🎙️ Mikrofon, um direkt zu sprechen!';
+    updateDialogMicLangUI();
   }
 
   function showDialogRecordingBar(active) {
@@ -947,9 +987,12 @@ function initApp() {
     const input = document.getElementById('dialogTextInput');
     dialogSpeechFinalAccumulator = input && input.value.trim() ? input.value.trim() : '';
     if (input && !input.value.trim()) {
-      input.placeholder = '🎙️ Höre zu... Dein gesprochener Satz erscheint hier...';
+      input.placeholder = dialogMicLang === 'de-DE'
+        ? '🎙️ Höre zu (🇩🇪 Deutsch)... Sprich deinen Satz!'
+        : '🎙️ Höre zu (🇬🇧 Englisch)... Sprich deinen Satz!';
     }
     try {
+      recognition.lang = dialogMicLang;
       recognition.continuous = true;
       recognition.interimResults = true;
     } catch (e) {}
@@ -1336,6 +1379,7 @@ function initApp() {
     } else {
       activeMicTarget = 'flashcard';
       try {
+        recognition.lang = 'en-US';
         recognition.continuous = false;
         recognition.interimResults = false;
       } catch (e) {}
@@ -1440,6 +1484,7 @@ function initApp() {
     } else {
       activeMicTarget = 'speechTrainer';
       try {
+        recognition.lang = 'en-US';
         recognition.continuous = false;
         recognition.interimResults = false;
       } catch (e) {}
@@ -1802,12 +1847,26 @@ function initApp() {
   let currentDialogMode = 'text'; // 'text' oder 'voice'
   let currentScenarioId = 'beginner';
 
+  function normalizeLearnerName(rawName) {
+    const clean = (rawName || '').trim();
+    if (!clean) return '';
+    if (/^(ishtam|ishta|isht|ishvan|istwan|ischtvan|ischwan|istfan|isthvan|istv[aá]n|easton|ishtvan)$/i.test(clean)) {
+      return 'Istvan';
+    }
+    return clean;
+  }
+
   function getUserName() {
-    return localStorage.getItem('fiae_user_name') || '';
+    const stored = localStorage.getItem('fiae_user_name') || '';
+    const norm = normalizeLearnerName(stored);
+    if (norm && norm !== stored) {
+      localStorage.setItem('fiae_user_name', norm);
+    }
+    return norm;
   }
 
   function setUserName(name) {
-    const clean = (name || '').trim();
+    const clean = normalizeLearnerName(name);
     if (clean) {
       localStorage.setItem('fiae_user_name', clean);
     } else {
@@ -3226,11 +3285,19 @@ function initApp() {
 
     // Hauptfunktion: Erkennt Thema, Turn-Zähler und wählt abwechslungsreiche Antworten
     getUserName() {
-      return (typeof localStorage !== 'undefined' && localStorage.getItem('fiae_user_name')) || '';
+      if (typeof getUserName === 'function') {
+        return getUserName();
+      }
+      const raw = (typeof localStorage !== 'undefined' && localStorage.getItem('fiae_user_name')) || '';
+      if (/^(ishtam|ishta|isht|ishvan|istwan|ischtvan|ischwan|istfan|isthvan|istv[aá]n|easton|ishtvan)$/i.test(raw.trim())) {
+        if (typeof localStorage !== 'undefined') localStorage.setItem('fiae_user_name', 'Istvan');
+        return 'Istvan';
+      }
+      return raw;
     },
 
     setUserName(name) {
-      const clean = (name || '').trim();
+      const clean = (typeof normalizeLearnerName === 'function') ? normalizeLearnerName(name) : (name || '').trim();
       if (typeof setUserName === 'function') {
         setUserName(clean);
       } else if (typeof localStorage !== 'undefined') {
@@ -3324,7 +3391,18 @@ function initApp() {
         [/\bspra\b/g, 'sprache'],
         [/\bdeutch\b/g, 'deutsch'],
         [/\bgermani\b/g, 'germany'],
-        [/\bspeek\b/g, 'speak']
+        [/\bspeek\b/g, 'speak'],
+        [/\bishtam\b/g, 'istvan'],
+        [/\bishta\b/g, 'istvan'],
+        [/\bishvan\b/g, 'istvan'],
+        [/\bistwan\b/g, 'istvan'],
+        [/\bischtvan\b/g, 'istvan'],
+        // Häufige englische Mikrofon-Fehltranskriptionen, wenn jemand Deutsch ins englische Mikrofon spricht:
+        [/\bcan\s+stew\s+deutsch\b/g, 'kannst du deutsch'],
+        [/\bsprich\s+stew\s+deutsch\b/g, 'sprichst du deutsch'],
+        [/\bfirst\s+days?\s+to\s+deutsch\b/g, 'verstehst du deutsch'],
+        [/\bfish\s+taste?\s+to\s+deutsch\b/g, 'verstehst du deutsch'],
+        [/\bfirst\s+taste?\s+to\s+mice\b/g, 'verstehst du mich']
       ];
 
       for (const [pattern, repl] of typoMap) {
@@ -3480,24 +3558,43 @@ function initApp() {
 
       // 3. Muster: "my name is...", "call me...", "ich heiße eigentlich...", "nenne mich..."
       if (!detectedNewName) {
-        const stdName = rawInput.match(/\b(?:my\s+(?:real\s+)?name\s+is|call\s+me|ich\s+hei[sß]+e(?:\s+eigentlich)?|mein\s+name\s+ist|nenne?\s+mich|ich\s+bin|i\s+am)\s+([A-Za-zÄÖÜäöüß]{2,25})\b/i);
+        const stdName = rawInput.match(/\b(?:my\s+(?:real\s+)?name\s+is|call\s+me|ich\s+hei[sß]+e(?:\s+eigentlich)?|mein\s+name\s+ist|nenne?\s+mich)\s+([A-Za-zÄÖÜäöüß]{2,25})\b/i);
         if (stdName) {
           detectedNewName = stdName[1];
           if (/eigentlich|real/i.test(rawInput)) isExplicitCorrection = true;
         }
       }
 
+      // 3b. Muster: "ich bin Istvan" / "I am Istvan" -> NUR wenn das Wort kein Adjektiv/Verb/Sprache ist!
+      if (!detectedNewName) {
+        const iAmMatch = rawInput.trim().match(/^(?:hello\s+|hi\s+|hey\s+|hallo\s+)?(?:ich\s+bin|i\s+am|i'm)\s+([A-Za-zÄÖÜäöüß]{2,20})[.!?\s]*$/i);
+        if (iAmMatch) {
+          const cand = iAmMatch[1].toLowerCase();
+          const forbiddenIam = new Set([
+            'speaking', 'talking', 'asking', 'learning', 'studying', 'working', 'trying', 'waiting',
+            'calling', 'ready', 'tired', 'good', 'fine', 'great', 'here', 'there', 'home', 'back',
+            'happy', 'sad', 'busy', 'bored', 'sick', 'ill', 'well', 'bad', 'new', 'old', 'sure',
+            'german', 'english', 'deutsch', 'beginner', 'student', 'developer', 'programmer',
+            'müde', 'muede', 'fertig', 'bereit', 'da', 'hier', 'gut', 'krank', 'anfänger'
+          ]);
+          if (!forbiddenIam.has(cand) && !cand.endsWith('ing') && !cand.endsWith('ed')) {
+            detectedNewName = iAmMatch[1];
+          }
+        }
+      }
+
       // 4. Einzellwort-Name (z.B. wenn der Nutzer zu Beginn einfach "Istvan" eintippt)
       if (!detectedNewName) {
         const cleanTrim = rawInput.trim();
-        const isCommonWord = /^(hello|hi|yes|no|okay|cool|super|good|nice|what|who|how|why|thanks|thank|bitte|danke|hallo|nein|ja|morning|fine|great|ready|start|begin)$/i.test(cleanTrim);
+        const isCommonWord = /^(hello|hi|yes|no|okay|cool|super|good|nice|what|who|how|why|where|when|thanks|thank|bitte|danke|hallo|nein|ja|morning|fine|great|ready|start|begin|german|germany|deutsch|english|englisch|speak|speaking|understand)$/i.test(cleanTrim);
         if (/^[A-Za-zÄÖÜäöüß]{2,25}$/.test(cleanTrim) && !isCommonWord) {
           detectedNewName = cleanTrim;
         }
       }
 
       if (detectedNewName) {
-        let extractedName = detectedNewName.charAt(0).toUpperCase() + detectedNewName.slice(1).toLowerCase();
+        let rawExtracted = detectedNewName.charAt(0).toUpperCase() + detectedNewName.slice(1).toLowerCase();
+        let extractedName = (typeof normalizeLearnerName === 'function') ? normalizeLearnerName(rawExtracted) : rawExtracted;
         this.setUserName(extractedName);
         if (typeof setUserName === 'function') {
           setUserName(extractedName);
@@ -3507,8 +3604,8 @@ function initApp() {
         if (typeof dialogHistories !== 'undefined' && dialogHistories[scenarioId]) {
           dialogHistories[scenarioId].forEach(msg => {
             if (msg.type === 'partner') {
-              msg.textEn = (msg.textEn || '').replace(/\b(Ishta|Isht)\b/g, extractedName);
-              msg.textDe = (msg.textDe || '').replace(/\b(Ishta|Isht)\b/g, extractedName);
+              msg.textEn = (msg.textEn || '').replace(/\b(Ishtam|Ishta|Isht|Ishvan|Istwan|Ischtvan)\b/gi, extractedName);
+              msg.textDe = (msg.textDe || '').replace(/\b(Ishtam|Ishta|Isht|Ishvan|Istwan|Ischtvan)\b/gi, extractedName);
             }
           });
         }
@@ -4087,30 +4184,88 @@ ${cleanTip}`,
         };
       }
 
-      // 23c. Asking about German or requesting German ("Speak German", "Do you speak German / Germany?", "Sprich Deutsch", "Kannst du Deutsch?")
-      if (/\b(speak\s+(in\s+)?(german|germany|deutsch)|(do|can|could|will)\s+you\s+(speak|talk|know|understand)\s+(german|germany|deutsch)|(can|let('?s)?|could)\s+(we\s+)?(speak|talk)\s+(in\s+)?(german|germany|deutsch)|(sprichst|kannst|redest|verstehst)\s+du\s+(auch\s+)?(deutsch|german|germany)|sprich\s+(mal\s+)?(deutsch|german)|auf\s+deutsch(\s+bitte)?|bitte\s+auf\s+deutsch|deutsch\s+sprechen|k[oö]nnen\s+wir\s+deutsch\s+sprechen|german\s+please|deutsch\s+bitte|in\s+german\s+please|talk\s+(in\s+)?(german|germany|deutsch))\b/i.test(norm)) {
+      // 23c. Asking about German or requesting German ("can you understand the German language", "are you speaking German", "Do you speak German?", "Sprichst du Deutsch?", "Verstehst du Deutsch?")
+      const mentionsGerman = /\b(german|germany|deutsch|deutsche[nrms]?)\b/i.test(norm);
+      const asksAboutLanguage = /\b(speak|speaking|speaks|talk|talking|understand|understanding|know|knowing|learn|language|sprache|sprich|sprichst|sprechen|versteh|verstehst|verstehen|kannst|k[oö]nnen|redest|reden|auf\s+deutsch|in\s+german|bitte|please|can\s+you|are\s+you|do\s+you)\b/i.test(norm);
+      if ((mentionsGerman && asksAboutLanguage) || /^(deutsch|german|auf\s+deutsch|in\s+german)[.!?\s]*$/i.test(norm.trim())) {
         return {
           id: 'intent_speak_german',
-          en: `Yes, of course! I speak and understand German fluently. Since our goal is to improve your English, I converse in English and always provide the complete German translation directly below every response. You can also write or speak to me in German anytime, and I will happily explain everything and show you how to say it in natural English! What would you like to talk about?`,
-          de: `Ja, natürlich! Ich verstehe und spreche fließend Deutsch. Da unser Ziel ist, dein Englisch zu verbessern, unterhalte ich mich auf Englisch mit dir und zeige dir immer direkt die deutsche Übersetzung unter jeder Antwort. Du kannst mir jederzeit auf Deutsch schreiben oder sprechen, und ich erkläre dir alles und helfe dir, es auf natürlichem Englisch zu formulieren! Worüber möchtest du sprechen?`,
+          en: `Yes, of course${this.salutation()}! I understand and speak German fluently. You can write or speak to me in German or English anytime! Tip: If you want to speak German into the microphone, just tap the "🇬🇧 EN / 🇩🇪 DE" button right next to the microphone icon to switch it to German (🇩🇪 DE). What would you like to ask or practice?`,
+          de: `Ja, natürlich${this.salutation()}! Ich verstehe und spreche fließend Deutsch. Du kannst mir jederzeit auf Deutsch oder auf Englisch schreiben und sprechen! 💡 Tipp: Wenn du auf Deutsch ins Mikrofon sprechen möchtest, tippe einfach unten neben dem Mikrofon auf den Button „🇬🇧 EN“ (er wechselt dann auf „🇩🇪 DE“), damit das Mikrofon deine deutsche Sprache perfekt erkennt. Was möchtest du mich fragen oder üben?`,
           suggestions: [
-            "Okay, let us practice in English!",
-            "Kannst du mir auf Deutsch die wichtigsten Grammatik-Tipps geben?",
-            "How do you say 'Ich verstehe fast alles' in English?"
+            "Wie sagt man 'Ich lerne jeden Tag Englisch' auf Englisch?",
+            "Kannst du mir einfache englische Sätze für den Alltag zeigen?",
+            "Okay, let us practice in English!"
           ]
         };
       }
 
-      // 23d. Asking about English ("Do you speak English?", "Sprichst du Englisch?")
-      if (/\b((do|can|could)\s+you\s+(speak|talk|understand)\s+english|sprichst\s+du\s+englisch|kannst\s+du\s+englisch|verstehst\s+du\s+englisch|speak\s+english)\b/i.test(norm)) {
+      // 23d. Asking about English ("Do you speak English?", "Are you speaking English?", "Can you understand English?", "Sprichst du Englisch?")
+      if (/\b(english|englisch|englische[nrms]?)\b/i.test(norm) && /\b(speak|speaking|talk|talking|understand|understanding|know|sprichst|kannst|verstehst|redest|can\s+you|are\s+you|do\s+you)\b/i.test(norm)) {
         return {
           id: 'intent_speak_english',
-          en: `Yes, absolutely! English is my primary language for our lessons. I am excited to help you speak, write, and understand English naturally and fluently. What topic would you like to explore today?`,
-          de: `Ja, absolut! Englisch ist meine Hauptsprache in unseren Lektionen. Ich freue mich darauf, dir zu helfen, ganz natürlich und fließend Englisch zu sprechen, zu schreiben und zu verstehen. Welches Thema möchtest du heute erkunden?`,
+          en: `Yes, absolutely${this.salutation()}! I speak and understand both English and German fluently. I am here to help you speak, write, and understand English naturally. What topic would you like to explore today?`,
+          de: `Ja, absolut${this.salutation()}! Ich spreche und verstehe sowohl Englisch als auch Deutsch fließend. Ich helfe dir dabei, ganz natürlich Englisch zu sprechen, zu schreiben und zu verstehen. Welches Thema möchtest du heute erkunden?`,
           suggestions: [
             "Let's practice everyday English conversation.",
             "Can you teach me some common English phrases?",
             "How is my pronunciation?"
+          ]
+        };
+      }
+
+      // 23e. "Can you hear me?" / "Do you understand me?" / "Verstehst du mich?" / "Hörst du mich?"
+      if (/\b((can|do|are)\s+you\s+(hear|hearing|understand|understanding|listen|listening)(\s+to)?\s+me|verstehst\s+du\s+mich|h[oö]rst\s+du\s+mich|kannst\s+du\s+mich\s+(verstehen|h[oö]ren)|do\s+you\s+get\s+me)\b/i.test(norm)) {
+        return {
+          id: 'intent_understand_me',
+          en: `Yes, I can hear and understand you loud and clear${this.salutation()}! You can ask me anything in English or in German. What would you like to talk about?`,
+          de: `Ja, ich höre und verstehe dich klar und deutlich${this.salutation()}! Du kannst mich alles auf Englisch oder auf Deutsch fragen. Worüber möchtest du sprechen?`,
+          suggestions: [
+            "Can you ask me an easy question in English?",
+            "Wie sagt man 'Können wir das wiederholen?' auf Englisch?",
+            "Let's talk about my daily routine."
+          ]
+        };
+      }
+
+      // 23f. "Speak slower" / "Too fast" / "Say it again" / "Sprich langsamer" / "Nochmal bitte"
+      if (/\b(speak\s+slow(er|ly)?|talk\s+slow(er|ly)?|too\s+fast|zu\s+schnell|langsamer(\s+sprechen|\s+bitte)?|sprich\s+langsamer|say\s+(that|it)\s+again|repeat\s+that|bitte\s+wiederholen|nochmal\s+sagen)\b/i.test(norm)) {
+        return {
+          id: 'intent_speak_slower',
+          en: `Of course${this.salutation()}! I will keep my sentences clear and simple. Tip: You can also click the "🐢 Langsam" button below any of my messages to hear it spoken slowly, or tap any single word to hear its pronunciation!`,
+          de: `Natürlich${this.salutation()}! Ich halte meine Sätze klar und einfach. 💡 Tipp: Du kannst unter jeder meiner Nachrichten auch auf „🐢 Langsam“ klicken, um sie langsam zu hören, oder jedes einzelne Wort direkt antippen!`,
+          suggestions: [
+            "Thank you! Ask me a simple question.",
+            "Teach me 2 easy everyday words.",
+            "Let's practice a slow and simple dialogue."
+          ]
+        };
+      }
+
+      // 23g. "What can you do?" / "How can you help me?" / "Was kannst du alles?"
+      if (/\b(what\s+can\s+you\s+do|how\s+can\s+you\s+help(\s+me)?|what\s+are\s+your\s+functions|was\s+kannst\s+du(\s+alles|\s+machen)?|wie\s+kannst\s+du\s+mir\s+helfen|wie\s+funktioniert\s+das)\b/i.test(norm)) {
+        return {
+          id: 'intent_what_can_you_do',
+          en: `I can help you in many ways${this.salutation()}: 1. Practice free conversations in English, 2. Correct your sentences and explain grammar, 3. Translate words and sentences between German and English, and 4. Quiz your vocabulary! What would you like to try?`,
+          de: `Ich kann dir auf viele Arten helfen${this.salutation()}: 1. Freie Gespräche auf Englisch üben, 2. Deine Sätze korrigieren und Grammatik erklären, 3. Wörter und Sätze zwischen Deutsch und Englisch übersetzen und 4. Vokabeln abfragen! Was möchtest du ausprobieren?`,
+          suggestions: [
+            "Ask me an everyday question in English!",
+            "Teste meine Vokabeln im Quiz!",
+            "How do you say 'Ich arbeite als Softwareentwickler' in English?"
+          ]
+        };
+      }
+
+      // 23h. "What are you doing?" / "Was machst du gerade?"
+      if (/\b(what\s+are\s+you\s+doing(\s+right\s+now|\s+now|\s+today)?|was\s+machst\s+du(\s+gerade|\s+heute|\s+jetzt)?)\b/i.test(norm)) {
+        return {
+          id: 'intent_what_are_you_doing',
+          en: `Right now I am chatting with you and helping you improve your English${this.salutation()}! What are you doing today?`,
+          de: `Gerade unterhalte ich mich mit dir und helfe dir, dein Englisch zu verbessern${this.salutation()}! Was machst du heute noch?`,
+          suggestions: [
+            "I am practicing English and relaxing at home.",
+            "Today I am working on my programming project.",
+            "Can you teach me 2 useful English words?"
           ]
         };
       }
@@ -4182,23 +4337,94 @@ ${cleanTip}`,
         };
       }
 
-      // 27. General direct question ending with '?' (Abwechslungsreich & pädagogisch wertvoll)
-      if (/\?\s*$/.test(norm.trim())) {
+      // 26d. "Do you like X?" / "Magst du X?" (Allgemeine Vorlieben-Frage an den Coach)
+      const likeMatch = norm.match(/\b(?:do\s+you\s+(?:like|love|enjoy)|magst\s+du|gef[aä]llt\s+dir)\s+([a-zäöüß\s]{2,30}?)[.!?\s]*$/i);
+      if (likeMatch) {
+        const likedTopic = likeMatch[1].trim();
+        return {
+          id: 'intent_do_you_like',
+          en: `Yes, I really enjoy ${likedTopic}${this.salutation()}! It is a great topic to talk about. What do you like most about ${likedTopic}?`,
+          de: `Ja, ich mag „${likedTopic}“ sehr gerne${this.salutation()}! Das ist ein tolles Gesprächsthema. Was gefällt dir daran am besten?`,
+          suggestions: [
+            `I really enjoy ${likedTopic} in my free time.`,
+            `Can you teach me some English words about ${likedTopic}?`,
+            "What else do you like to do?"
+          ]
+        };
+      }
+
+      // 27. General direct question (auch OHNE '?' am Ende bei Spracheingabe! z.B. "can you...", "are you...", "do you...", "what...", "how...", "kannst du...", "bist du...")
+      const isSpokenOrWrittenQuestion = /\?\s*$/.test(norm.trim()) ||
+        /^(can\s+you|could\s+you|would\s+you|will\s+you|do\s+you|are\s+you|is\s+it|is\s+there|are\s+there|have\s+you|did\s+you|what\b|how\b|why\b|where\b|when\b|who\b|which\b|kannst\s+du|k[oö]nntest\s+du|bist\s+du|hast\s+du|verstehst\s+du|sprichst\s+du|wei[sß]t\s+du|kennst\s+du|gibst\s+du|machst\s+du|was\b|wie\b|warum\b|weshalb\b|wieso\b|wo\b|wann\b|wer\b)\b/i.test(norm.trim());
+
+      if (isSpokenOrWrittenQuestion) {
+        // Prüfen, ob die Frage auf Deutsch gestellt wurde -> direkt auf die deutsche Frage eingehen & englische Übersetzung zeigen!
+        const isGermanQuestion = /\b(kannst\s+du|k[oö]nntest\s+du|bist\s+du|hast\s+du|verstehst\s+du|sprichst\s+du|wei[sß]t\s+du|kennst\s+du|machst\s+du|wie\s+geht|was\s+ist|warum\s+ist|wie\s+kann|wo\s+ist|ich\b|du\b|mir\b|mich\b|bitte\b|deutsch)\b/i.test(norm);
+        if (isGermanQuestion) {
+          const docCheck = (typeof SentenceDoctor !== 'undefined') ? SentenceDoctor.analyze(rawInput) : null;
+          const enTranslation = (docCheck && docCheck.isGerman && docCheck.correctedText) ? docCheck.correctedText.replace(/<[^>]+>/g, '').trim() : '';
+          if (enTranslation) {
+            return {
+              id: 'intent_german_question_translated',
+              en: `Yes, I understand your German question${this.salutation()}! In English, you can ask this as: "${enTranslation}". I am happy to help you with that — what details would you like to know?`,
+              de: `Ja, ich habe deine deutsche Frage verstanden${this.salutation()}! 🇩🇪➔🇬🇧 Auf Englisch fragst du das so: **„${enTranslation}“**. Ich helfe dir sehr gerne dabei!`,
+              suggestions: [
+                enTranslation,
+                "Can you give me a simple example?",
+                "Let's practice this in a short dialogue!"
+              ]
+            };
+          }
+          return {
+            id: 'intent_german_question_direct',
+            en: `Yes, I understand your question in German${this.salutation()}! Yes, we can gladly do that together. How would you like to start?`,
+            de: `Ja, ich verstehe deine deutsche Frage${this.salutation()}! Ja, das können wir sehr gerne zusammen machen. Wie möchtest du starten?`,
+            suggestions: [
+              "Can you give me an easy example in English?",
+              "Teach me 2 useful words for this topic.",
+              "Ask me a simple question in English!"
+            ]
+          };
+        }
+
+        // Englische "Can you / Could you / Will you ..." Frage direkt mit "Yes, of course!" beantworten
+        if (/^(can\s+you|could\s+you|would\s+you|will\s+you)\b/i.test(norm.trim())) {
+          return {
+            id: 'intent_can_you_question',
+            en: `Yes, of course I can${this.salutation()}! I am right here to help you with that. Tell me what topic or example you would like to start with!`,
+            de: `Ja, natürlich kann ich das${this.salutation()}! Ich helfe dir sofort dabei. Sag mir einfach, mit welchem Beispiel oder Thema wir beginnen sollen!`,
+            suggestions: [
+              "Can you give me an easy example sentence?",
+              "Ask me a simple everyday question!",
+              "Teach me 2 useful English words."
+            ]
+          };
+        }
+
+        // Englische "Are you / Do you / Have you ..." Frage direkt beantworten
+        if (/^(are\s+you|do\s+you|have\s+you|did\s+you)\b/i.test(norm.trim())) {
+          return {
+            id: 'intent_yes_no_question',
+            en: `Yes, absolutely${this.salutation()}! As your personal English coach, I understand both English and German and I am always ready to practice with you. What would you like to ask me next?`,
+            de: `Ja, absolut${this.salutation()}! Als dein persönlicher Englisch-Coach verstehe ich sowohl Englisch als auch Deutsch und übe jederzeit gerne mit dir. Was möchtest du mich als Nächstes fragen?`,
+            suggestions: [
+              "What are your favorite hobbies?",
+              "Can you ask me an easy question in English?",
+              "Teach me a useful English phrase!"
+            ]
+          };
+        }
+
         const questionPool = [
           {
-            en: `That is a thoughtful question${this.salutation()}! Taking it step by step with clear examples is always the best way. What specific part would you like to explore?`,
-            de: `Das ist eine durchdachte Frage${this.salutation()}! Schritt für Schritt mit klaren Beispielen vorzugehen ist immer der beste Weg. Welchen Teil möchtest du genauer ansehen?`,
+            en: `That is a great question${this.salutation()}! Taking it step by step with clear examples is always the best way. Would you like a simple explanation or an example sentence?`,
+            de: `Das ist eine tolle Frage${this.salutation()}! Schritt für Schritt mit klaren Beispielen vorzugehen ist immer der beste Weg. Möchtest du eine einfache Erklärung oder einen Beispielsatz?`,
             suggestions: ['Can you give me an easy example?', 'How would you say that in a daily conversation?', 'Teach me a useful word for this.']
           },
           {
-            en: `Great question${this.salutation()}! I am here to help you understand every aspect of English clearly. What would you like to focus on next?`,
-            de: `Tolle Frage${this.salutation()}! Ich helfe dir gerne, jeden Aspekt im Englischen zu verstehen. Worauf möchtest du dich als Nächstes konzentrieren?`,
+            en: `Good question${this.salutation()}! I am here to help you understand every aspect of English clearly. What part would you like me to explain first?`,
+            de: `Gute Frage${this.salutation()}! Ich helfe dir gerne, jeden Aspekt im Englischen klar zu verstehen. Welchen Teil soll ich dir zuerst erklären?`,
             suggestions: ['Let us focus on useful vocabulary.', 'Can you explain the grammar simply?', 'Let us practice with a short sentence.']
-          },
-          {
-            en: `Good point${this.salutation()}! Asking questions is the fastest way to learn. Would you like a simple explanation or a practical example?`,
-            de: `Guter Punkt${this.salutation()}! Fragen zu stellen ist der schnellste Weg zu lernen. Möchtest du eine einfache Erklärung oder ein praktisches Beispiel?`,
-            suggestions: ['A simple explanation, please.', 'Give me an everyday example.', 'Can we practice a short dialogue?']
           }
         ];
         const idx = (this.state.turnCount || 0) % questionPool.length;
@@ -4857,6 +5083,15 @@ ${cleanTip}`,
         toggleDialogSpeechRecording();
       });
     }
+
+    // Mikrofon-Sprachumschalter (🇬🇧 EN / 🇩🇪 DE) im Dialog
+    const btnDialogMicLang = document.getElementById('btnDialogMicLang');
+    if (btnDialogMicLang) {
+      btnDialogMicLang.addEventListener('click', () => {
+        toggleDialogMicLang();
+      });
+    }
+    updateDialogMicLangUI();
 
     // Dedizierter "Aufnahme stoppen & Abschicken"-Button
     const btnRecStopSend = document.getElementById('btnRecStopSend');
