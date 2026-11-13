@@ -2373,6 +2373,36 @@ function initApp() {
               'Can you ask me an easy question?',
               'Can we practice English for IT?'
             ]
+          },
+          {
+            id: 'beg_chat_2',
+            en: 'Practicing English step by step is so rewarding{name}! How is your day going so far?',
+            de: 'Schritt für Schritt Englisch zu üben bringt so viel{name}! Wie läuft dein Tag bisher?',
+            suggestions: [
+              'Today was busy with work and studies.',
+              'Pretty good, thanks! How about you?',
+              'I am ready to learn some new English phrases.'
+            ]
+          },
+          {
+            id: 'beg_chat_3',
+            en: 'You are making wonderful progress{name}! Is there a specific situation you want to feel more confident in, like meetings, travel, or smalltalk?',
+            de: 'Du machst tolle Fortschritte{name}! Gibt es eine bestimmte Situation, in der du sicherer werden willst, z. B. Meetings, Reisen oder Smalltalk?',
+            suggestions: [
+              'I want to be more confident in daily conversation.',
+              'I need English for IT jobs and technical standups.',
+              'Can you teach me some polite smalltalk phrases?'
+            ]
+          },
+          {
+            id: 'beg_chat_4',
+            en: 'Every conversation helps build your English fluency{name}! What is your favorite way to learn new things?',
+            de: 'Jedes Gespräch verbessert deine Sprachflüssigkeit{name}! Wie lernst du am liebsten Neues?',
+            suggestions: [
+              'I like practical conversations and exercises.',
+              'Listening to English music and podcasts helps me a lot.',
+              'I learn best by practicing a few minutes every day.'
+            ]
           }
         ],
         school_exams: [
@@ -2905,7 +2935,14 @@ function initApp() {
         [/\bwoerter\b/g, 'words'],
         [/\bunterhalten\b/g, 'chat'],
         [/\bplaudern\b/g, 'chat'],
-        [/\beinfach\b/g, 'simple']
+        [/\beinfach\b/g, 'simple'],
+        [/\bspeak\s+germany\b/g, 'speak german'],
+        [/\bdo\s+you\s+speak\s+germany\b/g, 'do you speak german'],
+        [/\bwelcje\b/g, 'welche'],
+        [/\bspra\b/g, 'sprache'],
+        [/\bdeutch\b/g, 'deutsch'],
+        [/\bgermani\b/g, 'germany'],
+        [/\bspeek\b/g, 'speak']
       ];
 
       for (const [pattern, repl] of typoMap) {
@@ -3530,13 +3567,59 @@ ${cleanTip}`,
         };
       }
 
-      // 23. Asking about German Language ("Do you speak German?")
-      if (/\b(do\s+you\s+speak\s+german|sprichst\s+du\s+deutsch|can\s+you\s+speak\s+german|verstehst\s+du\s+deutsch)\b/i.test(norm)) {
+      // 23a. Explain in German ("Explain in German", "Erklär es auf Deutsch")
+      if (/\b(explain(\s+it)?\s+in\s+german|erkl[aä]r(e)?(\s+es|\s+das)?\s+auf\s+deutsch|auf\s+deutsch\s+erkl[aä]ren)\b/i.test(norm)) {
+        return {
+          id: 'intent_explain_in_german',
+          en: `I am very happy to explain things in German! Whenever something is unclear or you need deeper explanations, just ask. The translation box directly below each of my messages also shows you the complete German text. What word or concept would you like me to explain right now?`,
+          de: `Sehr gerne erkläre ich es dir auf Deutsch! Wann immer etwas unklar ist oder du eine genauere Erklärung brauchst, frag mich einfach. Das Übersetzungsfeld direkt unter jeder meiner Nachrichten zeigt dir zudem immer den vollständigen deutschen Text. Welches Wort oder welche Grammatik soll ich dir jetzt erklären?`,
+          suggestions: [
+            "Kannst du mir den Unterschied zwischen 'since' und 'for' erklären?",
+            "Wie bildet man das Simple Past auf Englisch?",
+            "Everything is clear, let's keep chatting!"
+          ]
+        };
+      }
+
+      // 23b. What languages do you speak? / Welche Sprachen sprichst du / kannst du?
+      if (/\b(what\s+languages?(\s+(do|can)\s+you\s+speak)?|which\s+languages?(\s+(do|can)\s+you\s+speak)?|welche\s+sprachen?(\s+(sprichst|kannst|redest)\s+du)?|was\s+f[uü]r\s+sprachen?|how\s+many\s+languages|languages?\s+do\s+you\s+speak|welche\s+sprache\b|which\s+language)\b/i.test(norm)) {
+        return {
+          id: 'intent_languages_spoken',
+          en: `I speak both German and English fluently! In our chat, I primarily speak and teach English so you get plenty of active practice, but I understand everything in German and provide full German translations and helpful tips below every single message. Which language would you prefer right now?`,
+          de: `Ich spreche sowohl Deutsch als auch Englisch fließend! In unserem Chat spreche ich hauptsächlich Englisch mit dir, damit du viel aktive Übung bekommst – aber ich verstehe alles auf Deutsch und gebe dir unter jeder einzelnen Nachricht die komplette deutsche Übersetzung und hilfreiche Tipps. Welche Sprache ist dir gerade lieber?`,
+          suggestions: [
+            "Let's continue practicing in English!",
+            "Kannst du mir auf Deutsch erklären, wie wir am besten üben?",
+            "How do you say 'Ich möchte mein Englisch verbessern' in English?"
+          ]
+        };
+      }
+
+      // 23c. Asking about German or requesting German ("Speak German", "Do you speak German / Germany?", "Sprich Deutsch", "Kannst du Deutsch?")
+      if (/\b(speak\s+(in\s+)?(german|germany|deutsch)|(do|can|could|will)\s+you\s+(speak|talk|know|understand)\s+(german|germany|deutsch)|(can|let('?s)?|could)\s+(we\s+)?(speak|talk)\s+(in\s+)?(german|germany|deutsch)|(sprichst|kannst|redest|verstehst)\s+du\s+(auch\s+)?(deutsch|german|germany)|sprich\s+(mal\s+)?(deutsch|german)|auf\s+deutsch(\s+bitte)?|bitte\s+auf\s+deutsch|deutsch\s+sprechen|k[oö]nnen\s+wir\s+deutsch\s+sprechen|german\s+please|deutsch\s+bitte|in\s+german\s+please|talk\s+(in\s+)?(german|germany|deutsch))\b/i.test(norm)) {
         return {
           id: 'intent_speak_german',
-          en: `I understand German, but let us try simple English together! What would you like to say?`,
-          de: `Ich verstehe Deutsch, aber lass uns einfaches Englisch üben! Was möchtest du sagen?`,
-          suggestions: ['I want to say that I worked on the server.', 'How do you say Feierabend?', 'Okay, let us speak English!']
+          en: `Yes, of course! I speak and understand German fluently. Since our goal is to improve your English, I converse in English and always provide the complete German translation directly below every response. You can also write or speak to me in German anytime, and I will happily explain everything and show you how to say it in natural English! What would you like to talk about?`,
+          de: `Ja, natürlich! Ich verstehe und spreche fließend Deutsch. Da unser Ziel ist, dein Englisch zu verbessern, unterhalte ich mich auf Englisch mit dir und zeige dir immer direkt die deutsche Übersetzung unter jeder Antwort. Du kannst mir jederzeit auf Deutsch schreiben oder sprechen, und ich erkläre dir alles und helfe dir, es auf natürlichem Englisch zu formulieren! Worüber möchtest du sprechen?`,
+          suggestions: [
+            "Okay, let us practice in English!",
+            "Kannst du mir auf Deutsch die wichtigsten Grammatik-Tipps geben?",
+            "How do you say 'Ich verstehe fast alles' in English?"
+          ]
+        };
+      }
+
+      // 23d. Asking about English ("Do you speak English?", "Sprichst du Englisch?")
+      if (/\b((do|can|could)\s+you\s+(speak|talk|understand)\s+english|sprichst\s+du\s+englisch|kannst\s+du\s+englisch|verstehst\s+du\s+englisch|speak\s+english)\b/i.test(norm)) {
+        return {
+          id: 'intent_speak_english',
+          en: `Yes, absolutely! English is my primary language for our lessons. I am excited to help you speak, write, and understand English naturally and fluently. What topic would you like to explore today?`,
+          de: `Ja, absolut! Englisch ist meine Hauptsprache in unseren Lektionen. Ich freue mich darauf, dir zu helfen, ganz natürlich und fließend Englisch zu sprechen, zu schreiben und zu verstehen. Welches Thema möchtest du heute erkunden?`,
+          suggestions: [
+            "Let's practice everyday English conversation.",
+            "Can you teach me some common English phrases?",
+            "How is my pronunciation?"
+          ]
         };
       }
 
@@ -3637,7 +3720,7 @@ ${cleanTip}`,
       if (lower.includes('weather') || lower.includes('sunny') || lower.includes('rain') || lower.includes('cold') || lower.includes('cloud')) {
         topicList.push('weather_daily', 'coffee_break');
       }
-      if (lower.includes('chat') || lower.includes('talk') || lower.includes('conversation') || lower.includes('speak')) {
+      if (/\b(chat|let('?s)?\s+talk|just\s+talk|conversation|smalltalk|plaudern|unterhalten)\b/i.test(lower)) {
         topicList.push('casual_chat');
       }
 
@@ -3810,6 +3893,7 @@ ${cleanTip}`,
       };
     }
   };
+  window.DialogEngine = DialogEngine;
 
   function formatReplyText(t) {
     if (!t) return '';
