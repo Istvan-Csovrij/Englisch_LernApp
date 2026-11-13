@@ -553,7 +553,12 @@ function initApp() {
     }
   }
 
+  let speechChunkQueue = [];
+  let isCancelledSpeech = false;
+
   function stopSpeaking() {
+    isCancelledSpeech = true;
+    speechChunkQueue = [];
     try {
       if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
@@ -564,7 +569,7 @@ function initApp() {
   }
 
   function isSpeakingNow() {
-    return !!(window.speechSynthesis && window.speechSynthesis.speaking);
+    return !!(window.speechSynthesis && (window.speechSynthesis.speaking || speechChunkQueue.length > 0));
   }
 
   function toggleSpeakEnglish(text, triggerBtn = null, customRate = null, onEndCallback = null) {
@@ -574,7 +579,7 @@ function initApp() {
     }
 
     // Wenn gerade gesprochen wird:
-    if (window.speechSynthesis.speaking) {
+    if (isSpeakingNow()) {
       const isSameBtn = (triggerBtn && triggerBtn === activeSpeakingBtn);
       stopSpeaking();
       showToast('⏹️ Sprachausgabe angehalten');
@@ -586,12 +591,34 @@ function initApp() {
     speakEnglish(text, customRate, onEndCallback, triggerBtn);
   }
 
+  function splitTextIntoSpeechChunks(cleanText) {
+    if (!cleanText) return [];
+    if (cleanText.length <= 160) return [cleanText];
+    const rawParts = cleanText.match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [cleanText];
+    const chunks = [];
+    let current = '';
+    for (const part of rawParts) {
+      const trimmed = part.trim();
+      if (!trimmed) continue;
+      if ((current + ' ' + trimmed).trim().length <= 170) {
+        current = (current ? current + ' ' : '') + trimmed;
+      } else {
+        if (current) chunks.push(current);
+        current = trimmed;
+      }
+    }
+    if (current) chunks.push(current);
+    return chunks.length ? chunks : [cleanText];
+  }
+
   function speakEnglish(text, customRate = null, onEndCallback = null, triggerBtn = null) {
     if (!('speechSynthesis' in window)) {
       showToast('Sprachausgabe im Browser nicht unterstützt.');
       return;
     }
     try {
+      isCancelledSpeech = true;
+      speechChunkQueue = [];
       if (window.speechSynthesis.speaking) {
         window.speechSynthesis.cancel();
       }
@@ -603,53 +630,35 @@ function initApp() {
       if (!speechText) return;
 
       lastSpokenText = speechText;
+      isCancelledSpeech = false;
 
       const profile = getActiveVoiceProfile();
-      const utterance = new SpeechSynthesisUtterance(speechText);
-      utterance.lang = 'en-US';
-
-      // Stimme mit Gender-Support für Dialogpartner & gewählten Avatar ermitteln
       const meta = getCurrentPartnerMeta();
       const preferMale = meta.isMale;
       const voice = getBestEnglishVoice(preferMale);
 
-      // Basis-Tempo aus gewähltem Profil (oder customRate falls übergeben)
-      // Standard: 0.94x - flüssig, natürlich und nicht mehr zu langsam!
       let targetRate = (typeof customRate === 'number' && customRate > 0) ? customRate : profile.rate;
       let targetPitch = profile.pitch;
+      const isCustomSlow = (typeof customRate === 'number' && customRate > 0 && customRate < 0.88);
 
       if (preferMale) {
-        // MÄNNLICHE STIMME (Leo):
-        // Nutzerwunsch: "man soll etwas tiefer und jugendlicher angehört werden"
-        // -> Tonhöhe auf 0.92 (warmer, sonorer Bariton)
-        // -> Tempo auf 0.95x - 0.96x (flüssig, aktiv, jugendlich und frisch)
         targetPitch = 0.92;
-        targetRate = Math.max(targetRate, 0.95);
+        if (!isCustomSlow) targetRate = Math.max(targetRate, 0.95);
       } else {
-        // WEIBLICHE STIMME (Nova):
-        // Nutzerwunsch: "frau stimme soll etwas mehr weiblich sein"
-        // -> Tonhöhe auf 1.16 (deutlich femininer, heller, weich und melodisch)
-        // -> Tempo auf 0.93x - 0.94x (natürlich-fließendes, sympathisches Konversationstempo)
         targetPitch = 1.16;
-        targetRate = Math.max(targetRate, 0.93);
+        if (!isCustomSlow) targetRate = Math.max(targetRate, 0.93);
       }
 
       if (voice) {
-        utterance.voice = voice;
         const vName = (voice.name || '').toLowerCase();
-        // Gezieltes Feintuning für Windows-SAPI Desktop-Stimmen (David & Zira):
         if (vName.includes('david')) {
-          targetPitch = 0.91; // Sonor-jugendlich, kein metallisches Dröhnen
-          targetRate = 0.95;  // Natürlich flüssiges Tempo
+          targetPitch = 0.91;
+          if (!isCustomSlow) targetRate = 0.95;
         } else if (vName.includes('zira')) {
-          targetPitch = 1.18; // Spürbar femininer & weicher Klang
-          targetRate = 0.94;  // Natürlich flüssiges Tempo
+          targetPitch = 1.18;
+          if (!isCustomSlow) targetRate = 0.94;
         }
       }
-
-      utterance.rate = targetRate;
-      utterance.pitch = targetPitch;
-      utterance.volume = profile.volume || 0.95;
 
       setAvatarSpeaking(true);
 
@@ -666,25 +675,55 @@ function initApp() {
         mainToggle.classList.add('is-speaking-btn');
       }
 
-      utterance.onend = () => {
-        setAvatarSpeaking(false);
-        resetSpeakingBtn();
-        window._activeUtterance = null;
-        if (typeof onEndCallback === 'function') {
-          onEndCallback();
+      speechChunkQueue = splitTextIntoSpeechChunks(speechText);
+
+      function speakNextChunk() {
+        if (isCancelledSpeech || speechChunkQueue.length === 0) {
+          setAvatarSpeaking(false);
+          resetSpeakingBtn();
+          window._activeUtterance = null;
+          if (!isCancelledSpeech && typeof onEndCallback === 'function') {
+            onEndCallback();
+          }
+          return;
         }
-      };
 
-      utterance.onerror = (e) => {
-        setAvatarSpeaking(false);
-        resetSpeakingBtn();
-        window._activeUtterance = null;
-        console.warn('SpeechSynthesis error:', e);
-      };
+        const nextChunkText = speechChunkQueue.shift();
+        const utterance = new SpeechSynthesisUtterance(nextChunkText);
+        utterance.lang = (voice && voice.lang) ? voice.lang : 'en-US';
+        if (voice) utterance.voice = voice;
+        utterance.rate = targetRate;
+        utterance.pitch = targetPitch;
+        utterance.volume = profile.volume || 0.95;
 
-      // Referenz halten gegen Garbage-Collection Cutoffs
-      window._activeUtterance = utterance;
-      window.speechSynthesis.speak(utterance);
+        utterance.onend = () => {
+          if (isCancelledSpeech) return;
+          if (speechChunkQueue.length > 0) {
+            speakNextChunk();
+          } else {
+            setAvatarSpeaking(false);
+            resetSpeakingBtn();
+            window._activeUtterance = null;
+            if (typeof onEndCallback === 'function') {
+              onEndCallback();
+            }
+          }
+        };
+
+        utterance.onerror = (e) => {
+          if (e && (e.error === 'interrupted' || e.error === 'canceled')) return;
+          setAvatarSpeaking(false);
+          resetSpeakingBtn();
+          speechChunkQueue = [];
+          window._activeUtterance = null;
+          console.warn('SpeechSynthesis error:', e);
+        };
+
+        window._activeUtterance = utterance;
+        window.speechSynthesis.speak(utterance);
+      }
+
+      speakNextChunk();
     } catch (err) {
       console.warn('speakEnglish error:', err);
       resetSpeakingBtn();
@@ -731,18 +770,13 @@ function initApp() {
     }
   }
 
-  if ('speechSynthesis' in window) {
-    window.speechSynthesis.onvoiceschanged = () => {
-      window.speechSynthesis.getVoices();
-    };
-  }
-
-  // --- SPEECH RECOGNITION (SPRACHE PRÜFEN & KONTROLLIEREN - v30 CONTINUOUS & PUSH-TO-TALK) ---
+  // --- SPEECH RECOGNITION (SPRACHE PRÜFEN & KONTROLLIEREN - v34 PAUSE-RESILIENT & FUZZY MATCHING) ---
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   let recognition = null;
   let isRecording = false;
   let activeMicTarget = 'speechTrainer';
   let isDialogRecording = false;
+  let manualDialogStopRequested = false;
   let dialogSpeechFinalAccumulator = '';
 
   if (SpeechRecognition) {
@@ -764,14 +798,17 @@ function initApp() {
         cardMicBtn.classList.add('recording');
         cardMicBtn.textContent = '🔴 Höre...';
         const cardFb = document.getElementById('cardPronounceFeedback');
-        cardFb.className = 'card-pronounce-feedback listening';
-        cardFb.textContent = '🔴 Höre zu... Sprich jetzt das englische Wort!';
+        if (cardFb) {
+          cardFb.style.display = 'block';
+          cardFb.className = 'card-pronounce-feedback listening';
+          cardFb.textContent = '🔴 Höre zu... Sprich jetzt das englische Wort!';
+        }
       } else if (activeMicTarget === 'dialogChat') {
         isDialogRecording = true;
         const dialogMic = document.getElementById('btnDialogMic');
         if (dialogMic) dialogMic.classList.add('recording');
         const hint = document.getElementById('dialogInputHint');
-        if (hint) hint.textContent = '🔴 Aufnahme aktiv... Sprich in Ruhe! Klicke auf "⏹️ Stoppen & Abschicken", wenn du fertig bist.';
+        if (hint) hint.textContent = '🔴 Aufnahme aktiv (Pausen-Schutz aktiv)... Sprich in Ruhe! Klicke auf "⏹️ Stoppen & Abschicken", wenn du fertig bist.';
         showDialogRecordingBar(true);
       }
     };
@@ -800,16 +837,21 @@ function initApp() {
         }
         const statusText = document.getElementById('dialogRecordingStatusText');
         if (statusText && fullSpoken) {
-          const displaySample = fullSpoken.length > 40 ? fullSpoken.slice(0, 37) + '...' : fullSpoken;
+          const displaySample = fullSpoken.length > 48 ? '...' + fullSpoken.slice(-45) : fullSpoken;
           statusText.textContent = `🎙️ "${displaySample}"`;
         }
       }
     };
 
     recognition.onerror = (event) => {
+      if (event.error === 'no-speech' && activeMicTarget === 'dialogChat' && isDialogRecording && !manualDialogStopRequested) {
+        // Im Dialog-Modus bei kurzer Denkpause nicht abbrechen, sondern weiter zuhören!
+        return;
+      }
       isRecording = false;
       if (isDialogRecording) {
         isDialogRecording = false;
+        manualDialogStopRequested = true;
         showDialogRecordingBar(false);
       }
       stopAllRecordingUI();
@@ -817,20 +859,33 @@ function initApp() {
         showToast('⚠️ Mikrofon-Zugriff im Browser blockiert.');
       } else if (event.error === 'no-speech') {
         // Stille abfangen ohne Toast-Spam
-      } else {
+      } else if (event.error !== 'aborted') {
         showToast('⚠️ Sprachaufnahme: ' + event.error);
       }
     };
 
     recognition.onend = () => {
       isRecording = false;
+      // Pausen-Schutz im Dialog-Modus: Wenn der Browser nach kurzer Stille automatisch stoppt,
+      // der Nutzer aber noch nicht auf "Stoppen & Abschicken" geklickt hat -> nahtlos weiterhören!
+      if (activeMicTarget === 'dialogChat' && isDialogRecording && !manualDialogStopRequested) {
+        try {
+          recognition.start();
+          return;
+        } catch (e) {
+          // Falls direkter Neustart fehlschlägt, nach 120ms erneut versuchen
+          setTimeout(() => {
+            if (isDialogRecording && !manualDialogStopRequested) {
+              try { recognition.start(); } catch (err) {}
+            }
+          }, 120);
+          return;
+        }
+      }
+
       if (isDialogRecording) {
         isDialogRecording = false;
         showDialogRecordingBar(false);
-        const input = document.getElementById('dialogTextInput');
-        if (input && input.value.trim()) {
-          showToast('🎤 Aufnahme beendet. Prüfe deinen Satz und tippe auf Senden ➤');
-        }
       }
       stopAllRecordingUI();
     };
@@ -872,8 +927,8 @@ function initApp() {
         sendBtn.title = 'Nachricht senden';
       }
     }
-    if (statusText && active) {
-      statusText.textContent = 'Aufnahme läuft... Sprich in Ruhe deinen Satz!';
+    if (statusText && active && !dialogSpeechFinalAccumulator) {
+      statusText.textContent = 'Aufnahme läuft... Sprich in Ruhe (Pausen erlaubt)!';
     }
   }
 
@@ -882,10 +937,15 @@ function initApp() {
       showToast('⚠️ Spracherkennung im Browser nicht verfügbar.');
       return;
     }
+    // Laufende Sprachausgabe des Coaches sofort stoppen, damit sie nicht ins Mikrofon aufgenommen wird
+    if (isSpeakingNow()) {
+      stopSpeaking();
+    }
     activeMicTarget = 'dialogChat';
     isDialogRecording = true;
-    dialogSpeechFinalAccumulator = '';
+    manualDialogStopRequested = false;
     const input = document.getElementById('dialogTextInput');
+    dialogSpeechFinalAccumulator = input && input.value.trim() ? input.value.trim() : '';
     if (input && !input.value.trim()) {
       input.placeholder = '🎙️ Höre zu... Dein gesprochener Satz erscheint hier...';
     }
@@ -902,27 +962,34 @@ function initApp() {
   }
 
   function stopDialogRecordingAndSend() {
+    manualDialogStopRequested = true;
     isDialogRecording = false;
     if (isRecording) {
       try { recognition.stop(); } catch(e) {}
     }
     showDialogRecordingBar(false);
-    const input = document.getElementById('dialogTextInput');
-    const text = (input ? input.value : '').trim();
-    if (text) {
-      submitUserChatMessage();
-    } else {
-      showToast('ℹ️ Keine Sprache erkannt. Bitte sprich deinen Satz ins Mikrofon.');
-    }
+    stopAllRecordingUI();
+    // Kurze Verzögerung (150ms), damit das letzte gesprochene Wort noch vom Browser übertragen wird
+    setTimeout(() => {
+      const input = document.getElementById('dialogTextInput');
+      const text = (input ? input.value : '').trim();
+      if (text) {
+        submitUserChatMessage();
+      } else {
+        showToast('ℹ️ Keine Sprache erkannt. Bitte sprich deinen Satz ins Mikrofon.');
+      }
+    }, 150);
   }
 
   function cancelDialogRecording() {
+    manualDialogStopRequested = true;
     isDialogRecording = false;
     dialogSpeechFinalAccumulator = '';
     if (isRecording) {
       try { recognition.stop(); } catch(e) {}
     }
     showDialogRecordingBar(false);
+    stopAllRecordingUI();
     const input = document.getElementById('dialogTextInput');
     if (input) input.value = '';
     showToast('❌ Aufnahme abgebrochen');
@@ -933,11 +1000,70 @@ function initApp() {
       showToast('⚠️ Spracherkennung im Browser nicht verfügbar.');
       return;
     }
-    if (isRecording && activeMicTarget === 'dialogChat') {
+    if ((isRecording || isDialogRecording) && activeMicTarget === 'dialogChat') {
       stopDialogRecordingAndSend();
     } else {
       startDialogSpeechRecording();
     }
+  }
+
+  // Hilfsfunktionen für tolerante Aussprache-Bewertung (Levenshtein + Zahlen/Kontraktionen)
+  function normalizePronunciationTokens(str) {
+    if (!str) return [];
+    const numMap = {
+      '0': 'zero', '1': 'one', '2': 'two', '3': 'three', '4': 'four',
+      '5': 'five', '6': 'six', '7': 'seven', '8': 'eight', '9': 'nine',
+      '10': 'ten', '11': 'eleven', '12': 'twelve', '13': 'thirteen',
+      '15': 'fifteen', '20': 'twenty', '30': 'thirty', '50': 'fifty',
+      '80': 'eighty', '100': 'hundred', '800': 'eight hundred'
+    };
+    let s = str.toLowerCase()
+      .replace(/\bi'm\b/g, 'i am')
+      .replace(/\bit's\b/g, 'it is')
+      .replace(/\bdon't\b/g, 'do not')
+      .replace(/\bdoesn't\b/g, 'does not')
+      .replace(/\bdidn't\b/g, 'did not')
+      .replace(/\bcan't\b/g, 'cannot')
+      .replace(/\bwon't\b/g, 'will not')
+      .replace(/\blet's\b/g, 'let us')
+      .replace(/\bwe're\b/g, 'we are')
+      .replace(/\bthey're\b/g, 'they are')
+      .replace(/\byou're\b/g, 'you are')
+      .replace(/\bi've\b/g, 'i have')
+      .replace(/\bi'll\b/g, 'i will')
+      .replace(/%/g, ' percent ');
+    return s.replace(/[^a-z0-9\s]/g, ' ')
+      .split(/\s+/)
+      .filter(Boolean)
+      .map(w => numMap[w] || w);
+  }
+
+  function isWordPronunciationMatch(targetWord, spokenWordsList) {
+    if (!targetWord) return true;
+    if (spokenWordsList.includes(targetWord)) return true;
+    for (const sw of spokenWordsList) {
+      if (Math.abs(sw.length - targetWord.length) <= 2 && (sw.includes(targetWord) || targetWord.includes(sw))) {
+        return true;
+      }
+      // Levenshtein-Distanz <= 1 bei Wörtern >= 4 Buchstaben, <= 2 bei >= 7 Buchstaben
+      if (targetWord.length >= 4) {
+        const maxDist = targetWord.length >= 7 ? 2 : 1;
+        const m = targetWord.length, n = sw.length;
+        if (Math.abs(m - n) <= maxDist) {
+          const dp = Array.from({ length: m + 1 }, (_, i) => [i]);
+          for (let j = 1; j <= n; j++) dp[0][j] = j;
+          for (let i = 1; i <= m; i++) {
+            for (let j = 1; j <= n; j++) {
+              dp[i][j] = targetWord[i - 1] === sw[j - 1]
+                ? dp[i - 1][j - 1]
+                : 1 + Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]);
+            }
+          }
+          if (dp[m][n] <= maxDist) return true;
+        }
+      }
+    }
+    return false;
   }
 
   // --- AUSSPRACHE-BEWERTUNG IM SPRECHTRAINER ---
@@ -950,7 +1076,7 @@ function initApp() {
     recognizedBox.textContent = `"${spoken}"`;
     document.getElementById('spokenResultContainer').style.display = 'block';
 
-    const cleanSpokenWords = spoken.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(Boolean);
+    const cleanSpokenWords = normalizePronunciationTokens(spoken);
     const targetRawWords = target.split(/\s+/);
     const cleanTargetWords = target.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(Boolean);
 
@@ -959,8 +1085,9 @@ function initApp() {
 
     cleanTargetWords.forEach((targetWord, idx) => {
       const originalWord = targetRawWords[idx] || targetWord;
-      const isMatched = cleanSpokenWords.includes(targetWord) || 
-        cleanSpokenWords.some(sw => Math.abs(sw.length - targetWord.length) <= 1 && (sw.includes(targetWord) || targetWord.includes(sw)));
+      const normTargetTokens = normalizePronunciationTokens(targetWord);
+      const isMatched = normTargetTokens.every(t => isWordPronunciationMatch(t, cleanSpokenWords)) ||
+                        isWordPronunciationMatch(targetWord, cleanSpokenWords);
 
       const chip = document.createElement('div');
       chip.className = `word-chip ${isMatched ? 'correct' : 'wrong'}`;
@@ -978,8 +1105,9 @@ function initApp() {
       if (isMatched) matchCount++;
     });
 
-    const scorePct = Math.round((matchCount / cleanTargetWords.length) * 100);
+    const scorePct = Math.round((matchCount / Math.max(1, cleanTargetWords.length)) * 100);
 
+    feedbackBox.style.display = 'block';
     feedbackBox.className = 'score-feedback';
     if (scorePct >= 80) {
       feedbackBox.classList.add('good');
@@ -1006,15 +1134,17 @@ function initApp() {
     const card = filteredVocab[currentCardIndex];
     const target = card.english;
     const cardFb = document.getElementById('cardPronounceFeedback');
+    if (cardFb) cardFb.style.display = 'block';
 
-    const cleanSpoken = spoken.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim();
-    const cleanTarget = target.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim();
+    const spokenTokens = normalizePronunciationTokens(spoken);
+    const targetTokens = normalizePronunciationTokens(target.split('/')[0].replace(/\(.*?\)/g, ''));
 
-    const isMatch = cleanSpoken === cleanTarget || cleanSpoken.includes(cleanTarget) || cleanTarget.includes(cleanSpoken);
+    const matchedTokens = targetTokens.filter(t => isWordPronunciationMatch(t, spokenTokens));
+    const isMatch = targetTokens.length > 0 && (matchedTokens.length / targetTokens.length) >= 0.75;
 
     if (isMatch) {
       cardFb.className = 'card-pronounce-feedback success';
-      cardFb.innerHTML = `🎉 <strong>Perfekt!</strong> Du hast gesagt: <em>"${spoken}"</em> (+10 XP)`;
+      cardFb.innerHTML = `🎉 <strong>Perfekt!</strong> Du hast gesagt: <em>"${escapeHtml(spoken)}"</em> (+10 XP)`;
       playSound('success');
       addXP(10);
       showToast('🎉 Aussprache korrekt! +10 XP');
@@ -1026,7 +1156,7 @@ function initApp() {
       }
     } else {
       cardFb.className = 'card-pronounce-feedback wrong';
-      cardFb.innerHTML = `⚠️ Gehört: <em>"${spoken}"</em><br>Tippe auf <strong>🔊 Anhören</strong> und probiere es nochmal!`;
+      cardFb.innerHTML = `⚠️ Gehört: <em>"${escapeHtml(spoken)}"</em><br>Tippe auf <strong>🔊 Anhören</strong> und probiere es nochmal!`;
       playSound('try-again');
       showToast('Aussprache noch nicht ganz exakt');
     }
@@ -1464,7 +1594,7 @@ function initApp() {
     let idx = filteredVocab.findIndex(v => v.id === vocabId);
     if (idx === -1) {
       currentCategory = 'all';
-      document.querySelectorAll('.cat-chip').forEach(c => {
+      document.querySelectorAll('.cat-btn').forEach(c => {
         c.classList.toggle('active', c.dataset.category === 'all');
       });
       filteredVocab = [...VOCAB_DATA];
@@ -1473,9 +1603,9 @@ function initApp() {
     if (idx !== -1) {
       currentCardIndex = idx;
       renderCurrentCard();
-      switchView('flashcards');
+      switchView('cards');
       showToast(`🎴 Karteikarte geöffnet: ${filteredVocab[idx].english}`);
-      const cardEl = document.getElementById('flashcardEl');
+      const cardEl = document.getElementById('mainFlashcard');
       if (cardEl) {
         cardEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
@@ -1850,14 +1980,40 @@ function initApp() {
         explanation = '💡 Bei Berufsbezeichnungen im Englischen muss immer ein unbestimmter Artikel <strong>"a"</strong> oder <strong>"an"</strong> stehen (z. B. <em>"I am a software developer"</em>).';
       }
 
-      // Regel K: Unzählbare Nomen: "informations", "softwares", "feedbacks"
-      if (!hasError && /\b(informations|softwares|hardwares|feedbacks)\b/i.test(lower)) {
+      // Regel K: Unzählbare Nomen: "informations", "softwares", "feedbacks", "equipments", "advices", "knowledges"
+      if (!hasError && /\b(informations|softwares|hardwares|feedbacks|equipments|advices|knowledges)\b/i.test(lower)) {
         hasError = true;
         corrected = corrected.replace(/\binformations\b/i, 'information')
                              .replace(/\bsoftwares\b/i, 'software')
                              .replace(/\bhardwares\b/i, 'hardware')
-                             .replace(/\bfeedbacks\b/i, 'feedback');
-        explanation = '💡 Wörter wie <strong>"information"</strong>, <strong>"software"</strong> und <strong>"feedback"</strong> sind im Englischen unzählbar und haben keine Pluralform mit -s.';
+                             .replace(/\bfeedbacks\b/i, 'feedback')
+                             .replace(/\bequipments\b/i, 'equipment')
+                             .replace(/\badvices\b/i, 'advice')
+                             .replace(/\bknowledges\b/i, 'knowledge');
+        explanation = '💡 Wörter wie <strong>"information"</strong>, <strong>"software"</strong>, <strong>"feedback"</strong>, <strong>"equipment"</strong> und <strong>"advice"</strong> sind im Englischen unzählbar und haben keine Pluralform mit -s.';
+      }
+
+      // Regel K2: "discuss about" -> "discuss" / "explain me" -> "explain to me" / "listen music" -> "listen to music"
+      if (!hasError && /\bdiscuss\s+about\b/i.test(lower)) {
+        hasError = true;
+        corrected = corrected.replace(/\bdiscuss\s+about\b/i, 'discuss');
+        explanation = '💡 Nach <strong>"discuss"</strong> steht im Englischen kein "about" (z. B. <em>"We discussed the architecture"</em>).';
+      }
+      if (!hasError && /\bexplain\s+me\b/i.test(lower)) {
+        hasError = true;
+        corrected = corrected.replace(/\bexplain\s+me\b/i, 'explain to me');
+        explanation = '💡 Bei <em>explain</em> heißt es immer <strong>"explain to me"</strong> (mit "to"), nicht "explain me".';
+      }
+      if (!hasError && /\blisten\s+(music|podcasts|radio|songs)\b/i.test(lower)) {
+        hasError = true;
+        corrected = corrected.replace(/\blisten\s+(music|podcasts|radio|songs)\b/i, 'listen to $1');
+        explanation = '💡 Nach <em>listen</em> folgt immer <strong>"to"</strong>: <strong>"listen to music"</strong>.';
+      }
+      if (!hasError && /\bin\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday|weekend)\b/i.test(lower)) {
+        hasError = true;
+        corrected = corrected.replace(/\bin\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday)/i, 'on $1')
+                             .replace(/\bin\s+weekend\b/i, 'on the weekend');
+        explanation = '💡 Vor Wochentagen steht im Englischen immer die Präposition <strong>"on"</strong> (z. B. <em>"on Monday"</em>, <em>"on Friday"</em>).';
       }
 
       // Regel L: Modalverb + to: "must to", "can to", "should to"
@@ -1997,6 +2153,11 @@ function initApp() {
       score: 0,
       totalAsked: 0,
       deck: []
+    },
+
+    salutation() {
+      const name = getUserName();
+      return name ? `, ${name}` : '';
     },
 
     start() {
@@ -4948,7 +5109,7 @@ ${cleanTip}`,
 
     // Falls Sprachmodus aktiv ist, Begrüßung vorlesen
     if (currentDialogMode === 'voice') {
-      speakEnglish(scenario.initialPrompt);
+      speakEnglish(promptEn);
     }
   }
 
@@ -5008,6 +5169,18 @@ ${cleanTip}`,
     ];
   }
 
+  function renderInteractiveEnglishText(rawText) {
+    if (!rawText) return '';
+    return String(rawText).split(/(\s+)/).map(token => {
+      if (/^\s+$/.test(token)) return token.replace(/\n/g, '<br>');
+      const cleanWord = token.replace(/^[^A-Za-z0-9]+|[^A-Za-z0-9]+$/g, '');
+      if (cleanWord.length >= 2) {
+        return `<span class="chat-word-token" data-word="${escapeHtml(cleanWord)}" title="Tippen für Einzelwort-Aussprache & Übersetzung">${escapeHtml(token)}</span>`;
+      }
+      return escapeHtml(token);
+    }).join('');
+  }
+
   function renderChatLog(scenarioId) {
     const chatLog = document.getElementById('dialogChatLog');
     const chipsContainer = document.getElementById('quickRepliesChips');
@@ -5025,20 +5198,45 @@ ${cleanTip}`,
         msgDiv.innerHTML = `
           <div class="chat-partner-bubble">
             <div class="chat-partner-sender">${item.sender}</div>
-            <div class="chat-partner-text">${item.textEn}</div>
+            <div class="chat-partner-text">${renderInteractiveEnglishText(item.textEn)}</div>
             <div class="chat-partner-de">🇩🇪 <em>${item.textDe}</em></div>
             <div class="chat-partner-actions">
-              <button class="chat-audio-btn" data-speak="${encodeURIComponent(item.textEn)}">
+              <button class="chat-audio-btn chat-btn-normal" data-speak="${encodeURIComponent(item.textEn)}" title="In natürlichem Tempo vorlesen">
                 🔊 Vorlesen
               </button>
+              <button class="chat-audio-btn chat-btn-slow" data-speak-slow="${encodeURIComponent(item.textEn)}" title="Langsam und deutlich vorlesen (0.78x)">
+                🐢 Langsam
+              </button>
+              <span class="chat-word-click-hint">💡 Wort antippen = Einzel-Aussprache</span>
             </div>
           </div>
         `;
 
-        msgDiv.querySelector('.chat-audio-btn').addEventListener('click', (e) => {
+        msgDiv.querySelector('.chat-btn-normal').addEventListener('click', (e) => {
           const btn = e.currentTarget;
           const textToSpeak = decodeURIComponent(btn.dataset.speak);
           toggleSpeakEnglish(textToSpeak, btn);
+        });
+
+        msgDiv.querySelector('.chat-btn-slow').addEventListener('click', (e) => {
+          const btn = e.currentTarget;
+          const textToSpeak = decodeURIComponent(btn.dataset.speakSlow);
+          toggleSpeakEnglish(textToSpeak, btn, 0.78);
+        });
+
+        msgDiv.querySelectorAll('.chat-word-token').forEach(wordSpan => {
+          wordSpan.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const w = e.currentTarget.dataset.word;
+            if (!w) return;
+            speakEnglish(w, 0.80);
+            const dictHit = (typeof TeacherDictionary !== 'undefined' && TeacherDictionary.lookup) ? TeacherDictionary.lookup(w) : null;
+            if (dictHit && dictHit.german) {
+              showToast(`🔊 "${w}" = ${dictHit.german}`);
+            } else {
+              showToast(`🔊 "${w}"`);
+            }
+          });
         });
 
         chatLog.appendChild(msgDiv);

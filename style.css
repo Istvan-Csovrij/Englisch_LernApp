@@ -3742,3 +3742,59 @@ button, .nav-icon-btn, .action-btn, .cat-btn, .card-audio-btn, .card-mic-btn {
   box-shadow: 0 0 12px rgba(16, 185, 129, 0.6);
   animation: recSendPulse 1.8s infinite;
 }
+
+/* ============================================================
+   v34: INTERACTIVE CLICKABLE WORDS & SLOW AUDIO IN DIALOG CHAT
+   ============================================================ */
+.chat-word-token {
+  cursor: pointer;
+  border-radius: 4px;
+  padding: 0 2px;
+  margin: 0 -1px;
+  transition: background 0.15s ease, color 0.15s ease;
+  border-bottom: 1px dotted rgba(56, 189, 248, 0.35);
+}
+
+.chat-word-token:hover,
+.chat-word-token:active {
+  background: rgba(56, 189, 248, 0.22);
+  color: #7dd3fc;
+  border-bottom-color: #38bdf8;
+}
+
+.chat-partner-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.chat-btn-slow {
+  background: rgba(168, 85, 247, 0.14) !important;
+  border-color: rgba(192, 132, 252, 0.35) !important;
+  color: #d8b4fe !important;
+}
+
+.chat-btn-slow:hover,
+.chat-btn-slow:active {
+  background: rgba(168, 85, 247, 0.28) !important;
+  border-color: #c084fc !important;
+  color: #ffffff !important;
+}
+
+.chat-word-click-hint {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  margin-left: auto;
+  opacity: 0.85;
+}
+
+@media (max-width: 520px) {
+  .chat-word-click-hint {
+    width: 100%;
+    margin-left: 0;
+    margin-top: 2px;
+  }
+}
+

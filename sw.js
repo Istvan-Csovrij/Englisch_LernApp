@@ -1,5 +1,5 @@
-// Service Worker: Offline-Support für Englisch-LernApp (v29 - Soft Voice & Speech Controls)
-const CACHE_NAME = 'english-master-cache-v33';
+// Service Worker: Offline-Support für Englisch-LernApp (v34 - Pause-Resilient Speech & Interactive Word Audio)
+const CACHE_NAME = 'english-master-cache-v34';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
