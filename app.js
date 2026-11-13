@@ -2094,6 +2094,214 @@ function initApp() {
     }
   };
 
+  // ============================================================
+  // DER PERSÖNLICHE WÖRTERBUCH- & ÜBERSETZUNGS-LEHRER (v32)
+  // ============================================================
+  const TeacherDictionary = {
+    // Umfangreiches Alltags-, Job-, Schul- und IT-Wörterbuch (Deutsch <-> Englisch)
+    common: {
+      'feierabend': { de: 'Feierabend', en: 'end of work / calling it a day / clocking off', phonetic: 'end ov wörk', exampleEn: 'It is 5 PM, time for Feierabend! (Time to call it a day!)', exampleDe: 'Es ist 17 Uhr, Zeit für Feierabend!' },
+      'erfolg': { de: 'Erfolg', en: 'success / achievement', phonetic: 'sək-SES', exampleEn: 'Consistency is the key to learning success.', exampleDe: 'Beständigkeit ist der Schlüssel zum Lernerfolg.' },
+      'erfolgreich': { de: 'erfolgreich', en: 'successful', phonetic: 'sək-SES-fəl', exampleEn: 'She is a successful software engineer.', exampleDe: 'Sie ist eine erfolgreiche Softwareentwicklerin.' },
+      'schlüssel': { de: 'Schlüssel', en: 'key', phonetic: 'kee', exampleEn: 'Here is the key to the office.', exampleDe: 'Hier ist der Schlüssel zum Büro.' },
+      'zuverlässig': { de: 'zuverlässig', en: 'reliable / dependable', phonetic: 'ri-LY-uh-bəl', exampleEn: 'Our cloud server is completely reliable.', exampleDe: 'Unser Cloud-Server ist absolut zuverlässig.' },
+      'zuverlässigkeit': { de: 'Zuverlässigkeit', en: 'reliability', phonetic: 'ri-ly-uh-BIL-i-tee', exampleEn: 'System reliability is our top priority.', exampleDe: 'System-Zuverlässigkeit ist unsere oberste Priorität.' },
+      'schwierig': { de: 'schwierig', en: 'difficult / challenging / hard', phonetic: 'DIF-i-kəlt', exampleEn: 'This task was difficult, but we solved it.', exampleDe: 'Diese Aufgabe war schwierig, aber wir haben sie gelöst.' },
+      'einfach': { de: 'einfach', en: 'simple / easy', phonetic: 'SIM-pəl', exampleEn: 'Learning English step by step is simple.', exampleDe: 'Schritt für Schritt Englisch zu lernen ist einfach.' },
+      'wichtig': { de: 'wichtig', en: 'important / crucial / essential', phonetic: 'im-POR-tənt', exampleEn: 'Good communication is very important in IT.', exampleDe: 'Gute Kommunikation ist sehr wichtig in der IT.' },
+      'entscheidung': { de: 'Entscheidung', en: 'decision', phonetic: 'di-SIZH-ən', exampleEn: 'We made an important architectural decision.', exampleDe: 'Wir haben eine wichtige Architekturentscheidung getroffen.' },
+      'fortschritt': { de: 'Fortschritt', en: 'progress', phonetic: 'PROG-res', exampleEn: 'You are making wonderful progress every day!', exampleDe: 'Du machst jeden Tag wundervolle Fortschritte!' },
+      'lösung': { de: 'Lösung', en: 'solution', phonetic: 'suh-LOO-shən', exampleEn: 'We developed an elegant solution for this problem.', exampleDe: 'Wir haben eine elegante Lösung für dieses Problem entwickelt.' },
+      'prüfung': { de: 'Prüfung', en: 'exam / test / examination', phonetic: 'ig-ZAM', exampleEn: 'I prepared thoroughly for my final exam.', exampleDe: 'Ich habe mich gründlich auf meine Abschlussprüfung vorbereitet.' },
+      'klausur': { de: 'Klausur', en: 'written exam / paper', phonetic: 'ig-ZAM', exampleEn: 'We had a math exam at school today.', exampleDe: 'Wir hatten heute eine Mathe-Klausur in der Schule.' },
+      'erfahrung': { de: 'Erfahrung', en: 'experience', phonetic: 'ik-SPEER-ee-əns', exampleEn: 'Practical experience is the best teacher.', exampleDe: 'Praktische Erfahrung ist der beste Lehrer.' },
+      'begriff': { de: 'Begriff', en: 'term / concept', phonetic: 'turm', exampleEn: 'Can you explain this technical term?', exampleDe: 'Kannst du diesen Fachbegriff erklären?' },
+      'termin': { de: 'Termin', en: 'appointment / deadline / meeting', phonetic: 'uh-POINT-mənt', exampleEn: 'I have an important appointment tomorrow at 10 AM.', exampleDe: 'Ich habe morgen um 10 Uhr einen wichtigen Termin.' },
+      'besprechung': { de: 'Besprechung', en: 'meeting / conference', phonetic: 'MEE-ting', exampleEn: 'Our daily standup meeting starts now.', exampleDe: 'Unsere tägliche Besprechung beginnt jetzt.' },
+      'aufgabe': { de: 'Aufgabe', en: 'task / assignment', phonetic: 'task', exampleEn: 'My task is to test the payment gateway.', exampleDe: 'Meine Aufgabe ist es, das Zahlungs-Gateway zu testen.' },
+      'arbeit': { de: 'Arbeit', en: 'work / job', phonetic: 'wurk', exampleEn: 'I love my work as a software developer.', exampleDe: 'Ich liebe meine Arbeit als Softwareentwickler.' },
+      'arbeiten': { de: 'arbeiten', en: 'to work', phonetic: 'wurk', exampleEn: 'I work on backend microservices.', exampleDe: 'Ich arbeite an Backend-Microservices.' },
+      'schule': { de: 'Schule', en: 'school', phonetic: 'skool', exampleEn: 'School finished early this afternoon.', exampleDe: 'Die Schule war heute Nachmittag früher aus.' },
+      'haus': { de: 'Haus', en: 'house / home', phonetic: 'hows', exampleEn: 'I arrived home after a productive day.', exampleDe: 'Ich bin nach einem produktiven Tag zu Hause angekommen.' },
+      'auto': { de: 'Auto', en: 'car / vehicle', phonetic: 'kar', exampleEn: 'Electric cars are popular today.', exampleDe: 'Elektroautos sind heutzutage beliebt.' },
+      'geld': { de: 'Geld', en: 'money / funds', phonetic: 'MUN-ee', exampleEn: 'Investing money wisely takes discipline.', exampleDe: 'Geld klug anzulegen erfordert Disziplin.' },
+      'zeit': { de: 'Zeit', en: 'time', phonetic: 'tym', exampleEn: 'Take your time to practice speaking.', exampleDe: 'Nimm dir Zeit, um das Sprechen zu üben.' },
+      'freund': { de: 'Freund', en: 'friend', phonetic: 'frend', exampleEn: 'My friend is studying computer science.', exampleDe: 'Mein Freund studiert Informatik.' },
+      'freundin': { de: 'Freundin', en: 'friend / girlfriend', phonetic: 'frend', exampleEn: 'My friend recommended this app to me.', exampleDe: 'Meine Freundin hat mir diese App empfohlen.' },
+      'kollege': { de: 'Kollege', en: 'colleague / co-worker', phonetic: 'KOL-eeg', exampleEn: 'My colleagues in the sprint team are awesome.', exampleDe: 'Meine Kollegen im Sprint-Team sind großartig.' },
+      'kollegin': { de: 'Kollegin', en: 'colleague / co-worker', phonetic: 'KOL-eeg', exampleEn: 'My colleague reviewed my pull request.', exampleDe: 'Meine Kollegin hat meinen Pull Request geprüft.' },
+      'essen': { de: 'Essen', en: 'food / meal (to eat)', phonetic: 'food', exampleEn: 'We had delicious Italian food for lunch.', exampleDe: 'Wir hatten leckeres italienisches Essen zum Mittagessen.' },
+      'trinken': { de: 'trinken', en: 'drink / to drink', phonetic: 'drink', exampleEn: 'Make sure to drink enough water while studying.', exampleDe: 'Achte darauf, beim Lernen genug Wasser zu trinken.' },
+      'kaffee': { de: 'Kaffee', en: 'coffee', phonetic: 'KOF-ee', exampleEn: 'A cup of black coffee helps me wake up.', exampleDe: 'Eine Tasse schwarzer Kaffee hilft mir beim Wachwerden.' },
+      'tee': { de: 'Tee', en: 'tea', phonetic: 'tee', exampleEn: 'I enjoy a warm cup of green tea in the evening.', exampleDe: 'Ich genieße abends eine warme Tasse grünen Tee.' },
+      'wasser': { de: 'Wasser', en: 'water', phonetic: 'WAW-tər', exampleEn: 'Fresh water is the healthiest drink.', exampleDe: 'Frisches Wasser ist das gesündeste Getränk.' },
+      'müde': { de: 'müde', en: 'tired / exhausted', phonetic: 'TY-ərd', exampleEn: 'I am a bit tired, but happy with my progress.', exampleDe: 'Ich bin etwas müde, aber zufrieden mit meinen Fortschritten.' },
+      'müdigkeit': { de: 'Müdigkeit', en: 'tiredness / fatigue', phonetic: 'TY-ərd-nəs', exampleEn: 'A short walk helps reduce tiredness.', exampleDe: 'Ein kurzer Spaziergang hilft gegen Müdigkeit.' },
+      'glücklich': { de: 'glücklich', en: 'happy / glad', phonetic: 'HAP-ee', exampleEn: 'I am happy that our release was successful.', exampleDe: 'Ich bin glücklich, dass unser Release erfolgreich war.' },
+      'traurig': { de: 'traurig', en: 'sad', phonetic: 'sad', exampleEn: 'It is okay to feel sad sometimes.', exampleDe: 'Es ist völlig in Ordnung, sich manchmal traurig zu fühlen.' },
+      'schnell': { de: 'schnell', en: 'fast / quick', phonetic: 'fast', exampleEn: 'Our database query is very fast now.', exampleDe: 'Unsere Datenbankabfrage ist jetzt sehr schnell.' },
+      'langsam': { de: 'langsam', en: 'slow', phonetic: 'sloh', exampleEn: 'Please speak slower so I can understand better.', exampleDe: 'Bitte sprich langsamer, damit ich besser verstehe.' },
+      'gesund': { de: 'gesund', en: 'healthy', phonetic: 'HEL-thee', exampleEn: 'Eating healthy food keeps your mind sharp.', exampleDe: 'Gesundes Essen hält den Geist fit.' },
+      'krank': { de: 'krank', en: 'sick / ill', phonetic: 'sik', exampleEn: 'He stayed home because he was sick.', exampleDe: 'Er blieb zu Hause, weil er krank war.' },
+      'krankheit': { de: 'Krankheit', en: 'illness / disease', phonetic: 'IL-nəs', exampleEn: 'Prevention is the best cure for illness.', exampleDe: 'Vorbeugung ist die beste Medizin gegen Krankheit.' },
+      'wochenende': { de: 'Wochenende', en: 'weekend', phonetic: 'WEEK-end', exampleEn: 'Have a wonderful and relaxing weekend!', exampleDe: 'Hab ein wundervolles und erholsames Wochenende!' },
+      'urlaub': { de: 'Urlaub', en: 'vacation / holiday / time off', phonetic: 'vey-KEY-shən', exampleEn: 'I am planning a two-week summer vacation.', exampleDe: 'Ich plane zwei Wochen Sommerurlaub.' },
+      'reise': { de: 'Reise', en: 'trip / journey / travel', phonetic: 'trip', exampleEn: 'Have a safe trip to London!', exampleDe: 'Gute Reise nach London!' },
+      'reisen': { de: 'reisen', en: 'to travel', phonetic: 'TRAV-əl', exampleEn: 'Traveling to new countries broadens your horizons.', exampleDe: 'In neue Länder zu reisen erweitert den Horizont.' },
+      'flughafen': { de: 'Flughafen', en: 'airport', phonetic: 'AIR-port', exampleEn: 'We arrived at Heathrow Airport on time.', exampleDe: 'Wir kamen pünktlich am Flughafen Heathrow an.' },
+      'bahnhof': { de: 'Bahnhof', en: 'train station / railway station', phonetic: 'TREYN stey-shən', exampleEn: 'The central train station is in the city center.', exampleDe: 'Der Hauptbahnhof liegt in der Innenstadt.' },
+      'hotel': { de: 'Hotel', en: 'hotel', phonetic: 'hoh-TEL', exampleEn: 'I booked a quiet room in this hotel.', exampleDe: 'Ich habe ein ruhiges Zimmer in diesem Hotel gebucht.' },
+      'zimmer': { de: 'Zimmer', en: 'room', phonetic: 'room', exampleEn: 'The hotel room has a great view.', exampleDe: 'Das Hotelzimmer hat eine tolle Aussicht.' },
+      'buchung': { de: 'Buchung', en: 'booking / reservation', phonetic: 'BOOK-ing', exampleEn: 'Here is my booking confirmation number.', exampleDe: 'Hier ist meine Buchungsbestätigungsnummer.' },
+      'reservierung': { de: 'Reservierung', en: 'reservation / booking', phonetic: 'rez-ər-VEY-shən', exampleEn: 'I have a table reservation for two at 7 PM.', exampleDe: 'Ich habe eine Tischreservierung für zwei um 19 Uhr.' },
+      'hilfe': { de: 'Hilfe', en: 'help / assistance', phonetic: 'help', exampleEn: 'Thank you for your kind help!', exampleDe: 'Vielen Dank für deine freundliche Hilfe!' },
+      'helfen': { de: 'helfen', en: 'to help / assist', phonetic: 'help', exampleEn: 'Can I help you with this project?', exampleDe: 'Kann ich dir bei diesem Projekt helfen?' },
+      'verstehen': { de: 'verstehen', en: 'to understand / comprehend', phonetic: 'un-dər-STAND', exampleEn: 'Now I understand how the code works.', exampleDe: 'Jetzt verstehe ich, wie der Code funktioniert.' },
+      'lernen': { de: 'lernen', en: 'to learn / study', phonetic: 'lurn', exampleEn: 'I practice English every day to learn faster.', exampleDe: 'Ich übe jeden Tag Englisch, um schneller zu lernen.' },
+      'sprechen': { de: 'sprechen', en: 'to speak / talk', phonetic: 'speek', exampleEn: 'Speaking English daily builds high confidence.', exampleDe: 'Täglich Englisch zu sprechen baut großes Selbstvertrauen auf.' },
+      'schreiben': { de: 'schreiben', en: 'to write', phonetic: 'ryt', exampleEn: 'I write clean and well-documented code.', exampleDe: 'Ich schreibe sauberen und gut dokumentierten Code.' },
+      'lesen': { de: 'lesen', en: 'to read', phonetic: 'reed', exampleEn: 'Reading technical articles improves your vocabulary.', exampleDe: 'Fachartikel zu lesen erweitert deinen Wortschatz.' },
+      'hören': { de: 'hören', en: 'to listen / hear', phonetic: 'LIS-ən', exampleEn: 'Listen carefully to the audio pronunciation.', exampleDe: 'Hör dir die Aussprache genau an.' },
+      'fragen': { de: 'fragen', en: 'to ask', phonetic: 'ask', exampleEn: 'Never hesitate to ask questions.', exampleDe: 'Zögere nie, Fragen zu stellen.' },
+      'frage': { de: 'Frage', en: 'question', phonetic: 'KWES-chən', exampleEn: 'That is a very good question!', exampleDe: 'Das ist eine sehr gute Frage!' },
+      'antwort': { de: 'Antwort', en: 'answer / reply', phonetic: 'AN-sər', exampleEn: 'I have an answer for your inquiry.', exampleDe: 'Ich habe eine Antwort auf deine Anfrage.' },
+      'antworten': { de: 'antworten', en: 'to answer / reply', phonetic: 'AN-sər', exampleEn: 'Please answer the customer email today.', exampleDe: 'Bitte beantworte die Kunden-E-Mail heute.' },
+      'problem': { de: 'Problem', en: 'problem / issue', phonetic: 'PROB-ləm', exampleEn: 'Every problem has an engineering solution.', exampleDe: 'Jedes Problem hat eine technische Lösung.' },
+      'fehler': { de: 'Fehler', en: 'error / mistake / bug', phonetic: 'ER-ər / bəg', exampleEn: 'We detected a syntax error in the configuration file.', exampleDe: 'Wir haben einen Syntaxfehler in der Konfigurationsdatei entdeckt.' },
+      'verbesserung': { de: 'Verbesserung', en: 'improvement', phonetic: 'im-PROOV-mənt', exampleEn: 'Continuous improvement is our team goal.', exampleDe: 'Kontinuierliche Verbesserung ist unser Teamziel.' },
+      'verbessern': { de: 'verbessern', en: 'to improve / enhance', phonetic: 'im-PROOV', exampleEn: 'I want to improve my spoken English.', exampleDe: 'Ich möchte mein gesprochenes Englisch verbessern.' },
+      'übung': { de: 'Übung', en: 'practice / exercise', phonetic: 'PRAK-tis', exampleEn: 'Practice makes perfect!', exampleDe: 'Übung macht den Meister!' },
+      'üben': { de: 'üben', en: 'to practice / train', phonetic: 'PRAK-tis', exampleEn: 'Let us practice ten minutes of English.', exampleDe: 'Lass uns zehn Minuten Englisch üben.' },
+      'gespräch': { de: 'Gespräch', en: 'conversation / talk / discussion', phonetic: 'kon-vər-SEY-shən', exampleEn: 'We had an insightful conversation about APIs.', exampleDe: 'Wir hatten ein aufschlussreiches Gespräch über APIs.' },
+      'unterhaltung': { de: 'Unterhaltung', en: 'conversation / chat / entertainment', phonetic: 'kon-vər-SEY-shən', exampleEn: 'I truly enjoy our English conversation.', exampleDe: 'Ich genieße unsere englische Unterhaltung sehr.' },
+      'schnitzeljagd': { de: 'Schnitzeljagd', en: 'scavenger hunt', phonetic: 'SKAV-in-jər hunt', exampleEn: 'The team organized a fun scavenger hunt in the city.', exampleDe: 'Das Team hat eine lustige Schnitzeljagd in der Stadt organisiert.' },
+      'wanderung': { de: 'Wanderung', en: 'hike / walking tour', phonetic: 'hyk', exampleEn: 'We went on a weekend hike in the Black Forest.', exampleDe: 'Wir machten eine Wochenend-Wanderung im Schwarzwald.' },
+      'wandern': { de: 'wandern', en: 'to hike', phonetic: 'hyk', exampleEn: 'I love to hike in the mountains during autumn.', exampleDe: 'Ich wandere im Herbst sehr gerne in den Bergen.' },
+      'wetter': { de: 'Wetter', en: 'weather', phonetic: 'WETH-ər', exampleEn: 'The weather is sunny and pleasant today.', exampleDe: 'Das Wetter ist heute sonnig und angenehm.' },
+      'sonne': { de: 'Sonne', en: 'sun', phonetic: 'sən', exampleEn: 'The sun is shining brightly.', exampleDe: 'Die Sonne scheint hell.' },
+      'sonnig': { de: 'sonnig', en: 'sunny', phonetic: 'SUN-ee', exampleEn: 'It is a warm, sunny afternoon.', exampleDe: 'Es ist ein warmer, sonniger Nachmittag.' },
+      'regen': { de: 'Regen', en: 'rain', phonetic: 'reyn', exampleEn: 'We need rain for the gardens.', exampleDe: 'Wir brauchen Regen für die Gärten.' },
+      'schnee': { de: 'Schnee', en: 'snow', phonetic: 'snoh', exampleEn: 'Fresh snow covered the streets.', exampleDe: 'Frischer Schnee bedeckte die Straßen.' },
+      'kalt': { de: 'kalt', en: 'cold', phonetic: 'kohld', exampleEn: 'It is getting cold outside tonight.', exampleDe: 'Es wird heute Nacht kalt draußen.' },
+      'warm': { de: 'warm', en: 'warm', phonetic: 'wawrm', exampleEn: 'It is cozy and warm inside the house.', exampleDe: 'Es ist gemütlich und warm im Haus.' },
+      'heute': { de: 'heute', en: 'today', phonetic: 'tuh-DEY', exampleEn: 'Today is a great day to learn English!', exampleDe: 'Heute ist ein toller Tag, um Englisch zu lernen!' },
+      'gestern': { de: 'gestern', en: 'yesterday', phonetic: 'YES-tər-dey', exampleEn: 'Yesterday I finished the project report.', exampleDe: 'Gestern habe ich den Projektbericht fertiggestellt.' },
+      'morgen': { de: 'morgen', en: 'tomorrow / morning', phonetic: 'tuh-MAW-roh', exampleEn: 'Tomorrow we will start the new sprint.', exampleDe: 'Morgen starten wir den neuen Sprint.' },
+      'sprache': { de: 'Sprache', en: 'language', phonetic: 'LANG-gwij', exampleEn: 'English is the global language of technology.', exampleDe: 'Englisch ist die weltweite Sprache der Technologie.' },
+      'wort': { de: 'Wort', en: 'word', phonetic: 'wurd', exampleEn: 'Every new word expands your thinking.', exampleDe: 'Jedes neue Wort erweitert dein Denken.' },
+      'satz': { de: 'Satz', en: 'sentence', phonetic: 'SEN-təns', exampleEn: 'Try to form a complete English sentence.', exampleDe: 'Versuche, einen vollständigen englischen Satz zu bilden.' },
+      'aussprache': { de: 'Aussprache', en: 'pronunciation', phonetic: 'pruh-nun-see-EY-shən', exampleEn: 'Your English pronunciation is improving quickly!', exampleDe: 'Deine englische Aussprache verbessert sich schnell!' },
+      'übersetzung': { de: 'Übersetzung', en: 'translation', phonetic: 'tranz-LEY-shən', exampleEn: 'This translation captures the exact meaning.', exampleDe: 'Diese Übersetzung trifft die genaue Bedeutung.' },
+      'übersetzen': { de: 'übersetzen', en: 'to translate', phonetic: 'TRANZ-leyt', exampleEn: 'Can you translate this sentence for me?', exampleDe: 'Kannst du diesen Satz für mich übersetzen?' },
+      'lehrer': { de: 'Lehrer', en: 'teacher / instructor', phonetic: 'TEE-chər', exampleEn: 'A good teacher encourages and inspires students.', exampleDe: 'Ein guter Lehrer ermutigt und inspiriert Schüler.' },
+      'lehrerin': { de: 'Lehrerin', en: 'teacher / instructor (female)', phonetic: 'TEE-chər', exampleEn: 'My English teacher is very patient.', exampleDe: 'Meine Englisch-Lehrerin ist sehr geduldig.' },
+      'schüler': { de: 'Schüler', en: 'student / pupil', phonetic: 'STOO-dənt', exampleEn: 'The students asked insightful questions.', exampleDe: 'Die Schüler stellten aufschlussreiche Fragen.' },
+      'ausbildung': { de: 'Ausbildung', en: 'apprenticeship / vocational training', phonetic: 'uh-PREN-tis-ship', exampleEn: 'Dual vocational training offers great career prospects.', exampleDe: 'Die duale Ausbildung bietet hervorragende Berufsaussichten.' },
+      'chef': { de: 'Chef', en: 'boss / manager / supervisor', phonetic: 'bos', exampleEn: 'My boss approved my training request.', exampleDe: 'Mein Chef hat meinen Weiterbildungsantrag genehmigt.' },
+      'kunde': { de: 'Kunde', en: 'client / customer', phonetic: 'KUS-tuh-mər', exampleEn: 'Customer satisfaction is our highest metric.', exampleDe: 'Kundenzufriedenheit ist unsere wichtigste Kennzahl.' },
+      'vertrag': { de: 'Vertrag', en: 'contract / agreement', phonetic: 'KON-trakt', exampleEn: 'Both parties signed the employment contract.', exampleDe: 'Beide Parteien haben den Arbeitsvertrag unterzeichnet.' },
+      'rechnung': { de: 'Rechnung', en: 'invoice / bill', phonetic: 'IN-voys', exampleEn: 'Please send the invoice to our accounting department.', exampleDe: 'Bitte sende die Rechnung an unsere Buchhaltung.' },
+      'angebot': { de: 'Angebot', en: 'offer / quote / proposal', phonetic: 'AW-fər', exampleEn: 'We sent a detailed project offer to the client.', exampleDe: 'Wir haben dem Kunden ein detailliertes Projektangebot geschickt.' },
+      'bestellung': { de: 'Bestellung', en: 'order', phonetic: 'OR-dər', exampleEn: 'Your hardware order has been shipped.', exampleDe: 'Deine Hardware-Bestellung wurde versandt.' },
+      'zoll': { de: 'Zoll', en: 'customs / tariff', phonetic: 'KUS-təmz', exampleEn: 'Imported goods must clear customs inspection.', exampleDe: 'Eingeführte Waren müssen die Zollkontrolle passieren.' },
+      'zölle': { de: 'Zölle', en: 'tariffs / customs duties', phonetic: 'TAIR-ifs', exampleEn: 'Tariffs are taxes imposed on imported goods.', exampleDe: 'Zölle sind Steuern auf importierte Waren.' },
+      'export': { de: 'Export', en: 'export', phonetic: 'EK-sport', exampleEn: 'Germany is known for high-quality automobile exports.', exampleDe: 'Deutschland ist bekannt für hochwertige Automobilexporte.' },
+      'import': { de: 'Import', en: 'import', phonetic: 'IM-port', exampleEn: 'Countries import raw materials to support manufacturing.', exampleDe: 'Länder importieren Rohstoffe zur Unterstützung der Produktion.' },
+      'handel': { de: 'Handel', en: 'trade / commerce', phonetic: 'treyd', exampleEn: 'International trade fosters global economic growth.', exampleDe: 'Internationaler Handel fördert das weltweite Wirtschaftswachstum.' },
+      'wirtschaft': { de: 'Wirtschaft', en: 'economy / economics', phonetic: 'i-KON-uh-mee', exampleEn: 'We study how global economic markets operate.', exampleDe: 'Wir untersuchen, wie globale Wirtschaftsmärkte funktionieren.' },
+      'markt': { de: 'Markt', en: 'market', phonetic: 'MAR-kit', exampleEn: 'Emerging markets offer rapid growth potential.', exampleDe: 'Schwellenmärkte bieten schnelles Wachstumspotenzial.' }
+    },
+
+    lookup(word) {
+      if (!word) return null;
+      const clean = word.toLowerCase().trim().replace(/[^a-zäöüß0-9\s\-]/g, '');
+      if (!clean) return null;
+
+      // 1. In common Dictionary suchen
+      if (this.common[clean]) {
+        return {
+          direction: 'de_to_en',
+          german: this.common[clean].de || word,
+          english: this.common[clean].en,
+          phonetic: this.common[clean].phonetic || '',
+          exampleEn: this.common[clean].exampleEn || '',
+          exampleDe: this.common[clean].exampleDe || ''
+        };
+      }
+
+      // Check reverse in common Dictionary (English -> German)
+      for (const [k, v] of Object.entries(this.common)) {
+        const enLower = v.en.toLowerCase();
+        if (enLower.split(/[\/,]+/).map(p => p.trim()).includes(clean) || enLower === clean) {
+          return {
+            direction: 'en_to_de',
+            german: v.de || k,
+            english: v.en,
+            phonetic: v.phonetic || '',
+            exampleEn: v.exampleEn || '',
+            exampleDe: v.exampleDe || ''
+          };
+        }
+      }
+
+      // 2. In VOCAB_DATA suchen
+      if (typeof VOCAB_DATA !== 'undefined' && Array.isArray(VOCAB_DATA)) {
+        for (const v of VOCAB_DATA) {
+          const gLower = (v.german || '').toLowerCase();
+          const eLower = (v.english || '').toLowerCase();
+
+          // Exakte Übereinstimmung Deutsch
+          const gParts = gLower.split(/[\/,\(\)&]+/).map(p => p.trim());
+          if (gParts.includes(clean) || gLower === clean) {
+            return {
+              direction: 'de_to_en',
+              german: v.german,
+              english: v.english,
+              phonetic: v.phonetic || '',
+              exampleEn: v.exampleEn || '',
+              exampleDe: v.exampleDe || '',
+              definition: v.definition || ''
+            };
+          }
+
+          // Exakte Übereinstimmung Englisch
+          const eParts = eLower.split(/[\/,\(\)&]+/).map(p => p.trim());
+          if (eParts.includes(clean) || eLower === clean) {
+            return {
+              direction: 'en_to_de',
+              german: v.german,
+              english: v.english,
+              phonetic: v.phonetic || '',
+              exampleEn: v.exampleEn || '',
+              exampleDe: v.exampleDe || '',
+              definition: v.definition || ''
+            };
+          }
+        }
+
+        // Substring-Match in VOCAB_DATA für längere Wörter
+        if (clean.length >= 4) {
+          for (const v of VOCAB_DATA) {
+            const gLower = (v.german || '').toLowerCase();
+            if (gLower.includes(clean)) {
+              return {
+                direction: 'de_to_en',
+                german: v.german,
+                english: v.english,
+                phonetic: v.phonetic || '',
+                exampleEn: v.exampleEn || '',
+                exampleDe: v.exampleDe || '',
+                definition: v.definition || ''
+              };
+            }
+          }
+        }
+      }
+
+      return null;
+    }
+  };
+
   // --- DIE DYNAMISCHE DIALOG-ENGINE (MULTI-TURN & ABWECHSLUNGSREICH) ---
   const DialogEngine = {
     state: {
@@ -3397,14 +3605,115 @@ ${cleanTip}`,
         };
       }
 
-      // 6. Word Translation & "How do you say X in English?" / "Was heißt X?" / "Was bedeutet X?"
-      if (/\b(how\s+do\s+you\s+say|what\s+is\s+.*in\s+english|wie\s+sagt\s+man|was\s+hei[sß]+t\s+.*auf\s+englisch|what\s+does\s+.*mean|was\s+bedeutet)\b/i.test(norm)) {
-        return {
-          id: 'intent_word_translation',
-          en: `In English, "Danke" is "Thank you", and "Bitte" is "Please". What other word would you like to know?`,
-          de: `Auf Englisch heißt „Danke“ „Thank you“ und „Bitte“ „Please“. Welches andere Wort möchtest du wissen?`,
-          suggestions: ['How do you say Feierabend in English?', 'How do you say Schnitzeljagd?', 'Thank you very much!']
-        };
+      // 6. DYNAMISCHER ÜBERSETZUNGS-LEHRER (v32): Wort- & Satzübersetzung Deutsch <-> Englisch
+      const translationMatch = (() => {
+        const patterns = [
+          /\bhow\s+do\s+you\s+say\s+["'„“]?([^"'?!.,]+?)["'“]?(\s+in\s+english)?\??$/i,
+          /\bwhat\s+is\s+["'„“]?([^"'?!.,]+?)["'“]?\s+in\s+english\??$/i,
+          /\bwhat\s+does\s+["'„“]?([^"'?!.,]+?)["'“]?\s+mean\??$/i,
+          /\bwie\s+sagt\s+man\s+["'„“]?([^"'?!.,]+?)["'“]?(\s+auf\s+englisch)?\??$/i,
+          /\bwas\s+hei[sß]+t\s+["'„“]?([^"'?!.,]+?)["'“]?(\s+auf\s+englisch)?\??$/i,
+          /\bwie\s+hei[sß]+t\s+["'„“]?([^"'?!.,]+?)["'“]?(\s+auf\s+englisch)?\??$/i,
+          /\bwas\s+bedeutet\s+["'„“]?([^"'?!.,]+?)["'“]?(\s+auf\s+englisch)?\??$/i,
+          /\b(?:übersetze|translate)\s+(?:mir\s+)?(?:das\s+wort\s+|den\s+satz\s+)?["'„“]?([^"'?!.,]+?)["'“]?(\s+auf\s+englisch|\s+into\s+english|\s+to\s+english)?\??$/i,
+          /\b(?:kannst\s+du\s+(?:mir\s+)?|can\s+you\s+)\s*["'„“]?([^"'?!.,]+?)["'“]?\s+(?:übersetzen|translate)\??$/i,
+          /^["'„“]?([^"'?!.,]+?)["'“]?\s+(?:auf\s+englisch|in\s+english)\??$/i
+        ];
+
+        function cleanCandidate(c) {
+          if (!c) return null;
+          let cand = c.trim();
+          cand = cand.replace(/\b(please|bitte|me|for\s+me|mir|f[uü]r\s+mich|mal|jetzt|now|trace|always)\b/gi, '').trim();
+          cand = cand.replace(/^(das\s+wort|ein\s+wort|a\s+word|das|der|die|ein|eine|einen|the|a|an)\s+/gi, '').trim();
+          cand = cand.replace(/^["'„“.,!?\s]+|["'„“.,!?\s]+$/g, '');
+          if (!cand || /^(word|wort|sentence|satz|something|etwas|me|it|this|that|this word|das wort)$/i.test(cand)) {
+            return null;
+          }
+          return cand.length >= 2 ? cand : null;
+        }
+
+        const rawClean = rawInput.trim();
+        for (const pat of patterns) {
+          const m = rawClean.match(pat);
+          if (m) {
+            const cand = cleanCandidate(m[1]);
+            if (cand) return { type: 'word', word: cand };
+          }
+        }
+
+        // Allgemeine Übersetzungsanfrage (z.B. "can you trace translate me please", "kannst du mir ein wort übersetzen")
+        const isGeneral = /\b(translate(\s+me)?(\s+please)?|übersetz(e|en)?(\s+mir)?|can\s+you\s+(trace\s+)?translate|kannst\s+du\s+(mir\s+)?übersetzen|word.*translate|how\s+to\s+translate|brauche\s+eine\s+übersetzung|ein\s+wort\s+übersetzen|hilfe\s+beim\s+übersetzen|weiß\s+(das|ein)?\s*wort\s+nicht)\b/i.test(norm);
+        if (isGeneral) {
+          return { type: 'general' };
+        }
+
+        // Einzellwort-Eingabe eines deutschen Begriffs prüfen (wenn Turn > 1 oder nach Begrüßung)
+        if (rawClean.split(/\s+/).length <= 2) {
+          const singleClean = cleanCandidate(rawClean);
+          if (singleClean && TeacherDictionary.lookup(singleClean)) {
+            return { type: 'word', word: singleClean };
+          }
+        }
+
+        return null;
+      })();
+
+      if (translationMatch) {
+        if (translationMatch.type === 'word') {
+          const queryWord = translationMatch.word;
+          const entry = TeacherDictionary.lookup(queryWord);
+          if (entry) {
+            const isDeToEn = entry.direction !== 'en_to_de';
+            const targetWord = isDeToEn ? entry.english : entry.german;
+            const sourceWord = isDeToEn ? queryWord : entry.english;
+            const primaryTarget = targetWord.split('/')[0].trim();
+            const phon = entry.phonetic ? ` [${entry.phonetic}]` : '';
+            const exEn = entry.exampleEn ? `\nExample: "${entry.exampleEn}"` : '';
+            const exDe = entry.exampleDe ? `\nBeispiel: *„${entry.exampleDe}“*` : (entry.exampleEn ? `\nBeispiel: *„${entry.exampleEn}“*` : '');
+
+            return {
+              id: 'intent_word_translation_found',
+              isTranslation: true,
+              en: isDeToEn 
+                ? `In English, "${sourceWord}" is "${targetWord}"${phon}.${exEn}\nWould you like to try using "${primaryTarget}" in a sentence?`
+                : `In German, "${sourceWord}" translates to "${targetWord}"${phon}.${exEn}\nWould you like to practice using "${sourceWord}" in a sentence?`,
+              de: isDeToEn
+                ? `Auf Englisch heißt „${sourceWord}“ ➔ **„${targetWord}“**${phon}.${exDe}\nMöchtest du versuchen, einen englischen Satz damit zu bilden?`
+                : `Auf Deutsch bedeutet „${sourceWord}“ ➔ **„${targetWord}“**${phon}.${exDe}\nMöchtest du versuchen, einen englischen Satz damit zu üben?`,
+              suggestions: [
+                `I would like to use "${primaryTarget}" in a sentence.`,
+                `Can you show me another example with "${primaryTarget}"?`,
+                `Can you teach me another useful word?`
+              ]
+            };
+          } else {
+            // Wort nicht im Offline-Wörterbuch gefunden: Lehrer hilft trotzdem sofort!
+            return {
+              id: 'intent_word_translation_generic',
+              isTranslation: true,
+              en: `Great question! You are asking for the translation of "${queryWord}". Tell me the full sentence or situation you want to use it in, and I will show you how to say the complete thought in natural English!`,
+              de: `Tolle Frage! Du fragst nach der Übersetzung für „${queryWord}“. Schreib mir gerne den ganzen Satz oder die Situation, in der du es verwenden möchtest, und ich zeige dir, wie man den gesamten Gedanken auf natürlichem Englisch ausdrückt!`,
+              suggestions: [
+                `How do you say "${queryWord}" in a daily conversation?`,
+                `Can you teach me another useful English word?`,
+                `Let us continue our conversation!`
+              ]
+            };
+          }
+        } else {
+          // Allgemeine Übersetzungsanfrage ("can you translate me please", etc.)
+          return {
+            id: 'intent_word_translation_request',
+            isTranslation: true,
+            en: `I would love to help you translate any word or sentence! Just tell me: "How do you say [word] in English?" or "Was heißt [word] auf Englisch?" (or simply write the German word directly), and I will give you the exact translation, pronunciation, and an example sentence. What word would you like to translate right now?`,
+            de: `Sehr gerne helfe ich dir, jedes Wort oder jeden Satz zu übersetzen! Frag mich einfach: „Wie heißt [Wort] auf Englisch?“ oder „Was heißt [Wort] auf Englisch?“ (oder schreib mir einfach direkt das deutsche Wort). Ich nenne dir sofort die Übersetzung, die Aussprache und einen passenden Beispielsatz! Welches Wort möchtest du wissen?`,
+            suggestions: [
+              "How do you say 'Erfolg' in English?",
+              "Was heißt 'Feierabend' auf Englisch?",
+              "Wie übersetzt man 'zuverlässig'?"
+            ]
+          };
+        }
       }
 
       // 7. Where are you from / Where do you live? / Woher kommst du?
