@@ -2209,7 +2209,15 @@ function initApp() {
       'import': { de: 'Import', en: 'import', phonetic: 'IM-port', exampleEn: 'Countries import raw materials to support manufacturing.', exampleDe: 'Länder importieren Rohstoffe zur Unterstützung der Produktion.' },
       'handel': { de: 'Handel', en: 'trade / commerce', phonetic: 'treyd', exampleEn: 'International trade fosters global economic growth.', exampleDe: 'Internationaler Handel fördert das weltweite Wirtschaftswachstum.' },
       'wirtschaft': { de: 'Wirtschaft', en: 'economy / economics', phonetic: 'i-KON-uh-mee', exampleEn: 'We study how global economic markets operate.', exampleDe: 'Wir untersuchen, wie globale Wirtschaftsmärkte funktionieren.' },
-      'markt': { de: 'Markt', en: 'market', phonetic: 'MAR-kit', exampleEn: 'Emerging markets offer rapid growth potential.', exampleDe: 'Schwellenmärkte bieten schnelles Wachstumspotenzial.' }
+      'markt': { de: 'Markt', en: 'market', phonetic: 'MAR-kit', exampleEn: 'Emerging markets offer rapid growth potential.', exampleDe: 'Schwellenmärkte bieten schnelles Wachstumspotenzial.' },
+      'thought': { direction: 'en_to_de', de: 'Gedanke / Überlegung', en: 'thought / idea', phonetic: 'thawt', exampleEn: 'I had an interesting thought about learning English.', exampleDe: 'Ich hatte einen interessanten Gedanken zum Englischlernen.' },
+      'thoughts': { direction: 'en_to_de', de: 'Gedanken / Überlegung / Meinung', en: 'thoughts / opinions / reflections', phonetic: 'thawts', exampleEn: 'What are your thoughts on learning English?', exampleDe: 'Was sind deine Gedanken (deine Meinung) zum Englischlernen?' },
+      'meaning': { direction: 'en_to_de', de: 'Bedeutung / Sinn', en: 'meaning / sense', phonetic: 'MEE-ning', exampleEn: 'What is the meaning of this word?', exampleDe: 'Was ist die Bedeutung dieses Wortes?' },
+      'meant': { direction: 'en_to_de', de: 'gemeint (Vergangenheit von mean)', en: 'meant', phonetic: 'ment', exampleEn: 'What is meant by this phrase?', exampleDe: 'Was ist mit dieser Redewendung gemeint?' },
+      'mean': { direction: 'en_to_de', de: 'bedeuten / meinen', en: 'to mean / signify', phonetic: 'meen', exampleEn: 'What does this word mean in German?', exampleDe: 'Was bedeutet dieses Wort auf Deutsch?' },
+      'opinion': { direction: 'en_to_de', de: 'Meinung / Ansicht', en: 'opinion / view', phonetic: 'uh-PIN-yən', exampleEn: 'What is your opinion on programming?', exampleDe: 'Was ist deine Meinung zum Programmieren?' },
+      'idea': { direction: 'en_to_de', de: 'Idee / Einfall', en: 'idea / concept', phonetic: 'eye-DEE-uh', exampleEn: 'Sharing ideas helps everyone learn faster.', exampleDe: 'Ideen auszutauschen hilft jedem, schneller zu lernen.' },
+      'speaking': { direction: 'en_to_de', de: 'Sprechen', en: 'speaking / spoken English', phonetic: 'SPEE-king', exampleEn: 'Speaking English daily builds high confidence.', exampleDe: 'Täglich Englisch zu sprechen baut großes Selbstvertrauen auf.' }
     },
 
     lookup(word) {
@@ -2217,15 +2225,20 @@ function initApp() {
       const clean = word.toLowerCase().trim().replace(/[^a-zäöüß0-9\s\-]/g, '');
       if (!clean) return null;
 
-      // 1. In common Dictionary suchen
-      if (this.common[clean]) {
+      // 1. In common Dictionary suchen (direkt oder Singular-Fallback bei Endung auf 's')
+      let item = this.common[clean];
+      if (!item && clean.endsWith('s') && clean.length > 3) {
+        item = this.common[clean.slice(0, -1)];
+      }
+
+      if (item) {
         return {
-          direction: 'de_to_en',
-          german: this.common[clean].de || word,
-          english: this.common[clean].en,
-          phonetic: this.common[clean].phonetic || '',
-          exampleEn: this.common[clean].exampleEn || '',
-          exampleDe: this.common[clean].exampleDe || ''
+          direction: item.direction || 'de_to_en',
+          german: item.de || word,
+          english: item.en,
+          phonetic: item.phonetic || '',
+          exampleEn: item.exampleEn || '',
+          exampleDe: item.exampleDe || ''
         };
       }
 
@@ -3605,16 +3618,24 @@ ${cleanTip}`,
         };
       }
 
-      // 6. DYNAMISCHER ÜBERSETZUNGS-LEHRER (v32): Wort- & Satzübersetzung Deutsch <-> Englisch
+      // 6. DYNAMISCHER ÜBERSETZUNGS- & BEDEUTUNGS-LEHRER (v33): Wort-, Bedeutungs- & Satzübersetzung
       const translationMatch = (() => {
         const patterns = [
+          // Bedeutungsfragen (z.B. "what is mein whit word thoughts ?", "what is meant with X", "what means X")
+          /\bwhat\s+(?:is\s+)?(?:meant|mein|mean)\s+(?:with|whit|by)\s+(?:the\s+)?(?:word\s+)?["'„“]?([^"'?!.,]+?)["'“]?\??$/i,
+          /\bwhat\s+means\s+(?:the\s+)?(?:word\s+)?["'„“]?([^"'?!.,]+?)["'“]?\??$/i,
+          /\bwhat\s+does\s+(?:the\s+)?(?:word\s+)?["'„“]?([^"'?!.,]+?)["'“]?\s+mean\??$/i,
+          /\bmeaning\s+of\s+(?:the\s+)?(?:word\s+)?["'„“]?([^"'?!.,]+?)["'“]?\??$/i,
+          /\bwas\s+(?:ist\s+)?(?:gemeint|meinst\s+du)\s+mit\s+(?:dem\s+wort\s+|das\s+wort\s+)?["'„“]?([^"'?!.,]+?)["'“]?\??$/i,
+          /\bwas\s+bedeutet\s+(?:das\s+wort\s+|den\s+satz\s+)?["'„“]?([^"'?!.,]+?)["'“]?(\s+auf\s+englisch)?\??$/i,
+          /\b(?:erkl[aä]r(?:e)?|explain)\s+(?:mir\s+)?(?:das\s+wort\s+|the\s+word\s+)?["'„“]?([^"'?!.,]+?)["'“]?\??$/i,
+          /\bbedeutung\s+von\s+(?:dem\s+wort\s+|das\s+wort\s+)?["'„“]?([^"'?!.,]+?)["'“]?\??$/i,
+          // Übersetzungsmuster
           /\bhow\s+do\s+you\s+say\s+["'„“]?([^"'?!.,]+?)["'“]?(\s+in\s+english)?\??$/i,
           /\bwhat\s+is\s+["'„“]?([^"'?!.,]+?)["'“]?\s+in\s+english\??$/i,
-          /\bwhat\s+does\s+["'„“]?([^"'?!.,]+?)["'“]?\s+mean\??$/i,
           /\bwie\s+sagt\s+man\s+["'„“]?([^"'?!.,]+?)["'“]?(\s+auf\s+englisch)?\??$/i,
           /\bwas\s+hei[sß]+t\s+["'„“]?([^"'?!.,]+?)["'“]?(\s+auf\s+englisch)?\??$/i,
           /\bwie\s+hei[sß]+t\s+["'„“]?([^"'?!.,]+?)["'“]?(\s+auf\s+englisch)?\??$/i,
-          /\bwas\s+bedeutet\s+["'„“]?([^"'?!.,]+?)["'“]?(\s+auf\s+englisch)?\??$/i,
           /\b(?:übersetze|translate)\s+(?:mir\s+)?(?:das\s+wort\s+|den\s+satz\s+)?["'„“]?([^"'?!.,]+?)["'“]?(\s+auf\s+englisch|\s+into\s+english|\s+to\s+english)?\??$/i,
           /\b(?:kannst\s+du\s+(?:mir\s+)?|can\s+you\s+)\s*["'„“]?([^"'?!.,]+?)["'“]?\s+(?:übersetzen|translate)\??$/i,
           /^["'„“]?([^"'?!.,]+?)["'“]?\s+(?:auf\s+englisch|in\s+english)\??$/i
@@ -3625,6 +3646,7 @@ ${cleanTip}`,
           let cand = c.trim();
           cand = cand.replace(/\b(please|bitte|me|for\s+me|mir|f[uü]r\s+mich|mal|jetzt|now|trace|always)\b/gi, '').trim();
           cand = cand.replace(/^(das\s+wort|ein\s+wort|a\s+word|das|der|die|ein|eine|einen|the|a|an)\s+/gi, '').trim();
+          cand = cand.replace(/\b(the\s+word|das\s+wort|word|wort)\b/gi, '').trim();
           cand = cand.replace(/^["'„“.,!?\s]+|["'„“.,!?\s]+$/g, '');
           if (!cand || /^(word|wort|sentence|satz|something|etwas|me|it|this|that|this word|das wort)$/i.test(cand)) {
             return null;
@@ -3665,7 +3687,7 @@ ${cleanTip}`,
           if (entry) {
             const isDeToEn = entry.direction !== 'en_to_de';
             const targetWord = isDeToEn ? entry.english : entry.german;
-            const sourceWord = isDeToEn ? queryWord : entry.english;
+            const sourceWord = queryWord;
             const primaryTarget = targetWord.split('/')[0].trim();
             const phon = entry.phonetic ? ` [${entry.phonetic}]` : '';
             const exEn = entry.exampleEn ? `\nExample: "${entry.exampleEn}"` : '';
@@ -3971,13 +3993,60 @@ ${cleanTip}`,
         };
       }
 
-      // 27. General direct question ending with '?'
+      // 26b. "I don't know" / "No idea" / "Ich weiß nicht" / "Keine Ahnung"
+      if (/^(i\s*don'?t\s*know|i\s*dont\s*know|dont\s*know|idk|no\s*idea|not\s*sure|have\s*no\s*idea|ich\s*wei[sß]\s*nicht|keine\s*ahnung|wei[sß]\s*nicht|wei[sß]\s*ich\s*nicht|nicht\s*sicher)[.!?\s]*$/i.test(norm.trim())) {
+        return {
+          id: 'intent_dont_know',
+          en: `That is completely okay${this.salutation()}! You do not need to know everything — that is exactly why we are practicing together. Let me guide you step by step. What would you like to explore next?`,
+          de: `Das ist völlig in Ordnung${this.salutation()}! Du musst nicht alles wissen – genau dafür üben wir ja zusammen. Ich helfe dir Schritt für Schritt. Worüber möchtest du als Nächstes sprechen?`,
+          suggestions: [
+            "Can you ask me an easy question?",
+            "Can you explain it with an easy example?",
+            "Teach me 2 useful everyday phrases."
+          ]
+        };
+      }
+
+      // 26c. Tutor Opinion / "What is your opinion / meaning?" / "What do you think?" / "What ist you meing?"
+      if (/\b(what\s+(is|ist)\s+(your|ur|you)\s+(opinion|meaning|meing|view|thought|perspective)|what\s+do\s+you\s+think|what\s+you\s+think|what\s+think\s+you|was\s+ist\s+deine\s+meinung|was\s+denkst\s+du|wie\s+findest\s+du\s+das|deine\s+meinung)\b/i.test(norm)) {
+        return {
+          id: 'intent_tutor_opinion',
+          en: `In my opinion${this.salutation()}, learning to speak English is one of the best decisions you can make! It opens doors worldwide, especially in IT, and speaking actively with me every day will help you become fluent and confident very quickly. Let's practice speaking right now!`,
+          de: `Meiner Meinung nach${this.salutation()} ist Englisch sprechen zu lernen eine fantastische Entscheidung! Es öffnet dir weltweit alle Türen, besonders in der IT, und wenn du täglich aktiv mit mir sprichst, wirst du sehr schnell flüssig und sicher. Lass uns direkt mit dem Sprechen üben loslegen!`,
+          suggestions: [
+            "I want to practice speaking every day!",
+            "Can you ask me an everyday question in English?",
+            "Teach me 3 useful conversation phrases."
+          ]
+        };
+      }
+
+      // 27. General direct question ending with '?' (Abwechslungsreich & pädagogisch wertvoll)
       if (/\?\s*$/.test(norm.trim())) {
+        const questionPool = [
+          {
+            en: `That is a thoughtful question${this.salutation()}! Taking it step by step with clear examples is always the best way. What specific part would you like to explore?`,
+            de: `Das ist eine durchdachte Frage${this.salutation()}! Schritt für Schritt mit klaren Beispielen vorzugehen ist immer der beste Weg. Welchen Teil möchtest du genauer ansehen?`,
+            suggestions: ['Can you give me an easy example?', 'How would you say that in a daily conversation?', 'Teach me a useful word for this.']
+          },
+          {
+            en: `Great question${this.salutation()}! I am here to help you understand every aspect of English clearly. What would you like to focus on next?`,
+            de: `Tolle Frage${this.salutation()}! Ich helfe dir gerne, jeden Aspekt im Englischen zu verstehen. Worauf möchtest du dich als Nächstes konzentrieren?`,
+            suggestions: ['Let us focus on useful vocabulary.', 'Can you explain the grammar simply?', 'Let us practice with a short sentence.']
+          },
+          {
+            en: `Good point${this.salutation()}! Asking questions is the fastest way to learn. Would you like a simple explanation or a practical example?`,
+            de: `Guter Punkt${this.salutation()}! Fragen zu stellen ist der schnellste Weg zu lernen. Möchtest du eine einfache Erklärung oder ein praktisches Beispiel?`,
+            suggestions: ['A simple explanation, please.', 'Give me an everyday example.', 'Can we practice a short dialogue?']
+          }
+        ];
+        const idx = (this.state.turnCount || 0) % questionPool.length;
+        const chosen = questionPool[idx];
         return {
           id: 'intent_general_question',
-          en: `That is a great question${this.salutation()}! What are your thoughts on it?`,
-          de: `Das ist eine gute Frage${this.salutation()}! Was denkst du darüber?`,
-          suggestions: ['I think it is very useful for developers.', 'I am still learning about it.', 'Could you give me an example?']
+          en: chosen.en,
+          de: chosen.de,
+          suggestions: chosen.suggestions
         };
       }
 
