@@ -2437,18 +2437,129 @@ function initApp() {
       'mean': { direction: 'en_to_de', de: 'bedeuten / meinen', en: 'to mean / signify', phonetic: 'meen', exampleEn: 'What does this word mean in German?', exampleDe: 'Was bedeutet dieses Wort auf Deutsch?' },
       'opinion': { direction: 'en_to_de', de: 'Meinung / Ansicht', en: 'opinion / view', phonetic: 'uh-PIN-yən', exampleEn: 'What is your opinion on programming?', exampleDe: 'Was ist deine Meinung zum Programmieren?' },
       'idea': { direction: 'en_to_de', de: 'Idee / Einfall', en: 'idea / concept', phonetic: 'eye-DEE-uh', exampleEn: 'Sharing ideas helps everyone learn faster.', exampleDe: 'Ideen auszutauschen hilft jedem, schneller zu lernen.' },
-      'speaking': { direction: 'en_to_de', de: 'Sprechen', en: 'speaking / spoken English', phonetic: 'SPEE-king', exampleEn: 'Speaking English daily builds high confidence.', exampleDe: 'Täglich Englisch zu sprechen baut großes Selbstvertrauen auf.' }
+      'speaking': { direction: 'en_to_de', de: 'Sprechen', en: 'speaking / spoken English', phonetic: 'SPEE-king', exampleEn: 'Speaking English daily builds high confidence.', exampleDe: 'Täglich Englisch zu sprechen baut großes Selbstvertrauen auf.' },
+      'erklären': { de: 'erklären', en: 'to explain / clarify', phonetic: 'ik-SPLEYN', exampleEn: 'Can you explain this word to me in English?', exampleDe: 'Kannst du mir dieses Wort auf Englisch erklären?' },
+      'erklärung': { de: 'Erklärung', en: 'explanation', phonetic: 'ek-spluh-NEY-shən', exampleEn: 'Thank you for the clear explanation!', exampleDe: 'Danke für die klare Erklärung!' },
+      'diskutieren': { de: 'diskutieren', en: 'to discuss / debate', phonetic: 'di-SKUS', exampleEn: 'Let us discuss this topic in detail.', exampleDe: 'Lass uns dieses Thema im Detail diskutieren.' },
+      'diskussion': { de: 'Diskussion', en: 'discussion / debate', phonetic: 'di-SKUSH-ən', exampleEn: 'We had a productive discussion in our meeting.', exampleDe: 'Wir hatten eine produktive Diskussion in unserem Meeting.' },
+      'beschreiben': { de: 'beschreiben', en: 'to describe', phonetic: 'di-SKRYB', exampleEn: 'Can you describe how the application works?', exampleDe: 'Kannst du beschreiben, wie die Anwendung funktioniert?' },
+      'beschreibung': { de: 'Beschreibung', en: 'description', phonetic: 'di-SKRIP-shən', exampleEn: 'Please read the ticket description carefully.', exampleDe: 'Bitte lies die Ticket-Beschreibung sorgfältig durch.' },
+      'bedeuten': { de: 'bedeuten', en: 'to mean / signify', phonetic: 'meen', exampleEn: 'What does this word mean in English?', exampleDe: 'Was bedeutet dieses Wort auf Englisch?' },
+      'bedeutung': { de: 'Bedeutung', en: 'meaning / significance', phonetic: 'MEE-ning', exampleEn: 'Do you know the meaning of this sentence?', exampleDe: 'Kennst du die Bedeutung dieses Satzes?' },
+      'wiederholen': { de: 'wiederholen', en: 'to repeat', phonetic: 'ri-PEET', exampleEn: 'Could you please repeat that sentence?', exampleDe: 'Könntest du diesen Satz bitte wiederholen?' },
+      'wiederholung': { de: 'Wiederholung', en: 'repetition / review', phonetic: 'rep-i-TISH-ən', exampleEn: 'Repetition is the mother of skill.', exampleDe: 'Wiederholung ist die Mutter des Könnens.' },
+      'inhalt': { de: 'Inhalt', en: 'content / subject matter', phonetic: 'KON-tent', exampleEn: 'The content of this course is very practical.', exampleDe: 'Der Inhalt dieses Kurses ist sehr praxisnah.' },
+      'stadt': { de: 'Stadt', en: 'city / town', phonetic: 'SIT-ee', exampleEn: 'London is a vibrant international city.', exampleDe: 'London ist eine lebendige internationale Stadt.' },
+      'statt': { de: 'statt / anstatt', en: 'instead of', phonetic: 'in-STED ov', exampleEn: 'Let us use JSON instead of XML.', exampleDe: 'Lass uns JSON statt XML verwenden.' },
+      'anstatt': { de: 'anstatt', en: 'instead of', phonetic: 'in-STED ov', exampleEn: 'I walked home instead of taking the bus.', exampleDe: 'Ich bin zu Fuß nach Hause gegangen, anstatt den Bus zu nehmen.' },
+      'weiter': { de: 'weiter', en: 'further / next / continue', phonetic: 'FUR-thər', exampleEn: 'Let us continue with the next exercise.', exampleDe: 'Lass uns mit der nächsten Übung weitermachen.' },
+      'zeigen': { de: 'zeigen', en: 'to show / demonstrate', phonetic: 'shoh', exampleEn: 'Can you show me an example sentence?', exampleDe: 'Kannst du mir einen Beispielsatz zeigen?' },
+      'denken': { de: 'denken', en: 'to think', phonetic: 'think', exampleEn: 'What do you think about this idea?', exampleDe: 'Was denkst du über diese Idee?' },
+      'glauben': { de: 'glauben', en: 'to believe / think', phonetic: 'bi-LEEV', exampleEn: 'I believe you will master English quickly.', exampleDe: 'Ich glaube, dass du Englisch schnell meistern wirst.' },
+      'wissen': { de: 'wissen', en: 'to know', phonetic: 'noh', exampleEn: 'Do you know how to solve this bug?', exampleDe: 'Weißt du, wie man diesen Bug behebt?' },
+      'kennen': { de: 'kennen', en: 'to know / be familiar with', phonetic: 'noh', exampleEn: 'I know this programming framework very well.', exampleDe: 'Ich kenne dieses Programmier-Framework sehr gut.' },
+      'finden': { de: 'finden', en: 'to find', phonetic: 'fynd', exampleEn: 'Did you find the error in the log file?', exampleDe: 'Hast du den Fehler in der Log-Datei gefunden?' },
+      'suchen': { de: 'suchen', en: 'to search / look for', phonetic: 'surch', exampleEn: 'I am looking for a good English dictionary.', exampleDe: 'Ich suche nach einem guten Englisch-Wörterbuch.' },
+      'brauchen': { de: 'brauchen', en: 'to need / require', phonetic: 'need', exampleEn: 'We need more unit tests for this module.', exampleDe: 'Wir brauchen mehr Unit-Tests für dieses Modul.' },
+      'wollen': { de: 'wollen', en: 'to want', phonetic: 'wont', exampleEn: 'I want to speak English fluently.', exampleDe: 'Ich will fließend Englisch sprechen.' },
+      'können': { de: 'können', en: 'can / to be able to', phonetic: 'kan', exampleEn: 'Can you help me with the translation?', exampleDe: 'Kannst du mir bei der Übersetzung helfen?' },
+      'müssen': { de: 'müssen', en: 'must / to have to', phonetic: 'must', exampleEn: 'We have to deploy the update today.', exampleDe: 'Wir müssen das Update heute bereitstellen.' },
+      'sollen': { de: 'sollen', en: 'should / to be supposed to', phonetic: 'shood', exampleEn: 'What should I say in the interview?', exampleDe: 'Was soll ich im Vorstellungsgespräch sagen?' },
+      'dürfen': { de: 'dürfen', en: 'may / to be allowed to', phonetic: 'mey', exampleEn: 'May I ask you a quick question?', exampleDe: 'Darf ich dir eine kurze Frage stellen?' },
+      'machen': { de: 'machen', en: 'to make / to do', phonetic: 'meyk / doo', exampleEn: 'What are you doing this weekend?', exampleDe: 'Was machst du dieses Wochenende?' },
+      'tun': { de: 'tun', en: 'to do', phonetic: 'doo', exampleEn: 'There is still a lot of work to do.', exampleDe: 'Es gibt noch viel zu tun.' },
+      'gehen': { de: 'gehen', en: 'to go / to walk', phonetic: 'goh', exampleEn: 'Let us go for a walk in the park.', exampleDe: 'Lass uns im Park spazieren gehen.' },
+      'kommen': { de: 'kommen', en: 'to come', phonetic: 'kum', exampleEn: 'Where do you come from?', exampleDe: 'Woher kommst du?' },
+      'sehen': { de: 'sehen', en: 'to see / to look', phonetic: 'see', exampleEn: 'I see what you mean!', exampleDe: 'Ich verstehe (sehe), was du meinst!' },
+      'geben': { de: 'geben', en: 'to give', phonetic: 'giv', exampleEn: 'Can you give me a simple example?', exampleDe: 'Kannst du mir ein einfaches Beispiel geben?' },
+      'nehmen': { de: 'nehmen', en: 'to take', phonetic: 'teyk', exampleEn: 'Let us take a short coffee break.', exampleDe: 'Lass uns eine kurze Kaffeepause machen (nehmen).' },
+      'bringen': { de: 'bringen', en: 'to bring', phonetic: 'bring', exampleEn: 'Can you bring your laptop to the meeting?', exampleDe: 'Kannst du deinen Laptop zum Meeting mitbringen?' },
+      'holen': { de: 'holen', en: 'to get / to fetch', phonetic: 'get', exampleEn: 'I will get a cup of coffee.', exampleDe: 'Ich hole mir eine Tasse Kaffee.' },
+      'kaufen': { de: 'kaufen', en: 'to buy / to purchase', phonetic: 'by', exampleEn: 'We need to buy a new server license.', exampleDe: 'Wir müssen eine neue Serverlizenz kaufen.' },
+      'verkaufen': { de: 'verkaufen', en: 'to sell', phonetic: 'sel', exampleEn: 'The company sells cloud software worldwide.', exampleDe: 'Das Unternehmen verkauft weltweit Cloud-Software.' },
+      'bezahlen': { de: 'bezahlen', en: 'to pay', phonetic: 'pey', exampleEn: 'Can I pay by credit card?', exampleDe: 'Kann ich mit Kreditkarte bezahlen?' },
+      'kosten': { de: 'kosten', en: 'to cost (costs)', phonetic: 'kost', exampleEn: 'How much does this ticket cost?', exampleDe: 'Wie viel kostet dieses Ticket?' },
+      'öffnen': { de: 'öffnen', en: 'to open', phonetic: 'OH-pən', exampleEn: 'Please open the project file in your editor.', exampleDe: 'Bitte öffne die Projektdatei in deinem Editor.' },
+      'schließen': { de: 'schließen', en: 'to close', phonetic: 'klohz', exampleEn: 'Do not forget to close the database connection.', exampleDe: 'Vergiss nicht, die Datenbankverbindung zu schließen.' },
+      'beginnen': { de: 'beginnen', en: 'to begin / to start', phonetic: 'bi-GIN', exampleEn: 'When does our meeting begin?', exampleDe: 'Wann beginnt unsere Besprechung?' },
+      'anfangen': { de: 'anfangen', en: 'to start / to begin', phonetic: 'start', exampleEn: 'Let us start with an easy question.', exampleDe: 'Lass uns mit einer einfachen Frage anfangen.' },
+      'aufhören': { de: 'aufhören', en: 'to stop / to quit', phonetic: 'stop', exampleEn: 'It finally stopped raining.', exampleDe: 'Es hat endlich aufgehört zu regnen.' },
+      'beenden': { de: 'beenden', en: 'to finish / to end / to complete', phonetic: 'FIN-ish', exampleEn: 'I will finish this task before lunch.', exampleDe: 'Ich werde diese Aufgabe vor dem Mittagessen beenden.' },
+      'versuchen': { de: 'versuchen', en: 'to try / to attempt', phonetic: 'try', exampleEn: 'Try to say the sentence out loud!', exampleDe: 'Versuche, den Satz laut auszusprechen!' },
+      'benutzen': { de: 'benutzen', en: 'to use', phonetic: 'yooz', exampleEn: 'Which programming language do you use most?', exampleDe: 'Welche Programmiersprache benutzt du am meisten?' },
+      'verwenden': { de: 'verwenden', en: 'to use / to utilize', phonetic: 'yooz', exampleEn: 'We use Git for version control.', exampleDe: 'Wir verwenden Git zur Versionsverwaltung.' },
+      'entwickeln': { de: 'entwickeln', en: 'to develop / to build', phonetic: 'di-VEL-əp', exampleEn: 'We develop modern web applications.', exampleDe: 'Wir entwickeln moderne Webanwendungen.' },
+      'entwicklung': { de: 'Entwicklung', en: 'development', phonetic: 'di-VEL-əp-mənt', exampleEn: 'Software development requires teamwork.', exampleDe: 'Softwareentwicklung erfordert Teamarbeit.' },
+      'entwickler': { de: 'Entwickler', en: 'developer / engineer', phonetic: 'di-VEL-ə-pər', exampleEn: 'I work as a software developer.', exampleDe: 'Ich arbeite als Softwareentwickler.' },
+      'programmieren': { de: 'programmieren', en: 'to program / to code', phonetic: 'PROH-gram / kohd', exampleEn: 'I love coding in JavaScript and Python.', exampleDe: 'Ich programmiere sehr gerne in JavaScript und Python.' },
+      'testen': { de: 'testen', en: 'to test', phonetic: 'test', exampleEn: 'We must test the new feature thoroughly.', exampleDe: 'Wir müssen die neue Funktion gründlich testen.' },
+      'speichern': { de: 'speichern', en: 'to save / to store', phonetic: 'seyv / stor', exampleEn: 'Remember to save your changes.', exampleDe: 'Denk daran, deine Änderungen zu speichern.' },
+      'löschen': { de: 'löschen', en: 'to delete / to remove', phonetic: 'di-LEET', exampleEn: 'Be careful not to delete production data.', exampleDe: 'Pass auf, keine Produktionsdaten zu löschen.' },
+      'ändern': { de: 'ändern', en: 'to change / to modify', phonetic: 'cheynj', exampleEn: 'You can change the language setting anytime.', exampleDe: 'Du kannst die Spracheinstellung jederzeit ändern.' },
+      'änderung': { de: 'Änderung', en: 'change / modification', phonetic: 'cheynj', exampleEn: 'I pushed the latest code changes to GitHub.', exampleDe: 'Ich habe die neuesten Code-Änderungen auf GitHub hochgeladen.' },
+      'vergleichen': { de: 'vergleichen', en: 'to compare', phonetic: 'kəm-PAIR', exampleEn: 'Let us compare both solutions.', exampleDe: 'Lass uns beide Lösungen vergleichen.' },
+      'entscheiden': { de: 'entscheiden', en: 'to decide', phonetic: 'di-SYD', exampleEn: 'We need to decide which database to use.', exampleDe: 'Wir müssen entscheiden, welche Datenbank wir nutzen.' },
+      'planen': { de: 'planen', en: 'to plan / to schedule', phonetic: 'plan', exampleEn: 'What are you planning for the next sprint?', exampleDe: 'Was planst du für den nächsten Sprint?' },
+      'erinnern': { de: 'erinnern', en: 'to remember / to remind', phonetic: 'ri-MEM-bər', exampleEn: 'Do you remember this English word?', exampleDe: 'Erinnerst du dich an dieses englische Wort?' },
+      'vergessen': { de: 'vergessen', en: 'to forget', phonetic: 'fər-GET', exampleEn: 'Never forget to back up your database.', exampleDe: 'Vergiss nie, ein Backup deiner Datenbank zu machen.' },
+      'warten': { de: 'warten', en: 'to wait', phonetic: 'weyt', exampleEn: 'I am waiting for the code review.', exampleDe: 'Ich warte auf das Code-Review.' },
+      'hoffen': { de: 'hoffen', en: 'to hope', phonetic: 'hohp', exampleEn: 'I hope you have a great day!', exampleDe: 'Ich hoffe, du hast einen tollen Tag!' },
+      'wünschen': { de: 'wünschen', en: 'to wish', phonetic: 'wish', exampleEn: 'I wish you lots of success in your exam.', exampleDe: 'Ich wünsche dir viel Erfolg bei deiner Prüfung.' },
+      'lieben': { de: 'lieben', en: 'to love', phonetic: 'luv', exampleEn: 'I love learning new things.', exampleDe: 'Ich liebe es, neue Dinge zu lernen.' },
+      'mögen': { de: 'mögen', en: 'to like', phonetic: 'lyk', exampleEn: 'Do you like working in a team?', exampleDe: 'Magst du es, im Team zu arbeiten?' },
+      'leben': { de: 'leben / Leben', en: 'to live / life', phonetic: 'liv / lyf', exampleEn: 'Where do you live?', exampleDe: 'Wo lebst du?' },
+      'wohnen': { de: 'wohnen', en: 'to live / to reside', phonetic: 'liv', exampleEn: 'I live in Germany.', exampleDe: 'Ich wohne in Deutschland.' },
+      'schlafen': { de: 'schlafen', en: 'to sleep', phonetic: 'sleep', exampleEn: 'Did you sleep well last night?', exampleDe: 'Hast du letzte Nacht gut geschlafen?' },
+      'kochen': { de: 'kochen', en: 'to cook', phonetic: 'kook', exampleEn: 'I like to cook fresh food in the evening.', exampleDe: 'Ich koche abends gerne frisches Essen.' },
+      'spielen': { de: 'spielen', en: 'to play', phonetic: 'pley', exampleEn: 'Do you play any musical instruments?', exampleDe: 'Spielst du ein Musikinstrument?' },
+      'gewinnen': { de: 'gewinnen', en: 'to win / to gain', phonetic: 'win', exampleEn: 'With practice, you will gain confidence.', exampleDe: 'Mit Übung wirst du Selbstvertrauen gewinnen.' },
+      'verlieren': { de: 'verlieren', en: 'to lose', phonetic: 'looz', exampleEn: 'Do not lose your motivation!', exampleDe: 'Verliere nicht deine Motivation!' },
+      'beispiel': { de: 'Beispiel', en: 'example / instance', phonetic: 'ig-ZAM-pəl', exampleEn: 'Can you give me a practical example?', exampleDe: 'Kannst du mir ein praktisches Beispiel geben?' },
+      'zusammen': { de: 'zusammen', en: 'together', phonetic: 'tuh-GETH-ər', exampleEn: 'Let us practice English together!', exampleDe: 'Lass uns zusammen Englisch üben!' },
+      'natürlich': { de: 'natürlich', en: 'of course / naturally', phonetic: 'ov KORS / NACH-rəl-ee', exampleEn: 'Of course I can help you with that!', exampleDe: 'Natürlich kann ich dir dabei helfen!' },
+      'vielleicht': { de: 'vielleicht', en: 'maybe / perhaps', phonetic: 'MEY-bee', exampleEn: 'Maybe we can test this tomorrow.', exampleDe: 'Vielleicht können wir das morgen testen.' },
+      'immer': { de: 'immer', en: 'always', phonetic: 'AWL-weyz', exampleEn: 'You can always ask me in German or English.', exampleDe: 'Du kannst mich immer auf Deutsch oder Englisch fragen.' },
+      'niemals': { de: 'niemals / nie', en: 'never', phonetic: 'NEV-ər', exampleEn: 'It is never too late to learn a language.', exampleDe: 'Es ist niemals zu spät, eine Sprache zu lernen.' },
+      'oft': { de: 'oft', en: 'often / frequently', phonetic: 'AW-fən', exampleEn: 'How often do you practice English?', exampleDe: 'Wie oft übst du Englisch?' },
+      'manchmal': { de: 'manchmal', en: 'sometimes', phonetic: 'SUM-tymz', exampleEn: 'Sometimes grammar can be tricky.', exampleDe: 'Manchmal kann Grammatik knifflig sein.' },
+      'jetzt': { de: 'jetzt / sofort', en: 'now / right now', phonetic: 'now', exampleEn: 'Let us try it right now!', exampleDe: 'Lass es uns jetzt gleich ausprobieren!' },
+      'später': { de: 'später', en: 'later', phonetic: 'LEY-tər', exampleEn: 'See you later!', exampleDe: 'Bis später!' },
+      'richtig': { de: 'richtig', en: 'correct / right', phonetic: 'kuh-REKT / ryt', exampleEn: 'Your answer is completely correct!', exampleDe: 'Deine Antwort ist völlig richtig!' },
+      'falsch': { de: 'falsch', en: 'wrong / incorrect / false', phonetic: 'rawng / in-kuh-REKT', exampleEn: 'Do not worry if a word is wrong.', exampleDe: 'Mach dir keine Sorgen, wenn ein Wort falsch ist.' },
+      'genau': { de: 'genau', en: 'exactly / precise', phonetic: 'ig-ZAKT-lee', exampleEn: 'That is exactly what I meant!', exampleDe: 'Das ist genau das, was ich meinte!' },
+      'klar': { de: 'klar / deutlich', en: 'clear / clearly', phonetic: 'kleer', exampleEn: 'Your pronunciation is very clear.', exampleDe: 'Deine Aussprache ist sehr klar.' }
     },
 
     lookup(word) {
       if (!word) return null;
-      const clean = word.toLowerCase().trim().replace(/[^a-zäöüß0-9\s\-]/g, '');
+      let clean = word.toLowerCase().trim().replace(/[^a-zäöüß0-9\s\-]/g, '');
       if (!clean) return null;
 
-      // 1. In common Dictionary suchen (direkt oder Singular-Fallback bei Endung auf 's')
-      let item = this.common[clean];
-      if (!item && clean.endsWith('s') && clean.length > 3) {
-        item = this.common[clean.slice(0, -1)];
+      // Bereinige evtl. mitgegebene Begleitwörter ("das wort erklären" -> "erklären")
+      clean = clean
+        .replace(/^(das\s+wort|ein\s+wort|wort|the\s+word|word|der\s+begriff|begriff)\s+/i, '')
+        .replace(/\s+(auf\s+englisch|ins\s+englische|in\s+english|to\s+english|into\s+english|auf\s+deutsch|in\s+german|übersetzen|translate|bitte|please)$/i, '')
+        .replace(/^(der|die|das|ein|eine|einen|to|the|a|an)\s+/i, '')
+        .trim();
+      if (!clean) return null;
+
+      // 1. In common Dictionary suchen (direkt oder über deutsche Verb-/Nomen-Stammformen)
+      const candidates = [
+        clean,
+        clean.replace(/ae/g, 'ä').replace(/oe/g, 'ö').replace(/ue/g, 'ü'),
+        clean.endsWith('s') && clean.length > 3 ? clean.slice(0, -1) : null,
+        clean.endsWith('e') && clean.length > 3 ? clean + 'n' : null,
+        clean.endsWith('st') && clean.length > 4 ? clean.slice(0, -2) + 'en' : null,
+        clean.endsWith('t') && clean.length > 3 ? clean.slice(0, -1) + 'en' : null,
+        !clean.endsWith('en') && clean.length >= 3 ? clean + 'en' : null
+      ].filter(Boolean);
+
+      let item = null;
+      for (const c of candidates) {
+        if (this.common[c]) {
+          item = this.common[c];
+          break;
+        }
       }
 
       if (item) {
@@ -3876,8 +3987,39 @@ ${cleanTip}`,
         };
       }
 
-      // 6. DYNAMISCHER ÜBERSETZUNGS- & BEDEUTUNGS-LEHRER (v33): Wort-, Bedeutungs- & Satzübersetzung
+      // 6. DYNAMISCHER ÜBERSETZUNGS- & BEDEUTUNGS-LEHRER (v36): Wort-, Bedeutungs- & Live-Wörterbuch-Übersetzung
       const translationMatch = (() => {
+        function cleanCandidate(c) {
+          if (!c) return null;
+          let cand = c.trim();
+          cand = cand.replace(/^["'„“.,!?\s]+|["'„“.,!?\s]+$/g, '');
+          // Entferne führende Einleitungen ("kannst du mir", "bitte", "das wort", etc.)
+          cand = cand.replace(/^(?:kannst\s+du(?:\s+mir)?|can\s+you|could\s+you|bitte|please|einfach|mal|nur|doch|jetzt|sofort|\s)+/gi, '').trim();
+          cand = cand.replace(/^(?:das\s+wort|dem\s+wort|ein\s+wort|a\s+word|the\s+word|wort|word|der\s+begriff|den\s+begriff|begriff)\s+/gi, '').trim();
+          // Entferne nachgestellte Zusätze ("auf englisch übersetzen", "auf englisch", "für mich", "soll", etc.)
+          cand = cand.replace(/\s+(?:auf\s+englisch|ins\s+englische|in\s+english|to\s+english|into\s+english|auf\s+deutsch|ins\s+deutsche|in\s+german|to\s+german|übersetzen|übersetzt|übersetze|translate|erklären|soll|sollst|willst|bitte|please|für\s+mich|for\s+me|mir|me|jetzt|now|einfach|mal)+[\s?!.,]*$/gi, '').trim();
+          cand = cand.replace(/\s+(?:auf\s+englisch|ins\s+englische|in\s+english|to\s+english|into\s+english|auf\s+deutsch|in\s+german|übersetzen|translate|bitte|please)+[\s?!.,]*$/gi, '').trim();
+          cand = cand.replace(/\b(please|bitte|for\s+me|f[uü]r\s+mich|trace|always)\b/gi, '').trim();
+          cand = cand.replace(/^(das\s+wort|ein\s+wort|a\s+word|the\s+word|word|wort)\s+/gi, '').trim();
+          cand = cand.replace(/^["'„“.,!?\s]+|["'„“.,!?\s]+$/g, '');
+          if (!cand || /^(word|wort|sentence|satz|something|etwas|me|mir|mich|it|this|that|this word|das wort|ein wort|englisch|english|deutsch|german|übersetzen|translate)$/i.test(cand)) {
+            return null;
+          }
+          return cand.length >= 2 ? cand : null;
+        }
+
+        const rawClean = rawInput.trim();
+
+        // A) Explizites Muster: "das Wort [X]" / "dem Wort [X]" / "the word [X]" überall im Satz
+        // (z.B. "das wort erklären auf englisch übersetzen", "kannst du das wort erklären übersetzen")
+        const explicitWordMatch = rawClean.match(/\b(?:das\s+wort|dem\s+wort|the\s+word|wort)\s+["'„“]?([A-Za-zÄÖÜäöüß\-]{2,30})["'“]?(?:\s+(?:auf\s+englisch|ins\s+englische|in\s+english|auf\s+deutsch|übersetzen|übersetzt|translate|bedeutet|heißt|heisst|soll))?/i);
+        if (explicitWordMatch && explicitWordMatch[1]) {
+          const w = explicitWordMatch[1].trim();
+          if (!/^(auf|in|to|into|übersetzen|übersetzt|translate|ist|heißt|heisst|bedeutet|und|oder|nicht|mir|mich|bitte|please)$/i.test(w)) {
+            return { type: 'word', word: w };
+          }
+        }
+
         const patterns = [
           // Bedeutungsfragen (z.B. "what is mein whit word thoughts ?", "what is meant with X", "what means X")
           /\bwhat\s+(?:is\s+)?(?:meant|mein|mean)\s+(?:with|whit|by)\s+(?:the\s+)?(?:word\s+)?["'„“]?([^"'?!.,]+?)["'“]?\??$/i,
@@ -3885,34 +4027,20 @@ ${cleanTip}`,
           /\bwhat\s+does\s+(?:the\s+)?(?:word\s+)?["'„“]?([^"'?!.,]+?)["'“]?\s+mean\??$/i,
           /\bmeaning\s+of\s+(?:the\s+)?(?:word\s+)?["'„“]?([^"'?!.,]+?)["'“]?\??$/i,
           /\bwas\s+(?:ist\s+)?(?:gemeint|meinst\s+du)\s+mit\s+(?:dem\s+wort\s+|das\s+wort\s+)?["'„“]?([^"'?!.,]+?)["'“]?\??$/i,
-          /\bwas\s+bedeutet\s+(?:das\s+wort\s+|den\s+satz\s+)?["'„“]?([^"'?!.,]+?)["'“]?(\s+auf\s+englisch)?\??$/i,
-          /\b(?:erkl[aä]r(?:e)?|explain)\s+(?:mir\s+)?(?:das\s+wort\s+|the\s+word\s+)?["'„“]?([^"'?!.,]+?)["'“]?\??$/i,
+          /\bwas\s+bedeutet\s+(?:das\s+wort\s+|den\s+satz\s+)?["'„“]?([^"'?!.,]+?)["'“]?(\s+auf\s+englisch|\s+auf\s+deutsch)?\??$/i,
           /\bbedeutung\s+von\s+(?:dem\s+wort\s+|das\s+wort\s+)?["'„“]?([^"'?!.,]+?)["'“]?\??$/i,
           // Übersetzungsmuster
           /\bhow\s+do\s+you\s+say\s+["'„“]?([^"'?!.,]+?)["'“]?(\s+in\s+english)?\??$/i,
           /\bwhat\s+is\s+["'„“]?([^"'?!.,]+?)["'“]?\s+in\s+english\??$/i,
           /\bwie\s+sagt\s+man\s+["'„“]?([^"'?!.,]+?)["'“]?(\s+auf\s+englisch)?\??$/i,
-          /\bwas\s+hei[sß]+t\s+["'„“]?([^"'?!.,]+?)["'“]?(\s+auf\s+englisch)?\??$/i,
-          /\bwie\s+hei[sß]+t\s+["'„“]?([^"'?!.,]+?)["'“]?(\s+auf\s+englisch)?\??$/i,
-          /\b(?:übersetze|translate)\s+(?:mir\s+)?(?:das\s+wort\s+|den\s+satz\s+)?["'„“]?([^"'?!.,]+?)["'“]?(\s+auf\s+englisch|\s+into\s+english|\s+to\s+english)?\??$/i,
-          /\b(?:kannst\s+du\s+(?:mir\s+)?|can\s+you\s+)\s*["'„“]?([^"'?!.,]+?)["'“]?\s+(?:übersetzen|translate)\??$/i,
-          /^["'„“]?([^"'?!.,]+?)["'“]?\s+(?:auf\s+englisch|in\s+english)\??$/i
+          /\bwas\s+hei[sß]+t\s+["'„“]?([^"'?!.,]+?)["'“]?(\s+auf\s+englisch|\s+auf\s+deutsch)?\??$/i,
+          /\bwie\s+hei[sß]+t\s+["'„“]?([^"'?!.,]+?)["'“]?(\s+auf\s+englisch|\s+auf\s+deutsch)?\??$/i,
+          /\b(?:übersetze|übersetzen|translate)\s+(?:mir\s+)?(?:bitte\s+)?(?:das\s+wort\s+|den\s+satz\s+)?["'„“]?([^"'?!.,]+?)["'“]?(\s+auf\s+englisch|\s+into\s+english|\s+to\s+english)?\??$/i,
+          /\b(?:kannst\s+du\s+(?:mir\s+)?(?:bitte\s+)?|can\s+you\s+)\s*(?:das\s+wort\s+)?["'„“]?([^"'?!.,]+?)["'“]?\s+(?:auf\s+englisch\s+|ins\s+englische\s+|in\s+english\s+)?(?:übersetzen|übersetzt|translate)\??$/i,
+          /\b["'„“]?([A-Za-zÄÖÜäöüß\-]{2,30})["'“]?\s+(?:auf\s+englisch|ins\s+englische|in\s+english)\s*(?:übersetzen|übersetzt|bitte|please|hei[sß]+t)?\??$/i,
+          /\b(?:erkl[aä]r(?:e)?|explain)\s+(?:mir\s+)?(?:bitte\s+)?(?:das\s+wort\s+|the\s+word\s+)["'„“]?([^"'?!.,]+?)["'“]?\??$/i
         ];
 
-        function cleanCandidate(c) {
-          if (!c) return null;
-          let cand = c.trim();
-          cand = cand.replace(/\b(please|bitte|me|for\s+me|mir|f[uü]r\s+mich|mal|jetzt|now|trace|always)\b/gi, '').trim();
-          cand = cand.replace(/^(das\s+wort|ein\s+wort|a\s+word|das|der|die|ein|eine|einen|the|a|an)\s+/gi, '').trim();
-          cand = cand.replace(/\b(the\s+word|das\s+wort|word|wort)\b/gi, '').trim();
-          cand = cand.replace(/^["'„“.,!?\s]+|["'„“.,!?\s]+$/g, '');
-          if (!cand || /^(word|wort|sentence|satz|something|etwas|me|it|this|that|this word|das wort)$/i.test(cand)) {
-            return null;
-          }
-          return cand.length >= 2 ? cand : null;
-        }
-
-        const rawClean = rawInput.trim();
         for (const pat of patterns) {
           const m = rawClean.match(pat);
           if (m) {
@@ -3921,18 +4049,30 @@ ${cleanTip}`,
           }
         }
 
-        // Allgemeine Übersetzungsanfrage (z.B. "can you trace translate me please", "kannst du mir ein wort übersetzen")
-        const isGeneral = /\b(translate(\s+me)?(\s+please)?|übersetz(e|en)?(\s+mir)?|can\s+you\s+(trace\s+)?translate|kannst\s+du\s+(mir\s+)?übersetzen|word.*translate|how\s+to\s+translate|brauche\s+eine\s+übersetzung|ein\s+wort\s+übersetzen|hilfe\s+beim\s+übersetzen|weiß\s+(das|ein)?\s*wort\s+nicht)\b/i.test(norm);
-        if (isGeneral) {
-          return { type: 'general' };
+        // B) Wenn die letzte Partner-Nachricht nach einem zu übersetzenden Wort gefragt hat ("Welches Wort möchtest du wissen?")
+        // und der Nutzer jetzt 1 bis 3 Wörter eingibt -> direkt als Wort-Übersetzung behandeln!
+        if (typeof dialogHistories !== 'undefined' && dialogHistories[scenarioId] && dialogHistories[scenarioId].length > 0) {
+          const lastMsg = [...dialogHistories[scenarioId]].reverse().find(m => m.type === 'partner');
+          if (lastMsg && /Welches Wort möchtest du|What word would you like to translate|Du fragst nach der Übersetzung/i.test((lastMsg.textDe || '') + ' ' + (lastMsg.textEn || ''))) {
+            if (rawClean.split(/\s+/).length <= 3) {
+              const followCand = cleanCandidate(rawClean);
+              if (followCand) return { type: 'word', word: followCand };
+            }
+          }
         }
 
-        // Einzellwort-Eingabe eines deutschen Begriffs prüfen (wenn Turn > 1 oder nach Begrüßung)
+        // C) Einzellwort- oder 2-Wort-Eingabe eines Begriffs prüfen
         if (rawClean.split(/\s+/).length <= 2) {
           const singleClean = cleanCandidate(rawClean);
           if (singleClean && TeacherDictionary.lookup(singleClean)) {
             return { type: 'word', word: singleClean };
           }
+        }
+
+        // D) Allgemeine Übersetzungsanfrage ohne konkretes Wort (z.B. "kannst du mir ein wort übersetzen")
+        const isGeneral = /\b(translate(\s+me)?(\s+please)?|übersetz(e|en)?(\s+mir)?|can\s+you\s+(trace\s+)?translate|kannst\s+du\s+(mir\s+)?übersetzen|word.*translate|how\s+to\s+translate|brauche\s+eine\s+übersetzung|ein\s+wort\s+übersetzen|hilfe\s+beim\s+übersetzen|weiß\s+(das|ein)?\s*wort\s+nicht)\b/i.test(norm);
+        if (isGeneral) {
+          return { type: 'general' };
         }
 
         return null;
@@ -3946,7 +4086,7 @@ ${cleanTip}`,
             const isDeToEn = entry.direction !== 'en_to_de';
             const targetWord = isDeToEn ? entry.english : entry.german;
             const sourceWord = queryWord;
-            const primaryTarget = targetWord.split('/')[0].trim();
+            const primaryTarget = targetWord.split('/')[0].replace(/^to\s+/i, '').trim();
             const phon = entry.phonetic ? ` [${entry.phonetic}]` : '';
             const exEn = entry.exampleEn ? `\nExample: "${entry.exampleEn}"` : '';
             const exDe = entry.exampleDe ? `\nBeispiel: *„${entry.exampleDe}“*` : (entry.exampleEn ? `\nBeispiel: *„${entry.exampleEn}“*` : '');
@@ -3955,27 +4095,29 @@ ${cleanTip}`,
               id: 'intent_word_translation_found',
               isTranslation: true,
               en: isDeToEn 
-                ? `In English, "${sourceWord}" is "${targetWord}"${phon}.${exEn}\nWould you like to try using "${primaryTarget}" in a sentence?`
-                : `In German, "${sourceWord}" translates to "${targetWord}"${phon}.${exEn}\nWould you like to practice using "${sourceWord}" in a sentence?`,
+                ? `In English, "${sourceWord}" means "${targetWord}"${phon}.${exEn}`
+                : `In German, "${sourceWord}" means "${targetWord}"${phon}.${exEn}`,
               de: isDeToEn
-                ? `Auf Englisch heißt „${sourceWord}“ ➔ **„${targetWord}“**${phon}.${exDe}\nMöchtest du versuchen, einen englischen Satz damit zu bilden?`
-                : `Auf Deutsch bedeutet „${sourceWord}“ ➔ **„${targetWord}“**${phon}.${exDe}\nMöchtest du versuchen, einen englischen Satz damit zu üben?`,
+                ? `🇩🇪➔🇬🇧 Auf Englisch heißt **„${sourceWord}“**: 👉 **„${targetWord}“**${phon}.${exDe}`
+                : `🇬🇧➔🇩🇪 Auf Deutsch bedeutet **„${sourceWord}“**: 👉 **„${targetWord}“**${phon}.${exDe}`,
               suggestions: [
-                `I would like to use "${primaryTarget}" in a sentence.`,
-                `Can you show me another example with "${primaryTarget}"?`,
-                `Can you teach me another useful word?`
+                entry.exampleEn || `Can you give me another example with "${primaryTarget}"?`,
+                `Was heißt 'wiederholen' auf Englisch?`,
+                `Was heißt 'Entscheidung' auf Englisch?`
               ]
             };
           } else {
-            // Wort nicht im Offline-Wörterbuch gefunden: Lehrer hilft trotzdem sofort!
+            // Wort nicht im Offline-Wörterbuch: Sofort per Live-Übersetzung übersetzen (NIEMALS nach "weiterem Inhalt" fragen!)
             return {
-              id: 'intent_word_translation_generic',
+              id: 'intent_word_translation_live',
               isTranslation: true,
-              en: `Great question! You are asking for the translation of "${queryWord}". Tell me the full sentence or situation you want to use it in, and I will show you how to say the complete thought in natural English!`,
-              de: `Tolle Frage! Du fragst nach der Übersetzung für „${queryWord}“. Schreib mir gerne den ganzen Satz oder die Situation, in der du es verwenden möchtest, und ich zeige dir, wie man den gesamten Gedanken auf natürlichem Englisch ausdrückt!`,
+              needsLiveTranslation: true,
+              queryWord: queryWord,
+              en: `Translating "${queryWord}" into English for you right now...`,
+              de: `Ich übersetze **„${queryWord}“** sofort für dich ins Englische... ⏳`,
               suggestions: [
-                `How do you say "${queryWord}" in a daily conversation?`,
-                `Can you teach me another useful English word?`,
+                `Was heißt 'erklären' auf Englisch?`,
+                `Was heißt 'Erfolg' auf Englisch?`,
                 `Let us continue our conversation!`
               ]
             };
@@ -5676,7 +5818,7 @@ ${partnerReply.de}`;
       ];
     }
 
-    dialogHistories[scenarioId].push({
+    const pushedPartnerMsg = {
       type: 'partner',
       sender: getCurrentPartnerMeta().name,
       textEn: partnerReply.en,
@@ -5686,7 +5828,8 @@ ${partnerReply.de}`;
         "How are you doing today?",
         "Let us continue chatting."
       ]
-    });
+    };
+    dialogHistories[scenarioId].push(pushedPartnerMsg);
 
     // XP vergeben & Sound abspielen
     userXP += 10;
@@ -5696,6 +5839,48 @@ ${partnerReply.de}`;
 
     // Chat neu rendern
     renderChatLog(scenarioId);
+
+    // Falls ein seltenes Wort live übersetzt werden soll (online), sofort übersetzen & Antwort aktualisieren!
+    if (partnerReply && partnerReply.needsLiveTranslation && partnerReply.queryWord) {
+      const qWord = partnerReply.queryWord;
+      fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(qWord)}&langpair=de|en`)
+        .then(r => r.json())
+        .then(data => {
+          const translated = (data && data.responseData && data.responseData.translatedText)
+            ? data.responseData.translatedText.trim()
+            : '';
+          if (translated && translated.toLowerCase() !== qWord.toLowerCase()) {
+            TeacherDictionary.common[qWord.toLowerCase()] = {
+              de: qWord,
+              en: translated,
+              phonetic: '',
+              exampleEn: `Can you use "${translated}" in a sentence?`,
+              exampleDe: `Kannst du „${translated}“ in einem Satz verwenden?`
+            };
+            pushedPartnerMsg.textEn = `In English, "${qWord}" means "${translated}".`;
+            pushedPartnerMsg.textDe = `🇩🇪➔🇬🇧 Auf Englisch heißt **„${qWord}“**: 👉 **„${translated}“**.`;
+            pushedPartnerMsg.suggestions = [
+              `Can you give me an example sentence with "${translated}"?`,
+              `Was heißt 'erklären' auf Englisch?`,
+              `Let us continue our conversation!`
+            ];
+            renderChatLog(scenarioId);
+            if (currentDialogMode === 'voice') {
+              speakEnglish(pushedPartnerMsg.textEn);
+            }
+          } else {
+            pushedPartnerMsg.textEn = `In English, you can translate "${qWord}" depending on context — try clicking any word in the glossary (📚) or ask me "Was heißt [Wort] auf Englisch?".`;
+            pushedPartnerMsg.textDe = `Für **„${qWord}“** konnte offline keine direkte Einzelwort-Übersetzung geladen werden. Frag mich gerne mit einem kurzen deutschen Wort wie „Was heißt erklären auf Englisch?“.`;
+            renderChatLog(scenarioId);
+          }
+        })
+        .catch(() => {
+          pushedPartnerMsg.textEn = `You are offline right now, so I could only search the built-in dictionary for "${qWord}".`;
+          pushedPartnerMsg.textDe = `Du bist gerade offline – sobald du wieder online bist, kann ich auch seltene Wörter wie **„${qWord}“** live übersetzen!`;
+          renderChatLog(scenarioId);
+        });
+      return;
+    }
 
     // Falls Sprachmodus aktiv ist, Antwort vorlesen
     if (currentDialogMode === 'voice') {
