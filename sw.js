@@ -1,5 +1,5 @@
-// Service Worker: Offline-Support für Englisch-LernApp (v36 - Direct Word Translation & Expanded Dictionary)
-const CACHE_NAME = 'english-master-cache-v36';
+// Service Worker: Offline-Support für Englisch-LernApp (v37 - Full Vocabulary Library, Dual-Engine Live Translator & Smart Intent Recognition)
+const CACHE_NAME = 'english-master-cache-v37';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',

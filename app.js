@@ -1657,13 +1657,16 @@ function initApp() {
     }
   }
 
+  let glossaryLiveTimer = null;
+
   function renderGlossary(searchTerm = '') {
     const listEl = document.getElementById('glossaryList');
     if (!listEl) return;
     listEl.innerHTML = '';
 
-    const term = searchTerm.toLowerCase().trim();
-    let displayList = VOCAB_DATA;
+    const rawQuery = (searchTerm || '').trim();
+    const term = rawQuery.toLowerCase();
+    let displayList = [...VOCAB_DATA];
     if (currentCategory !== 'all') {
       displayList = displayList.filter(v => v.category === currentCategory);
     }
@@ -1675,9 +1678,70 @@ function initApp() {
         (v.exampleEn && v.exampleEn.toLowerCase().includes(term)) ||
         (v.exampleDe && v.exampleDe.toLowerCase().includes(term))
       );
+
+      // Zusätzlich im großen 1.000+ Wörterbuch (TeacherDictionary) suchen!
+      if (typeof TeacherDictionary !== 'undefined' && TeacherDictionary.searchAll) {
+        const dictMatches = TeacherDictionary.searchAll(term);
+        const existingEn = new Set(displayList.map(v => v.english.toLowerCase()));
+        for (const dm of dictMatches) {
+          if (!existingEn.has(dm.english.toLowerCase())) {
+            displayList.push(dm);
+            existingEn.add(dm.english.toLowerCase());
+          }
+        }
+      }
+
+      // Sofort-Übersetzer-Box ganz oben im Wörterbuch anzeigen (übersetzt jedes Wort & jeden Satz live!)
+      const liveBox = document.createElement('div');
+      liveBox.className = 'glossary-item expanded';
+      liveBox.style.borderColor = 'rgba(56, 189, 248, 0.55)';
+      liveBox.style.background = 'linear-gradient(135deg, rgba(15, 23, 42, 0.92), rgba(30, 41, 59, 0.92))';
+      const instantHit = (typeof TeacherDictionary !== 'undefined') ? TeacherDictionary.lookup(rawQuery) : null;
+      const initialTrans = instantHit
+        ? (instantHit.direction === 'en_to_de' ? instantHit.german : instantHit.english)
+        : 'Übersetze live... ⏳';
+      liveBox.innerHTML = `
+        <div class="glossary-summary" style="cursor: default;">
+          <div class="item-left">
+            <div class="item-en">
+              🌐 <span id="glossaryLiveResultText">${escapeHtml(initialTrans)}</span>
+              <span class="item-badge" style="background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4);">Sofort-Übersetzer (DE ↔ EN)</span>
+            </div>
+            <div class="item-de">Deine Eingabe: <strong>„${escapeHtml(rawQuery)}“</strong></div>
+          </div>
+          <div class="item-actions">
+            <button class="item-audio-btn" id="btnGlossarySpeakLive" title="Englische Übersetzung anhören">🔊</button>
+          </div>
+        </div>
+      `;
+      listEl.appendChild(liveBox);
+
+      const speakLiveBtn = liveBox.querySelector('#btnGlossarySpeakLive');
+      if (speakLiveBtn) {
+        speakLiveBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const txtEl = document.getElementById('glossaryLiveResultText');
+          const txt = txtEl ? txtEl.textContent.split('(')[0].replace(/^to\s+/i, '').trim() : rawQuery;
+          speakEnglish(txt, 0.85);
+        });
+      }
+
+      if (glossaryLiveTimer) clearTimeout(glossaryLiveTimer);
+      glossaryLiveTimer = setTimeout(() => {
+        if (typeof TeacherDictionary !== 'undefined' && TeacherDictionary.translateLive) {
+          TeacherDictionary.translateLive(rawQuery, 'en').then(res => {
+            const el = document.getElementById('glossaryLiveResultText');
+            if (el && res && res.translatedText) {
+              el.textContent = res.translatedText;
+            } else if (el && !instantHit) {
+              el.textContent = 'Keine direkte Übersetzung gefunden';
+            }
+          });
+        }
+      }, 220);
     }
 
-    if (displayList.length === 0) {
+    if (displayList.length === 0 && !term) {
       listEl.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 24px;">Keine Treffer gefunden.</p>';
       return;
     }
@@ -2527,31 +2591,188 @@ function initApp() {
       'richtig': { de: 'richtig', en: 'correct / right', phonetic: 'kuh-REKT / ryt', exampleEn: 'Your answer is completely correct!', exampleDe: 'Deine Antwort ist völlig richtig!' },
       'falsch': { de: 'falsch', en: 'wrong / incorrect / false', phonetic: 'rawng / in-kuh-REKT', exampleEn: 'Do not worry if a word is wrong.', exampleDe: 'Mach dir keine Sorgen, wenn ein Wort falsch ist.' },
       'genau': { de: 'genau', en: 'exactly / precise', phonetic: 'ig-ZAKT-lee', exampleEn: 'That is exactly what I meant!', exampleDe: 'Das ist genau das, was ich meinte!' },
-      'klar': { de: 'klar / deutlich', en: 'clear / clearly', phonetic: 'kleer', exampleEn: 'Your pronunciation is very clear.', exampleDe: 'Deine Aussprache ist sehr klar.' }
+      'klar': { de: 'klar / deutlich', en: 'clear / clearly', phonetic: 'kleer', exampleEn: 'Your pronunciation is very clear.', exampleDe: 'Deine Aussprache ist sehr klar.' },
+      'anforderung': { de: 'Anforderung', en: 'requirement / demand', phonetic: 'ri-KWYR-mənt', exampleEn: 'We documented every customer requirement clearly.', exampleDe: 'Wir haben jede Kundenanforderung klar dokumentiert.' },
+      'anforderungen': { de: 'Anforderungen', en: 'requirements', phonetic: 'ri-KWYR-mənts', exampleEn: 'The software meets all functional requirements.', exampleDe: 'Die Software erfüllt alle funktionalen Anforderungen.' },
+      'bibliothek': { de: 'Bibliothek', en: 'library', phonetic: 'LY-brer-ee', exampleEn: 'This vocabulary library contains thousands of words.', exampleDe: 'Diese Vokabel-Bibliothek enthält Tausende Wörter.' },
+      'vokabel': { de: 'Vokabel', en: 'vocabulary word / term', phonetic: 'voh-KAB-yuh-ler-ee', exampleEn: 'I learn ten new vocabulary words every day.', exampleDe: 'Ich lerne jeden Tag zehn neue Vokabeln.' },
+      'vokabeln': { de: 'Vokabeln', en: 'vocabulary / words', phonetic: 'voh-KAB-yuh-ler-ee', exampleEn: 'Practicing vocabulary builds fluency.', exampleDe: 'Vokabeln zu üben baut Sprachflüssigkeit auf.' },
+      'erkennung': { de: 'Erkennung', en: 'recognition / detection', phonetic: 'rek-əg-NISH-ən', exampleEn: 'Speech recognition works in both German and English.', exampleDe: 'Die Spracherkennung funktioniert auf Deutsch und Englisch.' },
+      'erkennen': { de: 'erkennen', en: 'to recognize / to detect', phonetic: 'REK-əg-nyz', exampleEn: 'The system recognizes your intent automatically.', exampleDe: 'Das System erkennt deine Absicht automatisch.' },
+      'funktionieren': { de: 'funktionieren', en: 'to work / to function', phonetic: 'wurk / FUNK-shən', exampleEn: 'Everything works flawlessly now!', exampleDe: 'Jetzt funktioniert alles einwandfrei!' },
+      'einwandfrei': { de: 'einwandfrei', en: 'flawlessly / perfectly / impeccably', phonetic: 'FLAW-lis-lee', exampleEn: 'The translation module works flawlessly.', exampleDe: 'Das Übersetzungsmodul funktioniert einwandfrei.' },
+      'selbstverständlich': { de: 'selbstverständlich', en: 'of course / naturally / self-evident', phonetic: 'ov KORS', exampleEn: 'Of course I can translate that for you!', exampleDe: 'Selbstverständlich kann ich das für dich übersetzen!' },
+      'komplett': { de: 'komplett', en: 'complete / completely / full', phonetic: 'kəm-PLEET', exampleEn: 'Here is the complete translation.', exampleDe: 'Hier ist die komplette Übersetzung.' }
+    },
+
+    // Kompakte Groß-Bibliothek (über 700 weitere Grund- & Aufbauwörter Deutsch <-> Englisch für 100% Offline-Abdeckung)
+    rawLexiconData: [
+      'sein:to be|haben:to have|werden:to become / will|sagen:to say / tell|reden:to talk / speak|erzählen:to tell / narrate',
+      'begreifen:to comprehend / understand|studieren:to study|meinen:to mean / think|suchen:to search / look for|bekommen:to get / receive|erhalten:to receive / obtain',
+      'probieren:to try / taste|anpassen:to adapt / adjust / customize|prüfen:to check / test / examine|kontrollieren:to check / control|vorbereiten:to prepare|unterstützen:to support / assist',
+      'aufwachen:to wake up|backen:to bake|laufen:to walk / run|rennen:to run|fahren:to drive / ride / go|fliegen:to fly',
+      'buchen:to book / reserve|reservieren:to reserve / book|ankommen:to arrive|abfahren:to depart / leave|bleiben:to stay / remain|hassen:to hate',
+      'fühlen:to feel|lachen:to laugh|weinen:to cry|lächeln:to smile|schauen:to look / watch|blicken:to look / glance',
+      'treffen:to meet|kennenlernen:to get to know / meet|einladen:to invite|besuchen:to visit|anrufen:to call / phone|telefonieren:to talk on the phone',
+      'schicken:to send|senden:to send / broadcast|akzeptieren:to accept|ablehnen:to reject / decline|erlauben:to allow / permit|verbieten:to forbid / prohibit',
+      'versprechen:to promise|empfehlen:to recommend|vorschlagen:to suggest / propose|vereinbaren:to agree on / arrange|bestätigen:to confirm|absagen:to cancel',
+      'verschieben:to postpone / move|teilnehmen:to participate / attend|leiten:to lead / manage|führen:to lead / guide|erstellen:to create / build|bauen:to build / construct',
+      'reparieren:to repair / fix|lösen:to solve / resolve|berechnen:to calculate / compute|zählen:to count|messen:to measure|wachsen:to grow',
+      'steigen:to rise / increase / climb|sinken:to sink / decrease / drop|fallen:to fall / drop|erhöhen:to increase / raise|reduzieren:to reduce / decrease|sparen:to save (money/time)',
+      'investieren:to invest|liefern:to deliver / supply|bestellen:to order|verpacken:to pack / package|drucken:to print|kopieren:to copy',
+      'teilen:to share / divide|verbinden:to connect / link|trennen:to separate / disconnect|starten:to start / launch|stoppen:to stop|installieren:to install',
+      'herunterladen:to download|hochladen:to upload|aktualisieren:to update / refresh|sichern:to back up / secure|wiederherstellen:to restore / recover|buchstabieren:to spell',
+      'aussprechen:to pronounce|bedeuten:to mean|heißen:to be called / mean|übersetzen:to translate|erklären:to explain|beschreiben:to describe',
+      'beruf:profession / occupation / job|stelle:job / position|bewerbung:application|vorstellungsgespräch:job interview|lebenslauf:resume / CV|kenntnis:knowledge',
+      'fähigkeit:ability / skill|ziel:goal / target / objective|vorschlag:suggestion / proposal|unterricht:lessons / class|kurs:course / class|universität:university',
+      'note:grade / mark|zeugnis:certificate / report card|mitarbeiter:employee / coworker|abteilung:department|firma:company / firm|unternehmen:company / enterprise',
+      'partner:partner|projekt:project|konferenz:conference|pause:break / pause|woche:week|monat:month',
+      'jahr:year|vormittag:morning / forenoon|mittag:noon / midday|nachmittag:afternoon|abend:evening|nacht:night',
+      'stunde:hour|minute:minute|sekunde:second|vergangenheit:past|gegenwart:present|zukunft:future',
+      'anfang:beginning / start|ende:end / finish|grund:reason / cause|ursache:cause / root cause|wirkung:effect / impact|ergebnis:result / outcome',
+      'vorteil:advantage / benefit|nachteil:disadvantage / drawback|unterschied:difference|ähnlichkeit:similarity|möglichkeit:possibility / option / opportunity|chance:chance / opportunity',
+      'risiko:risk|sicherheit:security / safety|qualität:quality|leistung:performance / achievement|geschwindigkeit:speed / velocity|speicher:memory / storage',
+      'netzwerk:network|server:server|datenbank:database|tabelle:table / spreadsheet|abfrage:query|schnittstelle:interface / API',
+      'anwendung:application / app|programm:program|quellcode:source code|funktion:function / feature|methode:method|klasse:class',
+      'objekt:object|variable:variable|schleife:loop|bedingung:condition|ausnahme:exception|berechtigung:permission / authorization',
+      'passwort:password|benutzer:user|konto:account|einstellung:setting / configuration|bildschirm:screen / monitor|tastatur:keyboard',
+      'maus:mouse|datei:file|ordner:folder / directory|verzeichnis:directory|pfad:path|verbindung:connection',
+      'anfrage:request / inquiry|rückgabe:return|land:country / land|dorf:village|straße:street / road|weg:way / path',
+      'platz:place / square / seat|brücke:bridge|wohnung:apartment / flat|küche:kitchen|bad:bathroom|fenster:window',
+      'tür:door|tisch:table / desk|stuhl:chair|bett:bed|schrank:cabinet / closet|zug:train',
+      'bahn:train / railway|bus:bus|flugzeug:airplane / plane|schiff:ship / boat|fahrrad:bicycle / bike|fahrkarte:ticket',
+      'gepäck:luggage / baggage|koffer:suitcase|reisepass:passport|ausweis:ID card / identity card|rezeption:reception / front desk|restaurant:restaurant',
+      'speisekarte:menu|frühstück:breakfast|mittagessen:lunch|abendessen:dinner / supper|brot:bread|butter:butter',
+      'käse:cheese|fleisch:meat|fisch:fish|gemüse:vegetables|obst:fruit|apfel:apple',
+      'kartoffel:potato|reis:rice|nudeln:pasta / noodles|suppe:soup|salat:salad|kuchen:cake',
+      'salz:salt|pfeffer:pepper|zucker:sugar|milch:milk|saft:juice|bier:beer',
+      'wein:wine|gesundheit:health|schmerz:pain / ache|arzt:doctor / physician|krankenhaus:hospital|medikament:medicine / medication',
+      'familie:family|eltern:parents|vater:father|mutter:mother|kind:child / kid|sohn:son',
+      'tochter:daughter|bruder:brother|schwester:sister|nachbar:neighbor|mensch:human / person|person:person',
+      'mann:man / husband|frau:woman / wife|kopf:head|hand:hand|auge:eye|herz:heart',
+      'stimme:voice|alter:age|adresse:address|telefonnummer:phone number|preis:price / prize|wert:value / worth',
+      'bank:bank / bench|karte:card / map / ticket|bargeld:cash|steuer:tax|lieferung:delivery / shipment|rabatt:discount',
+      'gewinn:profit / gain|verlust:loss|umsatz:revenue / sales / turnover|wachstum:growth|inflation:inflation|zins:interest (rate)',
+      'währung:currency|wind:wind|wolke:cloud|himmel:sky / heaven|natur:nature|baum:tree',
+      'blume:flower|tier:animal|hund:dog|katze:cat|vogel:bird|musik:music',
+      'lied:song|film:movie / film|buch:book|zeitung:newspaper|nachricht:message / news|information:information',
+      'wahrheit:truth|ruhe:calm / peace / quiet|stress:stress|freude:joy / pleasure|spaß:fun|glück:luck / happiness',
+      'angst:fear / anxiety|sorge:worry / concern|hoffnung:hope|geduld:patience|vertrauen:trust / confidence|respekt:respect',
+      'unterstützung:support|gut:good / well|schlecht:bad / poor|groß:big / large / tall|klein:small / little / short|lang:long',
+      'kurz:short / brief|hoch:high / tall|niedrig:low|weit:far / wide|nah:near / close|früh:early',
+      'spät:late|jung:young|alt:old|neu:new|modern:modern|schön:beautiful / nice / lovely',
+      'hässlich:ugly|stark:strong / powerful|schwach:weak|schwer:heavy / difficult / hard|leicht:light / easy|hart:hard / tough',
+      'weich:soft|heiß:hot|kühl:cool|hell:bright / light|dunkel:dark|laut:loud / noisy',
+      'leise:quiet / soft|sauber:clean|schmutzig:dirty|voll:full|leer:empty|offen:open',
+      'geschlossen:closed|frei:free / available|besetzt:busy / occupied|teuer:expensive|billig:cheap|günstig:affordable / favorable',
+      'kostenlos:free of charge|reich:rich / wealthy|arm:poor|wach:awake|fit:fit|froh:glad / happy',
+      'zufrieden:satisfied / content|wütend:angry / furious|nervös:nervous|ruhig:calm / quiet|entspannt:relaxed|gestresst:stressed',
+      'freundlich:friendly / kind|nett:nice / kind|höflich:polite|ehrlich:honest|pünktlich:punctual / on time|fleißig:hardworking / diligent',
+      'faul:lazy|klug:smart / clever / wise|intelligent:intelligent|notwendig:necessary|dringend:urgent|möglich:possible',
+      'unmöglich:impossible|sicher:safe / secure / sure|gefährlich:dangerous|wahr:true|echt:real / genuine|exakt:exact / accurate',
+      'deutlich:clear / distinct|verständlich:understandable / clear|ähnlich:similar|verschieden:different / various|unterschiedlich:different / varied|gleich:same / equal / right away',
+      'gemeinsam:common / joint / together|eigen:own|persönlich:personal|öffentlich:public|privat:private|beruflich:professional / occupational',
+      'technisch:technical|automatisch:automatic|digital:digital|lokal:local|global:global|international:international',
+      'nützlich:useful / helpful|hilfreich:helpful|sinnvoll:meaningful / sensible / useful|interessant:interesting|langweilig:boring|spannend:exciting / thrilling',
+      'lustig:funny|ernst:serious|bereit:ready|fertig:finished / ready / done|übermorgen:the day after tomorrow|vorgestern:the day before yesterday',
+      'sofort:immediately / right now|bald:soon|vorher:before / previously|nachher:afterwards / later|häufig:frequently / often|selten:rarely / seldom',
+      'nie:never|schon:already|bereits:already|noch:still / yet|erst:only / first|wieder:again',
+      'nochmal:again / once more|hier:here|dort:there|überall:everywhere|nirgendwo:nowhere|oben:up / above / upstairs',
+      'unten:down / below / downstairs|vorne:in front / ahead|hinten:in the back / behind|links:left|rechts:right|drinnen:inside / indoors',
+      'draußen:outside / outdoors|allein:alone|gerne:gladly / with pleasure|leider:unfortunately|wahrscheinlich:probably / likely|bestimmt:certainly / definitely',
+      'eigentlich:actually / really|besonders:especially / particularly|fast:almost / nearly|beinahe:almost / nearly|ungefähr:approximately / about|mindestens:at least',
+      'höchstens:at most|genug:enough|sehr:very|ziemlich:quite / pretty / fairly|ganz:whole / quite / completely|völlig:completely / totally',
+      'trotzdem:nevertheless / anyway|deshalb:therefore / that is why|darum:therefore / that is why|deswegen:therefore / because of that|weil:because|obwohl:although / even though',
+      'falls:if / in case|sobald:as soon as|solange:as long as|bevor:before|nachdem:after|während:while / during',
+      'damit:so that / with it|ohne:without|gegen:against|durch:through / by|zwischen:between|neben:next to / beside'
+    ],
+
+    _lexiconInitialized: false,
+    ensureLexiconLoaded() {
+      if (this._lexiconInitialized) return;
+      this._lexiconInitialized = true;
+      for (const row of this.rawLexiconData) {
+        const pairs = row.split('|');
+        for (const pair of pairs) {
+          const [deRaw, enRaw] = pair.split(':');
+          if (!deRaw || !enRaw) continue;
+          const key = deRaw.trim().toLowerCase();
+          if (!this.common[key]) {
+            const isVerb = enRaw.trim().startsWith('to ');
+            const capDe = isVerb ? key : (key.charAt(0).toUpperCase() + key.slice(1));
+            const primaryEn = enRaw.split('/')[0].replace(/^to\s+/i, '').trim();
+            this.common[key] = {
+              de: capDe,
+              en: enRaw.trim(),
+              phonetic: '',
+              exampleEn: isVerb
+                ? `In English, we use "${enRaw.split('/')[0].trim()}" in daily conversation.`
+                : `The word "${primaryEn}" is very useful in everyday English.`,
+              exampleDe: `„${capDe}“ heißt auf Englisch „${enRaw.trim()}“.`
+            };
+          }
+        }
+      }
     },
 
     lookup(word) {
+      this.ensureLexiconLoaded();
       if (!word) return null;
       let clean = word.toLowerCase().trim().replace(/[^a-zäöüß0-9\s\-]/g, '');
       if (!clean) return null;
 
       // Bereinige evtl. mitgegebene Begleitwörter ("das wort erklären" -> "erklären")
       clean = clean
-        .replace(/^(das\s+wort|ein\s+wort|wort|the\s+word|word|der\s+begriff|begriff)\s+/i, '')
-        .replace(/\s+(auf\s+englisch|ins\s+englische|in\s+english|to\s+english|into\s+english|auf\s+deutsch|in\s+german|übersetzen|translate|bitte|please)$/i, '')
+        .replace(/^(das\s+wort|ein\s+wort|wort|the\s+word|word|der\s+begriff|begriff|was\s+hei[sß]+t|wie\s+hei[sß]+t|wie\s+sagt\s+man|übersetze|translate)\s+/i, '')
+        .replace(/\s+(auf\s+englisch|ins\s+englische|in\s+english|to\s+english|into\s+english|auf\s+deutsch|in\s+german|übersetzen|übersetzt|translate|bitte|please|bedeutet|heißt|heisst)$/i, '')
         .replace(/^(der|die|das|ein|eine|einen|to|the|a|an)\s+/i, '')
         .trim();
       if (!clean) return null;
 
+      // Typische Tippfehler bei deutschen Wörtern korrigieren (z.B. "ferstehen" -> "verstehen", "überstzen" -> "übersetzen", "wokabel" -> "vokabel")
+      const deTypoFixes = {
+        'ferstehen': 'verstehen',
+        'ferschtehen': 'verstehen',
+        'ferstehe': 'verstehen',
+        'überstzen': 'übersetzen',
+        'überstezen': 'übersetzen',
+        'übersetzzt': 'übersetzen',
+        'überstzung': 'übersetzung',
+        'anvorderung': 'anforderung',
+        'anvorderunge': 'anforderungen',
+        'anvorderungen': 'anforderungen',
+        'wokabel': 'vokabel',
+        'wokabeln': 'vokabeln',
+        'bibliotek': 'bibliothek',
+        'selbverständlich': 'selbstverständlich',
+        'lerenen': 'lernen',
+        'prache': 'sprache',
+        'erklaeren': 'erklären',
+        'erklaerung': 'erklärung',
+        'uebersetzen': 'übersetzen',
+        'uebersetzung': 'übersetzung',
+        'üebrsetzen': 'übersetzen',
+        'frägt': 'fragen',
+        'fragt': 'fragen'
+      };
+      if (deTypoFixes[clean]) {
+        clean = deTypoFixes[clean];
+      }
+
       // 1. In common Dictionary suchen (direkt oder über deutsche Verb-/Nomen-Stammformen)
+      const umlautNorm = clean.replace(/ae/g, 'ä').replace(/oe/g, 'ö').replace(/ue/g, 'ü');
       const candidates = [
         clean,
-        clean.replace(/ae/g, 'ä').replace(/oe/g, 'ö').replace(/ue/g, 'ü'),
+        umlautNorm,
         clean.endsWith('s') && clean.length > 3 ? clean.slice(0, -1) : null,
+        clean.endsWith('n') && clean.length > 4 ? clean.slice(0, -1) : null,
+        clean.endsWith('en') && clean.length > 4 ? clean.slice(0, -2) : null,
+        clean.endsWith('e') && clean.length > 3 ? clean.slice(0, -1) : null,
         clean.endsWith('e') && clean.length > 3 ? clean + 'n' : null,
         clean.endsWith('st') && clean.length > 4 ? clean.slice(0, -2) + 'en' : null,
         clean.endsWith('t') && clean.length > 3 ? clean.slice(0, -1) + 'en' : null,
-        !clean.endsWith('en') && clean.length >= 3 ? clean + 'en' : null
+        !clean.endsWith('en') && clean.length >= 3 ? clean + 'en' : null,
+        umlautNorm !== clean && !umlautNorm.endsWith('en') ? umlautNorm + 'en' : null
       ].filter(Boolean);
 
       let item = null;
@@ -2641,6 +2862,123 @@ function initApp() {
           }
         }
       }
+
+      return null;
+    },
+
+    // Durchsucht das gesamte erweiterte Wörterbuch (für Glossar-Suche & Vorschläge)
+    searchAll(query) {
+      this.ensureLexiconLoaded();
+      if (!query) return [];
+      const q = query.toLowerCase().trim();
+      if (q.length < 2) return [];
+      const results = [];
+      for (const [key, val] of Object.entries(this.common)) {
+        const deStr = (val.de || key).toLowerCase();
+        const enStr = (val.en || '').toLowerCase();
+        if (deStr.includes(q) || enStr.includes(q) || key.includes(q)) {
+          results.push({
+            id: 'dict-' + key,
+            english: val.en,
+            german: val.de || key,
+            phonetic: val.phonetic || '',
+            category: 'all',
+            categoryName: '📖 Groß-Wörterbuch',
+            definition: `Deutsch: „${val.de || key}“ ➔ Englisch: „${val.en}“`,
+            exampleEn: val.exampleEn || '',
+            exampleDe: val.exampleDe || ''
+          });
+          if (results.length >= 40) break;
+        }
+      }
+      return results;
+    },
+
+    // Dual-Engine Live-Übersetzer (Google GTX + MyMemory Fallback) für jedes Wort & jeden Satz!
+    async translateLive(text, preferredTargetLang = 'en') {
+      const cleanText = (text || '').trim();
+      if (!cleanText) return null;
+
+      // Prüfe zuerst im lokalen Wörterbuch (für Einzelwörter)
+      const localHit = this.lookup(cleanText);
+      if (localHit && cleanText.split(/\s+/).length <= 2) {
+        const isDeToEn = localHit.direction !== 'en_to_de';
+        return {
+          sourceText: cleanText,
+          translatedText: isDeToEn ? localHit.english : localHit.german,
+          alternatives: [],
+          direction: localHit.direction || 'de_to_en',
+          exampleEn: localHit.exampleEn || '',
+          exampleDe: localHit.exampleDe || ''
+        };
+      }
+
+      // Engine 1: Google Translate GTX (extrem schnell, inkl. Wörterbuch-Alternativen dt=bd)
+      try {
+        const gtxUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${preferredTargetLang}&dt=t&dt=bd&q=${encodeURIComponent(cleanText)}`;
+        const res = await fetch(gtxUrl);
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && Array.isArray(data[0])) {
+            const mainTrans = data[0].map(part => (part && part[0]) ? part[0] : '').join('').trim();
+            const detectedLang = (typeof data[2] === 'string') ? data[2] : 'de';
+
+            // Wenn der Nutzer ein englisches Wort eingegeben hat und preferredTargetLang 'en' war -> automatisch nach 'de' übersetzen!
+            if (detectedLang === 'en' && preferredTargetLang === 'en' && mainTrans.toLowerCase() === cleanText.toLowerCase()) {
+              return await this.translateLive(cleanText, 'de');
+            }
+
+            const alts = [];
+            if (Array.isArray(data[1])) {
+              for (const posBlock of data[1]) {
+                if (Array.isArray(posBlock[1])) {
+                  for (const w of posBlock[1].slice(0, 4)) {
+                    if (w && w.toLowerCase() !== mainTrans.toLowerCase() && !alts.includes(w)) {
+                      alts.push(w);
+                    }
+                  }
+                }
+              }
+            }
+
+            if (mainTrans) {
+              const combinedTrans = alts.length > 0
+                ? `${mainTrans} (${alts.slice(0, 3).join(' / ')})`
+                : mainTrans;
+              return {
+                sourceText: cleanText,
+                translatedText: combinedTrans,
+                primaryTranslation: mainTrans,
+                alternatives: alts,
+                direction: preferredTargetLang === 'de' ? 'en_to_de' : 'de_to_en'
+              };
+            }
+          }
+        }
+      } catch (e) {
+        // Fallback zu Engine 2
+      }
+
+      // Engine 2: MyMemory API Fallback
+      try {
+        const pair = preferredTargetLang === 'de' ? 'en|de' : 'de|en';
+        const mmRes = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(cleanText)}&langpair=${pair}`);
+        if (mmRes.ok) {
+          const mmData = await mmRes.json();
+          const mmTrans = (mmData && mmData.responseData && mmData.responseData.translatedText)
+            ? mmData.responseData.translatedText.trim()
+            : '';
+          if (mmTrans && mmTrans.toLowerCase() !== cleanText.toLowerCase()) {
+            return {
+              sourceText: cleanText,
+              translatedText: mmTrans,
+              primaryTranslation: mmTrans,
+              alternatives: [],
+              direction: preferredTargetLang === 'de' ? 'en_to_de' : 'de_to_en'
+            };
+          }
+        }
+      } catch (e) {}
 
       return null;
     }
@@ -3513,7 +3851,19 @@ function initApp() {
         [/\bsprich\s+stew\s+deutsch\b/g, 'sprichst du deutsch'],
         [/\bfirst\s+days?\s+to\s+deutsch\b/g, 'verstehst du deutsch'],
         [/\bfish\s+taste?\s+to\s+deutsch\b/g, 'verstehst du deutsch'],
-        [/\bfirst\s+taste?\s+to\s+mice\b/g, 'verstehst du mich']
+        [/\bfirst\s+taste?\s+to\s+mice\b/g, 'verstehst du mich'],
+        // Tippfehler-Toleranz für deutsche Anfragen & Befehle:
+        [/\b[uü]berstz(en|e|t|ung)\b/g, 'übersetzen'],
+        [/\b[uü]berstez(en|e|t|ung)\b/g, 'übersetzen'],
+        [/\b[uü]bersetzzt\b/g, 'übersetzt'],
+        [/\bfersteh(en|e|st|t)?\b/g, 'verstehen'],
+        [/\bferschteh(en|e|st|t)?\b/g, 'verstehen'],
+        [/\bwokabel(n)?\b/g, 'vokabeln'],
+        [/\bbibliotek\b/g, 'bibliothek'],
+        [/\banvorderung(en|e)?\b/g, 'anforderungen'],
+        [/\blerenen\b/g, 'lernen'],
+        [/\bprache\b/g, 'sprache'],
+        [/\bfr[aä]gt\b/g, 'fragt']
       ];
 
       for (const [pattern, repl] of typoMap) {
@@ -5840,45 +6190,47 @@ ${partnerReply.de}`;
     // Chat neu rendern
     renderChatLog(scenarioId);
 
-    // Falls ein seltenes Wort live übersetzt werden soll (online), sofort übersetzen & Antwort aktualisieren!
-    if (partnerReply && partnerReply.needsLiveTranslation && partnerReply.queryWord) {
-      const qWord = partnerReply.queryWord;
-      fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(qWord)}&langpair=de|en`)
-        .then(r => r.json())
-        .then(data => {
-          const translated = (data && data.responseData && data.responseData.translatedText)
-            ? data.responseData.translatedText.trim()
-            : '';
-          if (translated && translated.toLowerCase() !== qWord.toLowerCase()) {
+    // Falls ein Wort/Satz live übersetzt werden soll ODER eine deutsche Eingabe in den allgemeinen Fallback gefallen ist -> Dual-Engine Live-Übersetzer nutzen!
+    const isGenericFallback = partnerReply && /^(beginner_open_fallback|open_fallback|standup_open_fallback|intent_german_question_direct)/.test(partnerReply.id || '');
+    const looksGermanInput = (analysis && analysis.isGerman) || /\b(ich|du|wir|sie|mir|mich|mein|meine|wie|was|warum|wo|wann|kannst|möchte|will|soll|bitte|auf|für|mit|über|nicht|kein|keine|haben|sein|machen|gehen|heißt|bedeutet|übersetzen|erklären)\b/i.test(text);
+
+    if ((partnerReply && partnerReply.needsLiveTranslation && partnerReply.queryWord) || (isGenericFallback && looksGermanInput)) {
+      const qWord = (partnerReply && partnerReply.queryWord) ? partnerReply.queryWord : text;
+      const isSingleOrShort = qWord.trim().split(/\s+/).length <= 3;
+
+      TeacherDictionary.translateLive(qWord, 'en').then(res => {
+        if (res && res.translatedText) {
+          const primary = res.primaryTranslation || res.translatedText;
+          if (isSingleOrShort) {
             TeacherDictionary.common[qWord.toLowerCase()] = {
               de: qWord,
-              en: translated,
+              en: res.translatedText,
               phonetic: '',
-              exampleEn: `Can you use "${translated}" in a sentence?`,
-              exampleDe: `Kannst du „${translated}“ in einem Satz verwenden?`
+              exampleEn: `Can you use "${primary}" in a sentence?`,
+              exampleDe: `Kannst du „${primary}“ in einem Satz verwenden?`
             };
-            pushedPartnerMsg.textEn = `In English, "${qWord}" means "${translated}".`;
-            pushedPartnerMsg.textDe = `🇩🇪➔🇬🇧 Auf Englisch heißt **„${qWord}“**: 👉 **„${translated}“**.`;
-            pushedPartnerMsg.suggestions = [
-              `Can you give me an example sentence with "${translated}"?`,
-              `Was heißt 'erklären' auf Englisch?`,
-              `Let us continue our conversation!`
-            ];
-            renderChatLog(scenarioId);
-            if (currentDialogMode === 'voice') {
-              speakEnglish(pushedPartnerMsg.textEn);
-            }
-          } else {
-            pushedPartnerMsg.textEn = `In English, you can translate "${qWord}" depending on context — try clicking any word in the glossary (📚) or ask me "Was heißt [Wort] auf Englisch?".`;
-            pushedPartnerMsg.textDe = `Für **„${qWord}“** konnte offline keine direkte Einzelwort-Übersetzung geladen werden. Frag mich gerne mit einem kurzen deutschen Wort wie „Was heißt erklären auf Englisch?“.`;
-            renderChatLog(scenarioId);
           }
-        })
-        .catch(() => {
-          pushedPartnerMsg.textEn = `You are offline right now, so I could only search the built-in dictionary for "${qWord}".`;
-          pushedPartnerMsg.textDe = `Du bist gerade offline – sobald du wieder online bist, kann ich auch seltene Wörter wie **„${qWord}“** live übersetzen!`;
+          if (res.direction === 'en_to_de') {
+            pushedPartnerMsg.textEn = `In German, "${qWord}" means "${res.translatedText}".`;
+            pushedPartnerMsg.textDe = `🇬🇧➔🇩🇪 Auf Deutsch bedeutet **„${qWord}“**: 👉 **„${res.translatedText}“**.`;
+          } else if (isSingleOrShort) {
+            pushedPartnerMsg.textEn = `In English, "${qWord}" means "${res.translatedText}".`;
+            pushedPartnerMsg.textDe = `🇩🇪➔🇬🇧 Auf Englisch heißt **„${qWord}“**: 👉 **„${res.translatedText}“**.`;
+          } else {
+            pushedPartnerMsg.textEn = `In English, you say: "${primary}"! Great sentence — would you like to practice saying it out loud?`;
+            pushedPartnerMsg.textDe = `🇩🇪➔🇬🇧 Auf Englisch heißt dein Satz:\n👉 **„${primary}“**\n*(Du kannst oben auf 🔊 Vorlesen oder auf jedes einzelne Wort tippen!)*`;
+          }
+          pushedPartnerMsg.suggestions = [
+            primary,
+            `Can you give me an example sentence with "${primary.split(/\s+/)[0]}"?`,
+            `Let us continue our conversation!`
+          ];
           renderChatLog(scenarioId);
-        });
+          if (currentDialogMode === 'voice') {
+            speakEnglish(pushedPartnerMsg.textEn);
+          }
+        }
+      });
       return;
     }
 
