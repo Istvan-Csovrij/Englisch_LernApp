@@ -779,6 +779,130 @@ function initApp() {
   let manualDialogStopRequested = false;
   let dialogSpeechFinalAccumulator = '';
   let dialogMicLang = localStorage.getItem('fiae_dialog_mic_lang') || 'en-US';
+  let activeChatPronounceContext = null;
+
+  function startChatPronunciationTest(targetText, resultBoxEl, btnEl) {
+    if (!targetText || !resultBoxEl) return;
+    if (isSpeakingNow()) {
+      stopSpeaking();
+    }
+    if (!recognition) {
+      const userSpoke = prompt(`Bitte sprich folgenden englischen Text laut aus:\n"${targetText}"\n\nTippe zur Auswertung auf OK:`);
+      if (userSpoke !== null) {
+        activeChatPronounceContext = { targetText, resultBoxEl, btnEl };
+        evaluateChatPronunciationTest(userSpoke || targetText);
+      }
+      return;
+    }
+
+    if (isRecording && activeMicTarget === 'chatPronounceTest') {
+      try { recognition.stop(); } catch (e) {}
+      return;
+    }
+    if (isRecording) {
+      try { recognition.stop(); } catch (e) {}
+    }
+
+    activeChatPronounceContext = { targetText, resultBoxEl, btnEl };
+    activeMicTarget = 'chatPronounceTest';
+    isDialogRecording = false;
+    manualDialogStopRequested = true;
+
+    const phon = (typeof PronunciationCoach !== 'undefined') ? PronunciationCoach.toPhonetic(targetText) : '';
+    resultBoxEl.style.display = 'block';
+    resultBoxEl.innerHTML = `
+      <div class="chat-pronounce-listening">
+        🔴 <strong>Ich höre zu... Sprich jetzt auf Englisch:</strong><br>
+        <span class="chat-pronounce-target">"${escapeHtml(targetText)}"</span>
+        ${phon ? `<div class="chat-pronounce-phonetic">🗣️ Lautschrift: <code>[${escapeHtml(phon)}]</code></div>` : ''}
+      </div>
+    `;
+    if (btnEl) {
+      btnEl.classList.add('recording');
+      btnEl.innerHTML = '🔴 Höre zu...';
+    }
+
+    try {
+      recognition.lang = 'en-US';
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.start();
+    } catch (err) {
+      console.warn('Chat pronunciation start error:', err);
+    }
+  }
+
+  function evaluateChatPronunciationTest(spoken) {
+    if (!activeChatPronounceContext) return;
+    const { targetText, resultBoxEl, btnEl } = activeChatPronounceContext;
+    if (btnEl) {
+      btnEl.classList.remove('recording');
+      btnEl.innerHTML = '🎙️ Nochmal testen';
+    }
+
+    const cleanSpokenWords = normalizePronunciationTokens(spoken);
+    const targetRawWords = String(targetText).trim().split(/\s+/).filter(Boolean);
+    const cleanTargetWords = targetRawWords.map(w => w.toLowerCase().replace(/[^a-z0-9']/g, '')).filter(Boolean);
+
+    let matchCount = 0;
+    const chipsHtml = targetRawWords.map((origWord) => {
+      const cleanW = origWord.toLowerCase().replace(/[^a-z0-9']/g, '');
+      const normTokens = normalizePronunciationTokens(cleanW);
+      const isMatched = !cleanW || normTokens.every(t => isWordPronunciationMatch(t, cleanSpokenWords)) || isWordPronunciationMatch(cleanW, cleanSpokenWords);
+      if (isMatched) matchCount++;
+      const wordPhon = (typeof PronunciationCoach !== 'undefined' && cleanW) ? PronunciationCoach.wordToGermanPhonetic(cleanW) : '';
+      return `
+        <button type="button" class="chat-pronounce-word-chip ${isMatched ? 'is-ok' : 'is-miss'}" data-speak-word="${encodeURIComponent(origWord.replace(/[^a-zA-Z0-9'-]/g, ''))}" title="Tippen zum langsamen Anhören">
+          ${isMatched ? '✅' : '❌'} <strong>${escapeHtml(origWord)}</strong>
+          ${!isMatched && wordPhon ? `<span class="chip-phon">[${escapeHtml(wordPhon)}]</span>` : ''}
+          <span>🔊</span>
+        </button>
+      `;
+    }).join('');
+
+    const total = Math.max(1, cleanTargetWords.length);
+    const scorePct = Math.round((matchCount / total) * 100);
+    let badgeText = '';
+    let badgeClass = '';
+    if (scorePct >= 80) {
+      badgeText = `🏆 Starke Aussprache! (${scorePct}% richtig) +15 XP`;
+      badgeClass = 'score-high';
+      playSound('success');
+      addXP(15);
+      showToast(`🎉 Super ausgesprochen! (${scorePct}%) +15 XP`);
+    } else if (scorePct >= 50) {
+      badgeText = `👍 Gut verständlich (${scorePct}%) – Tippe auf ❌ Wörter zum Üben! (+10 XP)`;
+      badgeClass = 'score-mid';
+      playSound('success');
+      addXP(10);
+    } else {
+      badgeText = `🔄 Noch einmal versuchen (${scorePct}%) – Tippe auf die ❌ Wörter, hör sie dir an & sprich nach!`;
+      badgeClass = 'score-low';
+      playSound('try-again');
+    }
+
+    resultBoxEl.style.display = 'block';
+    resultBoxEl.innerHTML = `
+      <div class="chat-pronounce-eval ${badgeClass}">
+        <div class="chat-pronounce-score-header">${badgeText}</div>
+        <div class="chat-pronounce-heard">🎙️ Verstanden: <em>"${escapeHtml(spoken)}"</em></div>
+        <div class="chat-pronounce-chips-wrap">${chipsHtml}</div>
+        <div class="chat-pronounce-tip">💡 Tippe auf ein Wort oben, um es einzeln und langsam zu hören!</div>
+      </div>
+    `;
+
+    resultBoxEl.querySelectorAll('.chat-pronounce-word-chip').forEach(chip => {
+      chip.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const w = decodeURIComponent(e.currentTarget.dataset.speakWord || '');
+        if (w) {
+          speakEnglish(w, 0.75);
+          const ph = (typeof PronunciationCoach !== 'undefined') ? PronunciationCoach.wordToGermanPhonetic(w) : '';
+          showToast(`🔊 "${w}" ${ph ? `[${ph}]` : ''}`);
+        }
+      });
+    });
+  }
 
   function updateDialogMicLangUI() {
     const btnLang = document.getElementById('btnDialogMicLang');
@@ -857,6 +981,9 @@ function initApp() {
       } else if (activeMicTarget === 'flashcard') {
         const spokenText = event.results[0][0].transcript;
         evaluateFlashcardPronunciation(spokenText);
+      } else if (activeMicTarget === 'chatPronounceTest') {
+        const spokenText = event.results[0][0].transcript;
+        evaluateChatPronunciationTest(spokenText);
       } else if (activeMicTarget === 'dialogChat') {
         let interim = '';
         for (let i = event.resultIndex; i < event.results.length; ++i) {
@@ -942,6 +1069,12 @@ function initApp() {
     if (cardMicBtn) {
       cardMicBtn.classList.remove('recording');
       cardMicBtn.textContent = '🎙️ Aussprache testen';
+    }
+    if (activeChatPronounceContext && activeChatPronounceContext.btnEl) {
+      activeChatPronounceContext.btnEl.classList.remove('recording');
+      if (activeChatPronounceContext.btnEl.innerHTML.includes('Höre zu')) {
+        activeChatPronounceContext.btnEl.innerHTML = '🎙️ Aussprache testen';
+      }
     }
     const dialogMic = document.getElementById('btnDialogMic');
     if (dialogMic) dialogMic.classList.remove('recording');
@@ -1950,6 +2083,133 @@ function initApp() {
   let activeGuests = [];
   let dialogInitialized = false;
 
+  // --- AUSSPRACHE- & LAUTSCHRIFT-GENERATOR FÜR DEUTSCHSPRACHIGE (v38) ---
+  const PronunciationCoach = {
+    knownPhonetics: {
+      'better': 'BET-ör', 'good': 'gud', 'best': 'best', 'doesnt': 'DAS-nt', "doesn't": 'DAS-nt',
+      'matter': 'MÄT-ör', 'explain': 'ik-SPLEYN', 'understand': 'an-dör-STÄND', 'speaking': 'SPIH-king',
+      'speak': 'spihk', 'english': 'ING-glisch', 'german': 'DSCHÖR-mön', 'language': 'LÄNG-gwidsch',
+      'improve': 'im-PRUHW', 'pronunciation': 'pro-nan-si-EY-schön', 'sentence': 'SEN-tens',
+      'word': 'wörd', 'words': 'wörds', 'example': 'ig-SAM-pöl', 'grammar': 'GRÄM-ör',
+      'question': 'KWES-tschön', 'answer': 'ÄN-sör', 'practice': 'PRÄK-tis', 'learn': 'lörn',
+      'learning': 'LÖR-ning', 'because': 'bi-KAWS', 'through': 'thru', 'thought': 'thawt',
+      'thoughts': 'thawts', 'although': 'awl-THOH', 'weather': 'WETH-ör', 'together': 'tu-GETH-ör',
+      'really': 'RIH-li', 'actually': 'ÄK-tschu-ö-li', 'currently': 'KÖR-önt-li', 'usually': 'JUH-schu-ö-li',
+      'always': 'AWL-weys', 'never': 'NEV-ör', 'often': 'OF-ön', 'sometimes': 'SAM-taims',
+      'yesterday': 'JES-tör-dey', 'today': 'tu-DEY', 'tomorrow': 'tu-MOR-oh', 'morning': 'MOR-ning',
+      'evening': 'IHW-ning', 'night': 'nait', 'right': 'rait', 'know': 'noh', 'write': 'rait',
+      'wrong': 'rong', 'listen': 'LIS-ön', 'could': 'kud', 'would': 'wud', 'should': 'schud',
+      'can': 'kän', 'you': 'juh', 'your': 'johr', 'my': 'mai', 'mine': 'main', 'me': 'mih',
+      'we': 'wih', 'they': 'they', 'their': 'thehr', 'there': 'thehr', 'where': 'wehr',
+      'what': 'wot', 'when': 'wen', 'why': 'wai', 'who': 'huh', 'how': 'hau',
+      'are': 'ahr', 'were': 'wör', 'was': 'wos', 'is': 'is', 'have': 'häw', 'has': 'häs',
+      'make': 'meyk', 'made': 'meyd', 'take': 'teyk', 'give': 'giw', 'help': 'help',
+      'please': 'plihs', 'thank': 'thänk', 'thanks': 'thänks', 'welcome': 'WEL-kam',
+      'hello': 'he-LOH', 'name': 'neym', 'nice': 'nais', 'meet': 'miht', 'great': 'greyt',
+      'work': 'wörk', 'working': 'WÖR-king', 'worked': 'wörkt', 'database': 'DEY-tö-beys',
+      'query': 'KWIH-ri', 'server': 'SÖR-wör', 'code': 'kohd', 'developer': 'di-WEL-ö-pör',
+      'software': 'SOFT-wehr', 'application': 'äp-li-KEY-schön', 'requirement': 'ri-KWAIR-mönt',
+      'requirements': 'ri-KWAIR-mönts', 'library': 'LAI-brö-ri', 'vocabulary': 'wo-KÄB-ju-lö-ri'
+    },
+
+    wordToGermanPhonetic(w) {
+      if (!w) return '';
+      const clean = w.toLowerCase().replace(/[^a-z']/g, '');
+      if (!clean) return w;
+      if (this.knownPhonetics[clean]) return this.knownPhonetics[clean];
+
+      let p = clean;
+      p = p
+        .replace(/^kn/, 'n')
+        .replace(/^wr/, 'r')
+        .replace(/^wh/, 'w')
+        .replace(/tion$/g, '-schön')
+        .replace(/sion$/g, '-schön')
+        .replace(/ture$/g, '-tschör')
+        .replace(/ough/g, 'oh')
+        .replace(/igh/g, 'ai')
+        .replace(/ea/g, 'ih')
+        .replace(/ee/g, 'ih')
+        .replace(/oo/g, 'uh')
+        .replace(/ou/g, 'au')
+        .replace(/ow/g, 'au')
+        .replace(/ay/g, 'ey')
+        .replace(/ai/g, 'ey')
+        .replace(/ch/g, 'tsch')
+        .replace(/sh/g, 'sch')
+        .replace(/th/g, 'th')
+        .replace(/ph/g, 'f')
+        .replace(/ck/g, 'k')
+        .replace(/qu/g, 'kw')
+        .replace(/er$/g, 'ör')
+        .replace(/or$/g, 'ör')
+        .replace(/ir/g, 'ör')
+        .replace(/ur/g, 'ör')
+        .replace(/y$/g, 'i')
+        .replace(/v/g, 'w')
+        .replace(/j/g, 'dsch')
+        .replace(/c([eiy])/g, 's$1')
+        .replace(/c/g, 'k');
+      if (p.length > 3 && p.endsWith('e') && !p.endsWith('ie') && !p.endsWith('ee')) {
+        p = p.slice(0, -1);
+      }
+      return p;
+    },
+
+    toPhonetic(sentence) {
+      if (!sentence) return '';
+      const clean = String(sentence).replace(/<[^>]+>/g, '').trim();
+      const tokens = clean.split(/\s+/).filter(Boolean);
+      return tokens.map(tok => {
+        const puncMatch = tok.match(/([.?!,;]+)$/);
+        const punc = puncMatch ? puncMatch[1] : '';
+        const core = tok.replace(/[^a-zA-Z']/g, '');
+        if (!core) return tok;
+        return this.wordToGermanPhonetic(core) + punc;
+      }).join(' ');
+    },
+
+    getGrammarAndUsageTip(deWord, enWord) {
+      const enClean = (enWord || '').toLowerCase().split(/[\/(\s]/)[0].trim();
+      const deClean = (deWord || '').toLowerCase().trim();
+      if (enClean === 'better' || deClean === 'besser') {
+        return {
+          grammarTip: 'Steigerungsform (Komparativ) von <strong>good</strong> (gut): <em>good ➔ better ➔ the best</em>.',
+          exampleEn: 'My English speaking is getting better every day.',
+          exampleDe: 'Mein gesprochenes Englisch wird jeden Tag besser.'
+        };
+      }
+      if (deClean === 'egal' || enWord.toLowerCase().includes('matter')) {
+        return {
+          grammarTip: 'Redewendung im Alltag: Man sagt <strong>"It doesn\'t matter"</strong> (Es macht nichts / Es ist egal) oder kurz <strong>"Never mind"</strong>.',
+          exampleEn: 'It doesn\'t matter if you make a small mistake.',
+          exampleDe: 'Es ist egal (macht nichts), wenn du einen kleinen Fehler machst.'
+        };
+      }
+      if (enClean === 'explain' || deClean.startsWith('erklär')) {
+        return {
+          grammarTip: 'Wichtige Grammatik-Regel: Nach <em>explain</em> steht bei Personen immer <strong>"to"</strong>: <em>"Can you explain this <strong>to me</strong>?"</em> (NIEMALS "explain me").',
+          exampleEn: 'Can you explain this grammar rule to me?',
+          exampleDe: 'Kannst du mir diese Grammatikregel erklären?'
+        };
+      }
+      if ((enWord || '').trim().toLowerCase().startsWith('to ')) {
+        const baseV = enWord.split('/')[0].replace(/^to\s+/i, '').trim();
+        return {
+          grammarTip: `Englisches Verb (Grundform: <strong>to ${baseV}</strong>). Im normalen Satz steht es direkt nach der Person (Subjekt + Verb + Objekt): <em>"I ${baseV}..."</em> oder <em>"Can you ${baseV}..."</em>.`,
+          exampleEn: `Can you help me ${baseV} this in English?`,
+          exampleDe: `Kannst du mir helfen, das auf Englisch anzuwenden (${deWord})?`
+        };
+      }
+      const primary = (enWord || '').split(/[\/(\,]/)[0].trim();
+      return {
+        grammarTip: `Wichtige Vokabel: <strong>"${primary}"</strong>. Sprich die Silben ruhig und weich aus: <code>[${this.toPhonetic(primary)}]</code>.`,
+        exampleEn: `Can you show me how to use "${primary}" in a sentence?`,
+        exampleDe: `Kannst du mir zeigen, wie man „${primary}“ (${deWord}) in einem Satz benutzt?`
+      };
+    }
+  };
+
   // --- DER GRAMMATIK- & SATZ-DOKTOR (CLIENT-SEITIGE ANALYSE & PRAISE) ---
   const SentenceDoctor = {
     germanWords: [
@@ -1971,6 +2231,78 @@ function initApp() {
       if (!clean) return null;
 
       const lower = clean.toLowerCase();
+
+      // 0A. Mikrofon-Verhörer & gebrochene Sätze beim Sprechen erkennen (z.B. "Oak Park can you make better mine the English language my speaking" oder "what's your name Boy Is Mine speaking was")
+      if (/\boak\s+park\b/i.test(lower) || /\bmake\s+better\b.*\b(mine|my|english|speaking|pronunciation|language)\b/i.test(lower) || /\b(mine|my)\s+the\s+english\s+language\b/i.test(lower)) {
+        const fixed = 'Okay, can you help me improve my English speaking and pronunciation?';
+        const phon = PronunciationCoach.toPhonetic(fixed);
+        return {
+          hasError: true,
+          isGerman: false,
+          isMicGarbled: /\boak\s+park\b/i.test(lower),
+          originalText: clean,
+          correctedText: fixed,
+          phoneticText: phon,
+          explanation: `💡 <strong>Grammatik- & Aussprache-Korrektur:</strong><br>
+1️⃣ Statt <em>"make better"</em> (wörtlich „besser machen“) sagt man auf Englisch <strong>"improve"</strong> (verbessern).<br>
+2️⃣ Vor einem Hauptwort heißt es immer <strong>"my"</strong> (<em>my English / my speaking</em>), niemals <em>"mine"</em>.<br>
+3️⃣ Vor Sprachen steht kein Artikel (<strong>"English"</strong> statt <em>"the English language"</em>).<br>
+🗣️ <strong>So sprichst du den richtigen Satz aus:</strong> <code>[${phon}]</code>`
+        };
+      }
+
+      if (/\bboy\s+is\s+mine\s+speaking\s+was\b/i.test(lower) || /\bspeaking\s+was\s*$/i.test(lower) || /\bhow\s+my\s+speaking\s+was\b/i.test(lower)) {
+        const hasNamePart = /\bwhat('?s|\s+is)\s+your\s+name\b/i.test(lower);
+        const fixed = hasNamePart
+          ? 'What is your name, and how was my speaking?'
+          : 'How was my English speaking and pronunciation?';
+        const phon = PronunciationCoach.toPhonetic(fixed);
+        return {
+          hasError: true,
+          isGerman: false,
+          isMicGarbled: true,
+          originalText: clean,
+          correctedText: fixed,
+          phoneticText: phon,
+          explanation: `💡 <strong>Satzbau- & Mikrofon-Korrektur:</strong><br>
+Das Mikrofon hat <em>"Boy Is Mine speaking was"</em> verstanden. Wenn du fragen möchtest, wie deine Aussprache war, heißt es auf Englisch:<br>
+👉 <strong>"${fixed}"</strong><br>
+📖 <strong>Grammatik-Regel:</strong> Bei Fragen steht das Verb <strong>was</strong> vor <em>my speaking</em>: <strong>"How was my speaking?"</strong> (nicht "speaking was" am Ende).<br>
+🗣️ <strong>Aussprache (Lautschrift):</strong> <code>[${phon}]</code>`
+        };
+      }
+
+      // Allgemeine Regel für "mine" vor einem Nomen ("mine speaking", "mine English", "mine name", "mine pronunciation", "mine sentence")
+      if (/\bmine\s+(the\s+)?(english|german|speaking|pronunciation|name|sentence|words?|grammar|job|work|code|friend)\b/i.test(lower)) {
+        let fixed = clean.replace(/\bmine\s+(the\s+)?/gi, 'my ').replace(/\bmake\s+better\b/gi, 'improve');
+        fixed = fixed.charAt(0).toUpperCase() + fixed.slice(1);
+        if (!/[.!?]$/.test(fixed)) fixed += '?';
+        const phon = PronunciationCoach.toPhonetic(fixed);
+        return {
+          hasError: true,
+          isGerman: false,
+          originalText: clean,
+          correctedText: fixed,
+          phoneticText: phon,
+          explanation: `💡 <strong>Grammatik-Tipp (my vs. mine):</strong> Vor einem Nomen (wie <em>speaking, English, name</em>) musst du immer <strong>"my"</strong> verwenden (z. B. <em>"my speaking"</em>). <em>"mine"</em> darf nur ganz allein ohne Nomen stehen (z. B. <em>"This book is mine"</em>).<br>🗣️ <strong>Aussprache:</strong> <code>[${phon}]</code>`
+        };
+      }
+
+      // Allgemeine Regel für "make better" -> "improve"
+      if (/\bmake\s+better\b/i.test(lower)) {
+        let fixed = clean.replace(/\bmake\s+better\b/gi, 'improve');
+        fixed = fixed.charAt(0).toUpperCase() + fixed.slice(1);
+        if (!/[.!?]$/.test(fixed)) fixed += '.';
+        const phon = PronunciationCoach.toPhonetic(fixed);
+        return {
+          hasError: true,
+          isGerman: false,
+          originalText: clean,
+          correctedText: fixed,
+          phoneticText: phon,
+          explanation: `💡 <strong>Natürliches Englisch:</strong> Statt <em>"make better"</em> verwendet man im Englischen das Verb <strong>"improve"</strong> (verbessern), z. B. <em>"Can you help me improve my pronunciation?"</em><br>🗣️ <strong>Aussprache:</strong> <code>[${phon}]</code>`
+        };
+      }
 
       // 1A. Typo & Spelling Checker for common English learner typos
       const commonTypos = [
@@ -3764,7 +4096,8 @@ function initApp() {
     getPartnerMeta(scenarioId) {
       const p = (typeof getCurrentPartnerMeta === 'function') ? getCurrentPartnerMeta() : { name: 'Nova', role: 'Englisch-Tutorin', isMale: false };
       const pFirstName = p.name.split(' ')[0].replace(/[^A-Za-zÄÖÜäöüß]/g, '');
-      const pCleanRole = p.role.replace(/^Rolle:\s*/, '');
+      const pCleanRole = p.role.replace(/^Rolle:\s*/i, '').replace(/^(Deine|Dein)\s+/i, '');
+      const pRoleEn = p.isMale ? 'personal English coach and AI companion' : 'personal English tutor and AI companion';
 
       if (scenarioId === 'economics') {
         const grade = (typeof getEconomicsGrade === 'function') ? getEconomicsGrade() : '11';
@@ -3772,6 +4105,7 @@ function initApp() {
           name: pFirstName,
           fullName: p.name,
           role: pCleanRole,
+          roleEn: 'International Economics Coach',
           desc: `Internationalwirtschaft (Klasse ${grade})`,
           isMale: p.isMale
         };
@@ -3781,24 +4115,26 @@ function initApp() {
           name: pFirstName,
           fullName: p.name,
           role: pCleanRole,
+          roleEn: pRoleEn,
           desc: 'Anfänger & Plaudern',
           isMale: p.isMale
         };
       }
 
       const meta = {
-        standup: { name: 'Sarah', role: 'Scrum Master & Agile Coach', desc: 'Daily Scrum Standup' },
-        interview: { name: 'Mr. Davis', role: 'Lead Software Architect', desc: 'IT-Vorstellungsgespräch' },
-        support: { name: 'Alex', role: 'Senior Product Manager', desc: 'Bug-Report & Ticket Support' },
-        architecture: { name: 'David', role: 'Senior Cloud Solutions Architect', desc: 'System-Architektur Review' },
-        smalltalk: { name: 'Mark', role: 'Senior Developer & Teammate', desc: 'Kaffeepause & Smalltalk' },
-        travel: { name: 'James', role: 'Head Concierge at Royal Grand Hotel', desc: 'Hotel & London Reisen' },
-        quiz: { name: 'Prof. Miller', role: 'Vokabel-Coach', desc: 'Vokabel-Prüfer & Quiz' }
+        standup: { name: 'Sarah', role: 'Scrum Masterin & Agile Coach', roleEn: 'Scrum Master & Agile Coach', desc: 'Daily Scrum Standup' },
+        interview: { name: 'Mr. Davis', role: 'Lead Software Architect', roleEn: 'Lead Software Architect', desc: 'IT-Vorstellungsgespräch', isMale: true },
+        support: { name: 'Alex', role: 'Senior Product Manager', roleEn: 'Senior Product Manager', desc: 'Bug-Report & Ticket Support', isMale: true },
+        architecture: { name: 'David', role: 'Senior Cloud Solutions Architect', roleEn: 'Senior Cloud Solutions Architect', desc: 'System-Architektur Review', isMale: true },
+        smalltalk: { name: 'Mark', role: 'Senior Developer & Teammate', roleEn: 'Senior Developer & Teammate', desc: 'Kaffeepause & Smalltalk', isMale: true },
+        travel: { name: 'James', role: 'Head Concierge at Royal Grand Hotel', roleEn: 'Head Concierge at Royal Grand Hotel', desc: 'Hotel & London Reisen', isMale: true },
+        quiz: { name: 'Prof. Miller', role: 'Vokabel-Coach', roleEn: 'Vocabulary Coach', desc: 'Vokabel-Prüfer & Quiz', isMale: true }
       };
       return meta[scenarioId] || {
         name: pFirstName,
         fullName: p.name,
         role: pCleanRole,
+        roleEn: pRoleEn,
         desc: 'Konversation',
         isMale: p.isMale
       };
@@ -4188,27 +4524,113 @@ ${cleanTip}`,
         }
       }
 
+      // 0C. AUSSPRACHE VERBESSERN, WORT/SATZ AUSSPRECHEN LERNEN, GRAMMATIK-HILFE & NACHFRAGE BEI MIKROFON-VERHÖRERN (v38)
+      // Fall 1: "what's your name Boy Is Mine speaking was" / "how was my speaking" / "wie war meine aussprache"
+      if (/\bboy\s+is\s+mine\s+speaking\s+was\b/i.test(norm) || (/\b(speaking|pronunciation|aussprache)\b/i.test(norm) && /\b(how\s+was|wie\s+war|speaking\s+was)\b/i.test(norm))) {
+        const hasNameQ = /\bwhat('?s|\s+is)\s+your\s+name\b/i.test(norm);
+        const targetSentence = hasNameQ
+          ? 'What is your name, and how was my speaking?'
+          : 'How was my English speaking and pronunciation?';
+        const phon = PronunciationCoach.toPhonetic(targetSentence);
+        return {
+          id: 'intent_clarify_speaking_was',
+          practiceSentence: targetSentence,
+          en: `${hasNameQ ? `My name is ${meta.name}, your ${meta.roleEn || 'personal English tutor'}! 😊 ` : ''}I noticed the microphone heard "${rawInput.trim()}" — did you mean to ask: "${targetSentence}"? Here is how you pronounce it: [${phon}]. Click "🎙️ Aussprache testen" below to say it out loud and I will check your pronunciation word by word!`,
+          de: `${hasNameQ ? `Mein Name ist **${meta.name}**, ${meta.isMale ? 'dein' : 'deine'} ${meta.role}! 😊\n` : ''}🤔 **Kurze Nachfrage:** Das Mikrofon hat *„${rawInput.trim()}“* verstanden – **meintest du:**\n👉 **„${targetSentence}“** *(Wie heißt du, und wie war meine Aussprache?)*\n🗣️ **So sprichst du den Satz aus:** \`[${phon}]\`\n📖 **Grammatik-Hilfe:** Bei Fragen steht *was* vor *my speaking*: **„How was my speaking?“** (nicht *„speaking was“* am Ende).\n🎙️ **Tipp:** Klicke direkt hierunter auf **„🎙️ Aussprache testen“**, um den Satz laut nachzusprechen!`,
+          suggestions: [
+            targetSentence,
+            'Can you help me improve my English pronunciation?',
+            'Give me an easy sentence to practice speaking!'
+          ]
+        };
+      }
+
+      // Fall 2: Konkrete Frage: "Wie spricht man [X] aus?" / "How do I pronounce [X]?" / "Wie kann ich [X] aussprechen?"
+      const pronounceWordMatch = rawInput.trim().match(/\b(?:wie\s+(?:spricht\s+man|spreche\s+ich|kann\s+ich|sagt\s+man)|how\s+(?:do\s+(?:i|you)|to|can\s+i)\s+pronounce)\s+["'„“]?([^"'?!.,]+?)["'“]?(?:\s+(?:aus|aussprechen|richtig\s+aus|in\s+english|auf\s+englisch))?[\s?!.]*$/i);
+      if (pronounceWordMatch && pronounceWordMatch[1]) {
+        const targetRaw = pronounceWordMatch[1].replace(/\b(aus|aussprechen|richtig|das\s+wort|the\s+word|den\s+satz|the\s+sentence)\b/gi, '').trim();
+        if (targetRaw && targetRaw.length >= 2) {
+          const dictEntry = TeacherDictionary.lookup(targetRaw);
+          const enText = dictEntry ? (dictEntry.direction === 'en_to_de' ? targetRaw : dictEntry.english.split('/')[0].replace(/^to\s+/i, '').trim()) : targetRaw;
+          const deMeaning = dictEntry ? (dictEntry.direction === 'en_to_de' ? dictEntry.german : targetRaw) : '';
+          const phon = PronunciationCoach.toPhonetic(enText);
+          const tipObj = PronunciationCoach.getGrammarAndUsageTip(deMeaning || targetRaw, enText);
+          return {
+            id: 'intent_how_to_pronounce_item',
+            practiceSentence: enText,
+            en: `You pronounce "${enText}" like this: [${phon}]. Example sentence: "${tipObj.exampleEn}" [${PronunciationCoach.toPhonetic(tipObj.exampleEn)}]. Click "🎙️ Aussprache testen" below to practice saying "${enText}" out loud!`,
+            de: `🗣️ **Aussprache-Hilfe für „${enText}“${deMeaning && deMeaning.toLowerCase() !== enText.toLowerCase() ? ` (${deMeaning})` : ''}:**\n👉 **So sprichst du es aus:** \`[${phon}]\`\n📖 **Grammatik & Tipp:** ${tipObj.grammarTip}\n💬 **Beispielsatz:** *„${tipObj.exampleEn}“*\n*(🇩🇪 ${tipObj.exampleDe})*\n🎙️ Klicke unten auf **„🎙️ Aussprache testen“**, sprich **„${enText}“** nach und ich bewerte deine Aussprache sofort!`,
+            suggestions: [
+              enText,
+              tipObj.exampleEn,
+              'Can you give me another word to pronounce?'
+            ]
+          };
+        }
+      }
+
+      // Fall 3: Wunsch nach Aussprache-Verbesserung, Sprechtraining & Grammatik-Hilfe
+      // (z.B. "Oak Park can you make better mine the English language my speaking", "can you improve my pronunciation", "kannst du meine aussprache verbessern und grammatik helfen")
+      if (/\boak\s+park\b/i.test(norm) ||
+          (/\b(make\s+better|improve|better|verbessern|helfen|help|teach|üben|practice|check|prüfen)\b/i.test(norm) &&
+           /\b(speaking|pronunciation|aussprache|sprechen|aussprechen|grammar|grammatik|my\s+english|mine\s+the\s+english)\b/i.test(norm))) {
+        const hadGrammarOrMicIssue = /\b(oak\s+park|make\s+better|mine\s+the\s+english|mine\s+speaking|mine\s+english)\b/i.test(norm);
+        const correctRequestSentence = 'Can you help me improve my English speaking and pronunciation?';
+        const requestPhon = PronunciationCoach.toPhonetic(correctRequestSentence);
+        const practiceEx = 'I want to improve my English pronunciation step by step.';
+        const practicePhon = PronunciationCoach.toPhonetic(practiceEx);
+
+        if (hadGrammarOrMicIssue) {
+          return {
+            id: 'intent_improve_speaking_with_correction',
+            practiceSentence: correctRequestSentence,
+            en: `Yes, I would love to help you improve your pronunciation and grammar${this.salutation()}! First, let's fix your sentence: Instead of "${rawInput.trim()}", say: "${correctRequestSentence}" [${requestPhon}]. Click "🎙️ Aussprache testen" below to speak this corrected sentence out loud right now!`,
+            de: `Ja, sehr gerne helfe ich dir bei deiner **Aussprache und Grammatik**${this.salutation()}! 🎯\n\n1️⃣ **Nachfrage & Korrektur deines Satzes:**\nDas Mikrofon hat *„${rawInput.trim()}“* aufgenommen. Auf gutem Englisch fragst du das so:\n👉 **„${correctRequestSentence}“**\n🗣️ **Aussprache (Lautschrift):** \`[${requestPhon}]\`\n\n2️⃣ **Grammatik-Erklärung:**\n• Statt *„make better“* (wörtlich: besser machen) sagt man auf Englisch **„improve“** \`[im-PRUHW]\` *(verbessern)*.\n• Vor einem Hauptwort steht immer **„my“** (*my English, my speaking*), niemals *„mine“*.\n• Man sagt einfach **„my English“** statt *„mine the English language“*.\n\n3️⃣ **Sofort-Übung für deine Aussprache:**\nKlicke direkt hierunter auf **„🔊 Vorlesen“** zum Anhören und danach auf **„🎙️ Aussprache testen“**, um den Satz laut nachzusprechen!`,
+            suggestions: [
+              correctRequestSentence,
+              practiceEx,
+              'Give me another sentence to practice my pronunciation!'
+            ]
+          };
+        }
+
+        return {
+          id: 'intent_improve_speaking_coach',
+          practiceSentence: practiceEx,
+          en: `Yes, let's train your pronunciation and grammar together${this.salutation()}! Here is your first practice sentence: "${practiceEx}" [${practicePhon}]. Listen to it with "🔊 Vorlesen" and then click "🎙️ Aussprache testen" to speak it out loud — I will check every single word!`,
+          de: `Ja, lass uns deine **Aussprache und Grammatik** direkt zusammen trainieren${this.salutation()}! 🎯\n\n💬 **Dein Übungssatz zum Nachsprechen:**\n👉 **„${practiceEx}“**\n*(🇩🇪 Ich möchte meine englische Aussprache Schritt für Schritt verbessern.)*\n🗣️ **So sprichst du ihn aus:** \`[${practicePhon}]\`\n📖 **Grammatik-Tipp:** Nach *want* steht immer **to + Grundform** (*want to improve* = verbessern wollen).\n\n🎙️ **Jetzt du:** Klicke unten auf **„🎙️ Aussprache testen“** und sprich den Satz laut aus!`,
+          suggestions: [
+            practiceEx,
+            'Can you give me an everyday sentence to pronounce?',
+            'How do you pronounce "through" and "thought"?'
+          ]
+        };
+      }
+
       // 1. Asking for Partner's Name / Identity ("What is your name?", "wath is your name?", "who are you?")
-      if (/\b(what|tell|may|can)\b.*\b(your|ur)\s+(name|naem)\b/i.test(norm) ||
+      if ((/\b(what|tell|may|can)\b.*\b(your|ur)\s+(name|naem)\b/i.test(norm) ||
           /\bwho\s+(are\s+you|is\s+this|am\s+i\s+talking\s+to)\b/i.test(norm) ||
           /\bwhats\s+your\s+name\b/i.test(norm) ||
-          /\bname\s*\?/i.test(norm)) {
+          /\bname\s*\?/i.test(norm)) &&
+          !/\b(speaking|pronunciation|make\s+better|improve|boy\s+is\s+mine|grammar)\b/i.test(norm)) {
+        const roleEnText = meta.roleEn || 'personal English tutor';
+        const deinWord = meta.isMale ? 'dein' : 'deine';
         if (scenarioId === 'beginner' || scenarioId === 'free') {
           return {
             id: 'intent_name_beginner',
-            en: `My name is ${meta.name}, your ${meta.role}. How are you doing today?`,
-            de: `Mein Name ist ${meta.name}, deine ${meta.role}. Wie geht es dir heute?`,
+            en: `My name is ${meta.name}, your ${roleEnText}. How are you doing today?`,
+            de: `Mein Name ist ${meta.name}, ${deinWord} ${meta.role}. Wie geht es dir heute?`,
             suggestions: [
               `Nice to meet you, ${meta.name}! I am ready to practice.`,
-              `Hello ${meta.name}! What are your favorite topics?`,
+              `Hello ${meta.name}! Can you help me improve my pronunciation?`,
               `Can you teach me some easy English words?`
             ]
           };
         } else if (scenarioId === 'standup') {
           return {
             id: 'intent_name_standup',
-            en: `Good morning! My name is ${meta.name}, your ${meta.role}. What did you accomplish yesterday?`,
-            de: `Guten Morgen! Mein Name ist ${meta.name}, deine ${meta.role}. Was hast du gestern geschafft?`,
+            en: `Good morning! My name is ${meta.name}, your ${roleEnText}. What did you accomplish yesterday?`,
+            de: `Guten Morgen! Mein Name ist ${meta.name}, ${deinWord} ${meta.role}. Was hast du gestern geschafft?`,
             suggestions: [
               "Nice to meet you, Sarah! Yesterday I fixed an issue in our codebase.",
               "Good morning Sarah! Yesterday I worked on the database queries.",
@@ -4337,17 +4759,17 @@ ${cleanTip}`,
         };
       }
 
-      // 6. DYNAMISCHER ÜBERSETZUNGS- & BEDEUTUNGS-LEHRER (v36): Wort-, Bedeutungs- & Live-Wörterbuch-Übersetzung
+      // 6. DYNAMISCHER ÜBERSETZUNGS-, AUSSPRACHE- & GRAMMATIK-LEHRER (v38): Wort-, Bedeutungs- & Live-Wörterbuch-Übersetzung
       const translationMatch = (() => {
         function cleanCandidate(c) {
           if (!c) return null;
           let cand = c.trim();
           cand = cand.replace(/^["'„“.,!?\s]+|["'„“.,!?\s]+$/g, '');
-          // Entferne führende Einleitungen ("kannst du mir", "bitte", "das wort", etc.)
-          cand = cand.replace(/^(?:kannst\s+du(?:\s+mir)?|can\s+you|could\s+you|bitte|please|einfach|mal|nur|doch|jetzt|sofort|\s)+/gi, '').trim();
+          // Entferne führende Einleitungen ("kannst du mir", "bitte", "das wort", "wie wird", etc.)
+          cand = cand.replace(/^(?:kannst\s+du(?:\s+mir)?|can\s+you|could\s+you|wie\s+wird|wie\s+ist|was\s+ist|bitte|please|einfach|mal|nur|doch|jetzt|sofort|\s)+/gi, '').trim();
           cand = cand.replace(/^(?:das\s+wort|dem\s+wort|ein\s+wort|a\s+word|the\s+word|wort|word|der\s+begriff|den\s+begriff|begriff)\s+/gi, '').trim();
           // Entferne nachgestellte Zusätze ("auf englisch übersetzen", "auf englisch", "für mich", "soll", etc.)
-          cand = cand.replace(/\s+(?:auf\s+englisch|ins\s+englische|in\s+english|to\s+english|into\s+english|auf\s+deutsch|ins\s+deutsche|in\s+german|to\s+german|übersetzen|übersetzt|übersetze|translate|erklären|soll|sollst|willst|bitte|please|für\s+mich|for\s+me|mir|me|jetzt|now|einfach|mal)+[\s?!.,]*$/gi, '').trim();
+          cand = cand.replace(/\s+(?:auf\s+englisch|ins\s+englische|in\s+english|to\s+english|into\s+english|auf\s+deutsch|ins\s+deutsche|in\s+german|to\s+german|übersetzen|übersetzt|übersetze|translate|erklären|ausgesprochen|geschrieben|soll|sollst|willst|bitte|please|für\s+mich|for\s+me|mir|me|jetzt|now|einfach|mal)+[\s?!.,]*$/gi, '').trim();
           cand = cand.replace(/\s+(?:auf\s+englisch|ins\s+englische|in\s+english|to\s+english|into\s+english|auf\s+deutsch|in\s+german|übersetzen|translate|bitte|please)+[\s?!.,]*$/gi, '').trim();
           cand = cand.replace(/\b(please|bitte|for\s+me|f[uü]r\s+mich|trace|always)\b/gi, '').trim();
           cand = cand.replace(/^(das\s+wort|ein\s+wort|a\s+word|the\s+word|word|wort)\s+/gi, '').trim();
@@ -4361,7 +4783,6 @@ ${cleanTip}`,
         const rawClean = rawInput.trim();
 
         // A) Explizites Muster: "das Wort [X]" / "dem Wort [X]" / "the word [X]" überall im Satz
-        // (z.B. "das wort erklären auf englisch übersetzen", "kannst du das wort erklären übersetzen")
         const explicitWordMatch = rawClean.match(/\b(?:das\s+wort|dem\s+wort|the\s+word|wort)\s+["'„“]?([A-Za-zÄÖÜäöüß\-]{2,30})["'“]?(?:\s+(?:auf\s+englisch|ins\s+englische|in\s+english|auf\s+deutsch|übersetzen|übersetzt|translate|bedeutet|heißt|heisst|soll))?/i);
         if (explicitWordMatch && explicitWordMatch[1]) {
           const w = explicitWordMatch[1].trim();
@@ -4384,7 +4805,7 @@ ${cleanTip}`,
           /\bwhat\s+is\s+["'„“]?([^"'?!.,]+?)["'“]?\s+in\s+english\??$/i,
           /\bwie\s+sagt\s+man\s+["'„“]?([^"'?!.,]+?)["'“]?(\s+auf\s+englisch)?\??$/i,
           /\bwas\s+hei[sß]+t\s+["'„“]?([^"'?!.,]+?)["'“]?(\s+auf\s+englisch|\s+auf\s+deutsch)?\??$/i,
-          /\bwie\s+hei[sß]+t\s+["'„“]?([^"'?!.,]+?)["'“]?(\s+auf\s+englisch|\s+auf\s+deutsch)?\??$/i,
+          /\bwie\s+(?:hei[sß]+t|wird)\s+(?:das\s+wort\s+)?["'„“]?([^"'?!.,]+?)["'“]?(\s+auf\s+englisch|\s+auf\s+deutsch)?\??$/i,
           /\b(?:übersetze|übersetzen|translate)\s+(?:mir\s+)?(?:bitte\s+)?(?:das\s+wort\s+|den\s+satz\s+)?["'„“]?([^"'?!.,]+?)["'“]?(\s+auf\s+englisch|\s+into\s+english|\s+to\s+english)?\??$/i,
           /\b(?:kannst\s+du\s+(?:mir\s+)?(?:bitte\s+)?|can\s+you\s+)\s*(?:das\s+wort\s+)?["'„“]?([^"'?!.,]+?)["'“]?\s+(?:auf\s+englisch\s+|ins\s+englische\s+|in\s+english\s+)?(?:übersetzen|übersetzt|translate)\??$/i,
           /\b["'„“]?([A-Za-zÄÖÜäöüß\-]{2,30})["'“]?\s+(?:auf\s+englisch|ins\s+englische|in\s+english)\s*(?:übersetzen|übersetzt|bitte|please|hei[sß]+t)?\??$/i,
@@ -4400,7 +4821,6 @@ ${cleanTip}`,
         }
 
         // B) Wenn die letzte Partner-Nachricht nach einem zu übersetzenden Wort gefragt hat ("Welches Wort möchtest du wissen?")
-        // und der Nutzer jetzt 1 bis 3 Wörter eingibt -> direkt als Wort-Übersetzung behandeln!
         if (typeof dialogHistories !== 'undefined' && dialogHistories[scenarioId] && dialogHistories[scenarioId].length > 0) {
           const lastMsg = [...dialogHistories[scenarioId]].reverse().find(m => m.type === 'partner');
           if (lastMsg && /Welches Wort möchtest du|What word would you like to translate|Du fragst nach der Übersetzung/i.test((lastMsg.textDe || '') + ' ' + (lastMsg.textEn || ''))) {
@@ -4419,7 +4839,7 @@ ${cleanTip}`,
           }
         }
 
-        // D) Allgemeine Übersetzungsanfrage ohne konkretes Wort (z.B. "kannst du mir ein wort übersetzen")
+        // D) Allgemeine Übersetzungsanfrage ohne konkretes Wort
         const isGeneral = /\b(translate(\s+me)?(\s+please)?|übersetz(e|en)?(\s+mir)?|can\s+you\s+(trace\s+)?translate|kannst\s+du\s+(mir\s+)?übersetzen|word.*translate|how\s+to\s+translate|brauche\s+eine\s+übersetzung|ein\s+wort\s+übersetzen|hilfe\s+beim\s+übersetzen|weiß\s+(das|ein)?\s*wort\s+nicht)\b/i.test(norm);
         if (isGeneral) {
           return { type: 'general' };
@@ -4436,35 +4856,38 @@ ${cleanTip}`,
             const isDeToEn = entry.direction !== 'en_to_de';
             const targetWord = isDeToEn ? entry.english : entry.german;
             const sourceWord = queryWord;
-            const primaryTarget = targetWord.split('/')[0].replace(/^to\s+/i, '').trim();
-            const phon = entry.phonetic ? ` [${entry.phonetic}]` : '';
-            const exEn = entry.exampleEn ? `\nExample: "${entry.exampleEn}"` : '';
-            const exDe = entry.exampleDe ? `\nBeispiel: *„${entry.exampleDe}“*` : (entry.exampleEn ? `\nBeispiel: *„${entry.exampleEn}“*` : '');
+            const primaryTarget = (isDeToEn ? targetWord : sourceWord).split('/')[0].replace(/\(.*?\)/g, '').replace(/^to\s+/i, '').trim();
+            const tipInfo = PronunciationCoach.getGrammarAndUsageTip(isDeToEn ? sourceWord : targetWord, isDeToEn ? targetWord : sourceWord);
+            const wordPhon = entry.phonetic || PronunciationCoach.toPhonetic(primaryTarget);
+            const exEn = entry.exampleEn || tipInfo.exampleEn || `I use the word "${primaryTarget}" in my English conversation.`;
+            const exDe = entry.exampleDe || tipInfo.exampleDe || `Ich benutze das Wort „${primaryTarget}“ in meinem englischen Gespräch.`;
+            const exPhon = PronunciationCoach.toPhonetic(exEn);
 
             return {
               id: 'intent_word_translation_found',
               isTranslation: true,
+              practiceSentence: exEn,
               en: isDeToEn 
-                ? `In English, "${sourceWord}" means "${targetWord}"${phon}.${exEn}`
-                : `In German, "${sourceWord}" means "${targetWord}"${phon}.${exEn}`,
+                ? `In English, "${sourceWord}" means "${targetWord}" [${wordPhon}].\nExample: "${exEn}" [${exPhon}].`
+                : `In German, "${sourceWord}" [${wordPhon}] means "${targetWord}".\nExample: "${exEn}".`,
               de: isDeToEn
-                ? `🇩🇪➔🇬🇧 Auf Englisch heißt **„${sourceWord}“**: 👉 **„${targetWord}“**${phon}.${exDe}`
-                : `🇬🇧➔🇩🇪 Auf Deutsch bedeutet **„${sourceWord}“**: 👉 **„${targetWord}“**${phon}.${exDe}`,
+                ? `🇩🇪➔🇬🇧 Auf Englisch heißt **„${sourceWord}“**: 👉 **„${targetWord}“**\n🗣️ **Aussprache (Lautschrift):** \`[${wordPhon}]\`\n📖 **Grammatik & Anwendung:** ${tipInfo.grammarTip}\n💬 **Beispielsatz:** *„${exEn}“*\n*(🇩🇪 ${exDe})*\n🎙️ *Klicke unten auf **„🎙️ Aussprache testen“**, um den Satz oder das Wort laut nachzusprechen!*`
+                : `🇬🇧➔🇩🇪 Auf Deutsch bedeutet **„${sourceWord}“**: 👉 **„${targetWord}“**\n🗣️ **Aussprache (Lautschrift):** \`[${wordPhon}]\`\n📖 **Grammatik & Anwendung:** ${tipInfo.grammarTip}\n💬 **Beispielsatz:** *„${exEn}“* *(🇩🇪 ${exDe})*`,
               suggestions: [
-                entry.exampleEn || `Can you give me another example with "${primaryTarget}"?`,
-                `Was heißt 'wiederholen' auf Englisch?`,
-                `Was heißt 'Entscheidung' auf Englisch?`
+                exEn,
+                `How do I pronounce "${primaryTarget}"?`,
+                `Was heißt 'wiederholen' auf Englisch?`
               ]
             };
           } else {
-            // Wort nicht im Offline-Wörterbuch: Sofort per Live-Übersetzung übersetzen (NIEMALS nach "weiterem Inhalt" fragen!)
+            // Wort nicht im Offline-Wörterbuch: Sofort per Live-Übersetzung übersetzen (inkl. Lautschrift & Beispielsatz!)
             return {
               id: 'intent_word_translation_live',
               isTranslation: true,
               needsLiveTranslation: true,
               queryWord: queryWord,
-              en: `Translating "${queryWord}" into English for you right now...`,
-              de: `Ich übersetze **„${queryWord}“** sofort für dich ins Englische... ⏳`,
+              en: `Translating "${queryWord}" into English with pronunciation and an example sentence right now...`,
+              de: `Ich übersetze **„${queryWord}“** sofort inklusive Aussprache-Lautschrift und Beispielsatz... ⏳`,
               suggestions: [
                 `Was heißt 'erklären' auf Englisch?`,
                 `Was heißt 'Erfolg' auf Englisch?`,
@@ -4477,8 +4900,8 @@ ${cleanTip}`,
           return {
             id: 'intent_word_translation_request',
             isTranslation: true,
-            en: `I would love to help you translate any word or sentence! Just tell me: "How do you say [word] in English?" or "Was heißt [word] auf Englisch?" (or simply write the German word directly), and I will give you the exact translation, pronunciation, and an example sentence. What word would you like to translate right now?`,
-            de: `Sehr gerne helfe ich dir, jedes Wort oder jeden Satz zu übersetzen! Frag mich einfach: „Wie heißt [Wort] auf Englisch?“ oder „Was heißt [Wort] auf Englisch?“ (oder schreib mir einfach direkt das deutsche Wort). Ich nenne dir sofort die Übersetzung, die Aussprache und einen passenden Beispielsatz! Welches Wort möchtest du wissen?`,
+            en: `I would love to help you translate any word or sentence! Just tell me: "How do you say [word] in English?" or "Was heißt [word] auf Englisch?" (or simply write the German word directly), and I will give you the exact translation, pronunciation, grammar tip, and an example sentence. What word would you like to translate right now?`,
+            de: `Sehr gerne helfe ich dir, jedes Wort oder jeden Satz zu übersetzen! Frag mich einfach: „Wie heißt [Wort] auf Englisch?“ oder „Was heißt [Wort] auf Englisch?“ (oder schreib mir einfach direkt das deutsche Wort). Ich zeige dir sofort die Übersetzung, die Lautschrift-Aussprache, Grammatik-Tipps und einen Beispielsatz zum Nachsprechen! Welches Wort möchtest du wissen?`,
             suggestions: [
               "How do you say 'Erfolg' in English?",
               "Was heißt 'Feierabend' auf Englisch?",
@@ -4620,11 +5043,13 @@ ${cleanTip}`,
 
       // 20. Questions about the Partner's Job / Role ("What is your job?", "What do you do?")
       if (/\b(what\s+is\s+your\s+job|what\s+do\s+you\s+do|what\s+are\s+your\s+tasks|was\s+machst\s+du|was\s+ist\s+deine\s+aufgabe)\b/i.test(norm)) {
+        const roleEnText = meta.roleEn || 'personal English tutor';
+        const deinWord = meta.isMale ? 'dein' : 'deine';
         return {
           id: 'intent_partner_role',
-          en: `I am your ${meta.role}. I am here to help you practice English! What would you like to talk about?`,
-          de: `Ich bin deine ${meta.role}. Ich helfe dir beim Englischüben! Worüber möchtest du sprechen?`,
-          suggestions: ['Let us practice a realistic work dialogue.', 'Teach me some phrases for meetings.', 'How should I answer in a standup?']
+          en: `I am your ${roleEnText}. I am here to help you practice English, improve your pronunciation, and explain grammar! What would you like to talk about?`,
+          de: `Ich bin ${deinWord} ${meta.role}. Ich helfe dir beim Englischüben, verbessere deine Aussprache und erkläre dir die Grammatik! Worüber möchtest du sprechen?`,
+          suggestions: ['Can you help me improve my pronunciation?', 'Let us practice a realistic work dialogue.', 'Teach me some phrases for meetings.']
         };
       }
 
@@ -5064,30 +5489,68 @@ ${cleanTip}`,
         return chosen;
       }
 
-      // 4. INTELLIGENTER KONVERSATIONS-FALLBACK (Kein starres Wiederholen desselben Satzes!)
+      // 4. INTELLIGENTE NACHFRAGE & KORREKTUR STATT UNPASSENDER GENERISCHER FRAGEN (v38)
+      // Wenn kein Thema erkannt wurde, prüfen wir zuerst, ob ein Grammatik-/Aussprachefehler vorliegt oder ob das Mikrofon etwas Unverständliches aufgenommen hat:
+      const docAnalysis = (typeof SentenceDoctor !== 'undefined') ? SentenceDoctor.analyze(userInput) : null;
+      if (docAnalysis && docAnalysis.hasError && !docAnalysis.isGerman) {
+        const cleanFixed = (docAnalysis.correctedText || '').replace(/<[^>]+>/g, '').trim();
+        const phon = PronunciationCoach.toPhonetic(cleanFixed);
+        return {
+          id: 'intent_clarify_and_coach_' + this.state.turnCount,
+          isDirectCoaching: true,
+          practiceSentence: cleanFixed,
+          en: `Did you mean: "${cleanFixed}"? 😊 Here is how to pronounce it clearly: [${phon}]. Click "🎙️ Aussprache testen" below to speak this sentence out loud, or tell me if you meant something else!`,
+          de: `🤔 **Kurze Nachfrage & Aussprache-Hilfe:**\nMeintest du auf Englisch:\n👉 **„${cleanFixed}“**\n🗣️ **So sprichst du den Satz aus:** \`[${phon}]\`\n🎙️ *Klicke unten auf **„🎙️ Aussprache testen“**, um den Satz direkt nachzusprechen – oder sag mir kurz auf Deutsch, falls du etwas anderes sagen wolltest!*`,
+          suggestions: [
+            cleanFixed,
+            'Can you give me another example sentence?',
+            'Can you help me improve my English pronunciation?'
+          ]
+        };
+      }
+
+      // Wenn ein Satz >= 3 Wörter hat, aber weder Frage noch bekanntes Thema ist (z.B. Mikrofon-Verhörer), höflich nachfragen statt unpassenden Standardtext zu senden!
+      const wordCount = userInput.trim().split(/\s+/).filter(Boolean).length;
+      const looksGerman = (docAnalysis && docAnalysis.isGerman) || /\b(ich|du|wir|sie|mir|mich|mein|meine|wie|was|warum|wo|wann|kannst|möchte|will|soll|bitte|auf|für|mit|über|nicht|kein|keine|haben|sein|machen|gehen|heißt|bedeutet|übersetzen|erklären)\b/i.test(userInput);
+      if (wordCount >= 3 && !looksGerman) {
+        const cleanSpoken = userInput.trim();
+        const phonSpoken = PronunciationCoach.toPhonetic(cleanSpoken);
+        return {
+          id: 'intent_polite_clarification_' + this.state.turnCount,
+          practiceSentence: cleanSpoken,
+          en: `I want to make sure I understood you 100% correctly${this.salutation()} — I heard: "${cleanSpoken}" [${phonSpoken}]. Did the microphone catch all words right, or what would you like to say or translate?`,
+          de: `🤔 **Kurze Nachfrage${this.salutation()} (damit ich dir nichts Unpassendes antworte):**\nIch habe verstanden: **„${cleanSpoken}“** \`[${phonSpoken}]\`.\n• Hat das Mikrofon ein Wort falsch aufgenommen?\n• Oder möchtest du diesen Satz üben? *(Klicke unten auf **„🎙️ Aussprache testen“**)*\n💡 *Tipp: Du kannst mir auch jederzeit auf Deutsch schreiben oder das Mikrofon unten auf **🇩🇪 DE** stellen, dann übersetze und erkläre ich dir den Satz sofort!*`,
+          suggestions: [
+            'Can you help me improve my English pronunciation?',
+            'Wie sagt man das richtig auf Englisch?',
+            'Give me an easy example sentence to practice!'
+          ]
+        };
+      }
+
       if (scenarioId === 'beginner') {
         const beginnerFallbacks = [
           {
-            en: `That sounds interesting${this.salutation()}! Tell me more about that.`,
-            de: `Das klingt interessant${this.salutation()}! Erzähl mir mehr darüber.`,
+            en: `That sounds good${this.salutation()}! Would you like to practice a sentence with pronunciation, or translate a word?`,
+            de: `Das klingt gut${this.salutation()}! Möchtest du einen Satz mit Aussprache-Hilfe üben oder ein Wort übersetzen?`,
             suggestions: [
-              "And how about you? What are you doing today?",
+              "Can you help me improve my English pronunciation?",
               "Can you teach me 2 useful English words?",
               `What is your favorite hobby, ${meta.name}?`
             ]
           },
           {
-            en: `You are doing great${this.salutation()}! What topic do you enjoy most: music, food, or computers?`,
-            de: `Du machst das super${this.salutation()}! Welches Thema magst du am liebsten: Musik, Essen oder Computer?`,
+            en: `You are doing great${this.salutation()}! What would you like to practice next: pronunciation, grammar, or everyday conversation?`,
+            de: `Du machst das super${this.salutation()}! Was möchtest du als Nächstes üben: Aussprache, Grammatik oder Alltagsgespräche?`,
             suggestions: [
-              "I really enjoy talking about music and hobbies.",
+              "Can you help me improve my English pronunciation?",
               "I like talking about computers and programming.",
-              "Tell me about good food and cooking!"
+              "Ask me an easy everyday question!"
             ]
           },
           {
-            en: `Great practice${this.salutation()}! What would you like to talk about next?`,
-            de: `Tolles Training${this.salutation()}! Worüber möchtest du als Nächstes sprechen?`,
+            en: `Great practice${this.salutation()}! Tell me any word or sentence you want to learn, or ask me a question!`,
+            de: `Tolles Training${this.salutation()}! Nenne mir einfach ein Wort oder einen Satz, den du lernen möchtest, oder stell mir eine Frage!`,
             suggestions: [
               "Can you ask me an everyday question in English?",
               "How do you say 'Schönen Feierabend' in English?",
@@ -5156,9 +5619,9 @@ ${cleanTip}`,
     if (!t) return '';
     const uName = getUserName();
     if (uName) {
-      return t.replace(/\{name\}/g, `, ${uName}`).replace(/Istvan/g, uName).replace(/\s+,/g, ',').replace(/\s{2,}/g, ' ');
+      return t.replace(/\{name\}/g, `, ${uName}`).replace(/Istvan/g, uName).replace(/[ \t]+,/g, ',').replace(/[ \t]{2,}/g, ' ');
     } else {
-      return t.replace(/\{name\}/g, '').replace(/Istvan/g, '').replace(/\s+,/g, ',').replace(/\s{2,}/g, ' ').trim();
+      return t.replace(/\{name\}/g, '').replace(/Istvan/g, '').replace(/[ \t]+,/g, ',').replace(/[ \t]{2,}/g, ' ').trim();
     }
   }
 
@@ -5908,6 +6371,15 @@ ${cleanTip}`,
     }).join('');
   }
 
+  function formatChatDeHtml(rawDe) {
+    if (!rawDe) return '';
+    return String(rawDe)
+      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+      .replace(/`([^`]+)`/g, '<code class="chat-phonetic-code">$1</code>')
+      .replace(/\n/g, '<br>');
+  }
+
   function renderChatLog(scenarioId) {
     const chatLog = document.getElementById('dialogChatLog');
     const chipsContainer = document.getElementById('quickRepliesChips');
@@ -5922,11 +6394,12 @@ ${cleanTip}`,
       if (item.type === 'partner') {
         const msgDiv = document.createElement('div');
         msgDiv.className = 'chat-msg chat-msg-partner';
+        const pronounceTarget = (item.practiceSentence || item.textEn || '').replace(/\[[^\]]*\]/g, '').replace(/\s+/g, ' ').trim();
         msgDiv.innerHTML = `
           <div class="chat-partner-bubble">
             <div class="chat-partner-sender">${item.sender}</div>
             <div class="chat-partner-text">${renderInteractiveEnglishText(item.textEn)}</div>
-            <div class="chat-partner-de">🇩🇪 <em>${item.textDe}</em></div>
+            <div class="chat-partner-de">🇩🇪 <span class="chat-partner-de-body">${formatChatDeHtml(item.textDe)}</span></div>
             <div class="chat-partner-actions">
               <button class="chat-audio-btn chat-btn-normal" data-speak="${encodeURIComponent(item.textEn)}" title="In natürlichem Tempo vorlesen">
                 🔊 Vorlesen
@@ -5934,8 +6407,12 @@ ${cleanTip}`,
               <button class="chat-audio-btn chat-btn-slow" data-speak-slow="${encodeURIComponent(item.textEn)}" title="Langsam und deutlich vorlesen (0.78x)">
                 🐢 Langsam
               </button>
+              <button class="chat-audio-btn chat-btn-pronounce-test" data-pronounce="${encodeURIComponent(pronounceTarget)}" title="Sprich den englischen Satz/Begriff nach und lass deine Aussprache bewerten!">
+                🎙️ Aussprache testen
+              </button>
               <span class="chat-word-click-hint">💡 Wort antippen = Einzel-Aussprache</span>
             </div>
+            <div class="chat-pronounce-result-box" style="display: none;"></div>
           </div>
         `;
 
@@ -5951,6 +6428,16 @@ ${cleanTip}`,
           toggleSpeakEnglish(textToSpeak, btn, 0.78);
         });
 
+        const pronBtn = msgDiv.querySelector('.chat-btn-pronounce-test');
+        const pronBox = msgDiv.querySelector('.chat-pronounce-result-box');
+        if (pronBtn && pronBox) {
+          pronBtn.addEventListener('click', (e) => {
+            const btn = e.currentTarget;
+            const target = decodeURIComponent(btn.dataset.pronounce || '');
+            startChatPronunciationTest(target, pronBox, btn);
+          });
+        }
+
         msgDiv.querySelectorAll('.chat-word-token').forEach(wordSpan => {
           wordSpan.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -5958,10 +6445,11 @@ ${cleanTip}`,
             if (!w) return;
             speakEnglish(w, 0.80);
             const dictHit = (typeof TeacherDictionary !== 'undefined' && TeacherDictionary.lookup) ? TeacherDictionary.lookup(w) : null;
+            const phonW = (typeof PronunciationCoach !== 'undefined') ? PronunciationCoach.wordToGermanPhonetic(w) : '';
             if (dictHit && dictHit.german) {
-              showToast(`🔊 "${w}" = ${dictHit.german}`);
+              showToast(`🔊 "${w}" [${phonW}] = ${dictHit.german}`);
             } else {
-              showToast(`🔊 "${w}"`);
+              showToast(`🔊 "${w}" ${phonW ? `[${phonW}]` : ''}`);
             }
           });
         });
@@ -5978,36 +6466,56 @@ ${cleanTip}`,
         `;
         chatLog.appendChild(msgDiv);
 
-        // Falls ein ECHTER Fehler vorliegt, Doctor Card rendern
-        // WICHTIG: Wenn der Satz fehlerfrei ist, KEINE nervige "Großartig... bla bla"-Box anzeigen!
+        // Falls ein ECHTER Fehler vorliegt, Doctor Card mit Grammatik, Lautschrift & Aussprache-Test rendern
         if (item.analysis && item.analysis.hasError) {
           const docCard = document.createElement('div');
           docCard.className = 'sentence-doctor-card has-error';
+          const cleanCorrectedForSpeech = (item.analysis.correctedText || '').replace(/<[^>]+>/g, '').trim();
+          const phonLine = item.analysis.phoneticText || ((typeof PronunciationCoach !== 'undefined') ? PronunciationCoach.toPhonetic(cleanCorrectedForSpeech) : '');
           docCard.innerHTML = `
             <div class="doctor-header">
-              <span class="doctor-badge error">🩺 Satz-Korrektur & Grammatik-Tipp</span>
+              <span class="doctor-badge error">🩺 Satz-Korrektur, Grammatik & Aussprache-Hilfe</span>
             </div>
             <div class="doctor-detail-row">
               <span class="doctor-label">🔴 Dein Satz:</span>
               <span class="doctor-original-text">${item.analysis.originalText}</span>
             </div>
             <div class="doctor-corrected-box">
-              <span class="doctor-corrected-text">🟢 ${item.analysis.correctedText}</span>
-              <button class="chat-audio-btn" data-speak="${encodeURIComponent(item.analysis.correctedText)}">
-                🔊 Anhören
-              </button>
+              <div style="flex: 1;">
+                <span class="doctor-corrected-text">🟢 ${item.analysis.correctedText}</span>
+                ${phonLine ? `<div class="doctor-phonetic-line">🗣️ So sprichst du es aus: <code>[${escapeHtml(phonLine)}]</code></div>` : ''}
+              </div>
+              <div class="doctor-action-btns">
+                <button class="chat-audio-btn doc-btn-listen" data-speak="${encodeURIComponent(cleanCorrectedForSpeech)}">
+                  🔊 Anhören
+                </button>
+                <button class="chat-audio-btn chat-btn-pronounce-test doc-btn-pronounce" data-pronounce="${encodeURIComponent(cleanCorrectedForSpeech)}">
+                  🎙️ Nachsprechen testen
+                </button>
+              </div>
             </div>
             <div class="doctor-explanation-box">
               ${item.analysis.explanation}
             </div>
+            <div class="chat-pronounce-result-box" style="display: none;"></div>
           `;
 
-          const listenBtn = docCard.querySelector('.chat-audio-btn');
+          const listenBtn = docCard.querySelector('.doc-btn-listen');
           if (listenBtn) {
             listenBtn.addEventListener('click', (e) => {
               const btn = e.currentTarget;
               const textToSpeak = decodeURIComponent(btn.dataset.speak);
               toggleSpeakEnglish(textToSpeak, btn, 0.80);
+            });
+          }
+
+          const docPronBtn = docCard.querySelector('.doc-btn-pronounce');
+          const docPronBox = docCard.querySelector('.chat-pronounce-result-box');
+          if (docPronBtn && docPronBox) {
+            docPronBtn.addEventListener('click', (e) => {
+              const btn = e.currentTarget;
+              const target = decodeURIComponent(btn.dataset.pronounce || '');
+              startChatPronunciationTest(target, docPronBox, btn);
             });
           }
 
@@ -6107,9 +6615,10 @@ ${cleanTip}`,
 
     let analysis = SentenceDoctor.analyze(text);
 
-    // Wenn der Nutzer seinen Namen nennt, sich vorstellt, einen Gast vorstellt oder nach dem Namen fragt:
-    // NIEMALS eine Fehler-Box anzeigen!
-    const isNameOrGuestMessage = directIntent || /\b(nicht\s+[A-Za-z]+\s+sondern|meine?\s+(richtige[rn]?\s+)?na[h]?me|ich\s+hei[sß]+e|my\s+name\s+is|call\s+me|ich\s+bin|i\s+am|mein\s+name\s+ist|wie\s+hei[sß]+e\s+ich|what\s+is\s+my\s+name|wei[sß]+t\s+du\s+wie\s+ich|sag\s+mir\s+meinen\s+namen|das\s+ist|hier\s+ist|this\s+is|wer\s+ist\s+(alles\s+)?da|who\s+is\s+here)\b/i.test(text);
+    // Wenn der Nutzer seinen Namen nennt, sich vorstellt, einen Gast vorstellt oder eine reine Wortübersetzung anfragt:
+    // NIEMALS eine Fehler-Box anzeigen! Aber bei allen anderen Sätzen (auch wenn directIntent greift) soll SentenceDoctor aktiv helfen!
+    const isPureNameOrTranslationIntent = directIntent && (directIntent.isNameUpdate || directIntent.isGuestIntro || directIntent.isNameInquiry || directIntent.isTranslation);
+    const isNameOrGuestMessage = isPureNameOrTranslationIntent || /\b(nicht\s+[A-Za-z]+\s+sondern|meine?\s+(richtige[rn]?\s+)?na[h]?me|ich\s+hei[sß]+e|my\s+name\s+is|call\s+me|mein\s+name\s+ist|wie\s+hei[sß]+e\s+ich|what\s+is\s+my\s+name|wei[sß]+t\s+du\s+wie\s+ich|sag\s+mir\s+meinen\s+namen|wer\s+ist\s+(alles\s+)?da|who\s+is\s+here)\b/i.test(text);
 
     if (isNameOrGuestMessage && analysis) {
       analysis = null;
@@ -6141,25 +6650,27 @@ ${cleanTip}`,
       };
     }
 
-    // WICHTIG: Sofortige sprachliche & textliche Korrektur mit Beispielsatz
-    if (analysis && analysis.hasError) {
+    // WICHTIG: Sofortige sprachliche & textliche Korrektur mit Lautschrift & Beispielsatz
+    const alreadyCoachesError = partnerReply && (partnerReply.isDirectCoaching || /^(intent_improve_speaking_with_correction|intent_clarify_speaking_was|intent_clarify_and_coach)/.test(partnerReply.id || ''));
+    if (analysis && analysis.hasError && !alreadyCoachesError) {
       const cleanCorrected = (analysis.correctedText || '').replace(/<[^>]+>/g, '').trim();
+      const corrPhon = analysis.phoneticText || ((typeof PronunciationCoach !== 'undefined') ? PronunciationCoach.toPhonetic(cleanCorrected) : '');
       let verbalEn = '';
       let verbalDe = '';
 
       if (analysis.isGerman) {
-        verbalEn = `In English, say: "${cleanCorrected}"! `;
-        verbalDe = `💡 Sprach-Tipp: Auf Englisch sagst du: „${cleanCorrected}“!
-`;
+        verbalEn = `In English, say: "${cleanCorrected}" [${corrPhon}]! `;
+        verbalDe = `💡 **Sprach- & Aussprache-Tipp:** Auf Englisch sagst du: **„${cleanCorrected}“** \`[${corrPhon}]\`!\n`;
       } else {
-        verbalEn = `Quick tip: say "${cleanCorrected}"! `;
-        verbalDe = `💡 Sprach-Tipp: Richtig heißt es „${cleanCorrected}“!
-`;
+        verbalEn = `Quick tip: say "${cleanCorrected}" [${corrPhon}]! `;
+        verbalDe = `💡 **Grammatik- & Aussprache-Tipp:** Richtig heißt es **„${cleanCorrected}“** \`[${corrPhon}]\`!\n`;
       }
 
       partnerReply.en = `${verbalEn}${partnerReply.en}`;
-      partnerReply.de = `${verbalDe}━━━━━━━━━━━━━━━━━━━━
-${partnerReply.de}`;
+      partnerReply.de = `${verbalDe}━━━━━━━━━━━━━━━━━━━━\n${partnerReply.de}`;
+      if (!partnerReply.practiceSentence) {
+        partnerReply.practiceSentence = cleanCorrected;
+      }
 
       // Biete den korrigierten Satz sofort als ersten Vorschlags-Chip zum Wiederholen an
       partnerReply.suggestions = [
@@ -6173,9 +6684,10 @@ ${partnerReply.de}`;
       sender: getCurrentPartnerMeta().name,
       textEn: partnerReply.en,
       textDe: partnerReply.de,
+      practiceSentence: partnerReply.practiceSentence || '',
       suggestions: partnerReply.suggestions || [
+        "Can you help me improve my English pronunciation?",
         "Can you teach me some new words?",
-        "How are you doing today?",
         "Let us continue chatting."
       ]
     };
@@ -6200,29 +6712,35 @@ ${partnerReply.de}`;
 
       TeacherDictionary.translateLive(qWord, 'en').then(res => {
         if (res && res.translatedText) {
-          const primary = res.primaryTranslation || res.translatedText;
+          const primary = (res.primaryTranslation || res.translatedText).replace(/^to\s+/i, '').trim();
+          const phonLive = (typeof PronunciationCoach !== 'undefined') ? PronunciationCoach.toPhonetic(primary) : '';
+          const tipInfo = (typeof PronunciationCoach !== 'undefined') ? PronunciationCoach.getGrammarAndUsageTip(qWord, res.translatedText) : { grammarTip: '', exampleEn: `Can you use "${primary}" in a sentence?`, exampleDe: `Kannst du „${primary}“ in einem Satz verwenden?` };
           if (isSingleOrShort) {
             TeacherDictionary.common[qWord.toLowerCase()] = {
               de: qWord,
               en: res.translatedText,
-              phonetic: '',
-              exampleEn: `Can you use "${primary}" in a sentence?`,
-              exampleDe: `Kannst du „${primary}“ in einem Satz verwenden?`
+              phonetic: phonLive,
+              exampleEn: tipInfo.exampleEn,
+              exampleDe: tipInfo.exampleDe
             };
           }
           if (res.direction === 'en_to_de') {
-            pushedPartnerMsg.textEn = `In German, "${qWord}" means "${res.translatedText}".`;
-            pushedPartnerMsg.textDe = `🇬🇧➔🇩🇪 Auf Deutsch bedeutet **„${qWord}“**: 👉 **„${res.translatedText}“**.`;
+            const srcPhon = (typeof PronunciationCoach !== 'undefined') ? PronunciationCoach.toPhonetic(qWord) : '';
+            pushedPartnerMsg.practiceSentence = qWord;
+            pushedPartnerMsg.textEn = `In German, "${qWord}" [${srcPhon}] means "${res.translatedText}". Example: "${tipInfo.exampleEn}".`;
+            pushedPartnerMsg.textDe = `🇬🇧➔🇩🇪 Auf Deutsch bedeutet **„${qWord}“**: 👉 **„${res.translatedText}“**\n🗣️ **Aussprache (Lautschrift):** \`[${srcPhon}]\`\n📖 **Grammatik & Tipp:** ${tipInfo.grammarTip}\n💬 **Beispielsatz:** *„${tipInfo.exampleEn}“* *(🇩🇪 ${tipInfo.exampleDe})*`;
           } else if (isSingleOrShort) {
-            pushedPartnerMsg.textEn = `In English, "${qWord}" means "${res.translatedText}".`;
-            pushedPartnerMsg.textDe = `🇩🇪➔🇬🇧 Auf Englisch heißt **„${qWord}“**: 👉 **„${res.translatedText}“**.`;
+            pushedPartnerMsg.practiceSentence = tipInfo.exampleEn || primary;
+            pushedPartnerMsg.textEn = `In English, "${qWord}" means "${res.translatedText}" [${phonLive}]. Example: "${tipInfo.exampleEn}".`;
+            pushedPartnerMsg.textDe = `🇩🇪➔🇬🇧 Auf Englisch heißt **„${qWord}“**: 👉 **„${res.translatedText}“**\n🗣️ **Aussprache (Lautschrift):** \`[${phonLive}]\`\n📖 **Grammatik & Anwendung:** ${tipInfo.grammarTip}\n💬 **Beispielsatz:** *„${tipInfo.exampleEn}“*\n*(🇩🇪 ${tipInfo.exampleDe})*\n🎙️ *Klicke unten auf **„🎙️ Aussprache testen“**, um es laut nachzusprechen!*`;
           } else {
-            pushedPartnerMsg.textEn = `In English, you say: "${primary}"! Great sentence — would you like to practice saying it out loud?`;
-            pushedPartnerMsg.textDe = `🇩🇪➔🇬🇧 Auf Englisch heißt dein Satz:\n👉 **„${primary}“**\n*(Du kannst oben auf 🔊 Vorlesen oder auf jedes einzelne Wort tippen!)*`;
+            pushedPartnerMsg.practiceSentence = primary;
+            pushedPartnerMsg.textEn = `In English, you say: "${primary}" [${phonLive}]! Click "🎙️ Aussprache testen" below to practice saying it out loud!`;
+            pushedPartnerMsg.textDe = `🇩🇪➔🇬🇧 Auf Englisch heißt dein Satz:\n👉 **„${primary}“**\n🗣️ **So sprichst du ihn aus:** \`[${phonLive}]\`\n🎙️ *(Klicke oben auf **🔊 Vorlesen** zum Anhören oder auf **🎙️ Aussprache testen** zum Nachsprechen!)*`;
           }
           pushedPartnerMsg.suggestions = [
             primary,
-            `Can you give me an example sentence with "${primary.split(/\s+/)[0]}"?`,
+            tipInfo.exampleEn || `Can you give me an example sentence with "${primary.split(/\s+/)[0]}"?`,
             `Let us continue our conversation!`
           ];
           renderChatLog(scenarioId);
