@@ -513,10 +513,11 @@ function initApp() {
     }
   }
 
-  // Bereinigt den Text vor der Sprachausgabe: Entfernt Smileys, Emojis, Markdown & Sonderzeichen
+  // Bereinigt den Text vor der Sprachausgabe: Entfernt Lautschrift-Klammern [...], Smileys, Emojis, Markdown & Sonderzeichen
   function cleanTextForSpeech(raw) {
     if (!raw) return '';
     let clean = raw
+      .replace(/\[[^\]]*\]/g, ' ')
       .replace(/\*\*([^*]+)\*\*/g, '$1')
       .replace(/\*([^*]+)\*/g, '$1')
       .replace(/`([^`]+)`/g, '$1')
@@ -578,12 +579,13 @@ function initApp() {
       return;
     }
 
-    // Wenn gerade gesprochen wird:
+    // Wenn gerade gesprochen wird: Beim Klick auf Stopp / Vorlesen sofort anhalten, sodass nur der Text vor einem bleibt!
     if (isSpeakingNow()) {
       const isSameBtn = (triggerBtn && triggerBtn === activeSpeakingBtn);
+      const isNormalStop = !customRate;
       stopSpeaking();
-      showToast('⏹️ Sprachausgabe angehalten');
-      if (isSameBtn || !triggerBtn) {
+      if (isSameBtn || !triggerBtn || isNormalStop) {
+        showToast('⏹️ Vorlesen gestoppt – nur Text vor dir');
         return;
       }
     }
@@ -662,16 +664,25 @@ function initApp() {
 
       setAvatarSpeaking(true);
 
-      if (triggerBtn) {
-        activeSpeakingBtn = triggerBtn;
-        activeSpeakingOriginalHTML = triggerBtn.innerHTML;
-        triggerBtn.innerHTML = '⏹️ Anhalten';
-        triggerBtn.classList.add('is-speaking-btn');
+      // Falls im Dialog automatisch vorgelesen wird, auch den Button direkt unter der aktuellen Nachricht auf "⏹️ Stopp (Nur Text)" schalten!
+      let targetBtn = triggerBtn;
+      if (!targetBtn && currentView === 'dialog') {
+        const normalBtns = document.querySelectorAll('#dialogChatLog .chat-msg-partner .chat-btn-normal');
+        if (normalBtns && normalBtns.length > 0) {
+          targetBtn = normalBtns[normalBtns.length - 1];
+        }
+      }
+
+      if (targetBtn && targetBtn.id !== 'btnToggleScenarioAudio') {
+        activeSpeakingBtn = targetBtn;
+        activeSpeakingOriginalHTML = targetBtn.innerHTML;
+        targetBtn.innerHTML = '⏹️ Stopp (Nur Text)';
+        targetBtn.classList.add('is-speaking-btn');
       }
 
       const mainToggle = document.getElementById('btnToggleScenarioAudio');
       if (mainToggle) {
-        mainToggle.innerHTML = '⏹️ Anhalten';
+        mainToggle.innerHTML = '⏹️ Stopp (Nur Text)';
         mainToggle.classList.add('is-speaking-btn');
       }
 
@@ -1372,6 +1383,9 @@ function initApp() {
 
   // --- VIEW SWITCHING ---
   function switchView(viewName) {
+    if (currentView === 'dialog' && viewName !== 'dialog' && isSpeakingNow()) {
+      stopSpeaking();
+    }
     currentView = viewName;
     document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active'));
     document.querySelectorAll('.nav-tab-btn').forEach(btn => {
@@ -1390,6 +1404,16 @@ function initApp() {
       renderGlossary();
     } else if (viewName === 'dialog') {
       initDialogView();
+      if (typeof updateDialogAudioModeUI === 'function') {
+        updateDialogAudioModeUI();
+      }
+      if (currentDialogMode === 'voice' && !isSpeakingNow() && typeof speakLastPartnerMessage === 'function') {
+        setTimeout(() => {
+          if (currentView === 'dialog' && currentDialogMode === 'voice' && !isSpeakingNow()) {
+            speakLastPartnerMessage();
+          }
+        }, 180);
+      }
     } else if (viewName === 'stories') {
       initStoriesView();
     } else if (viewName === 'grammar') {
@@ -2041,7 +2065,15 @@ function initApp() {
   // ============================================================
   // 5. DIALOG-COACH & SATZ-DOKTOR LOGIK
   // ============================================================
-  let currentDialogMode = 'text'; // 'text' oder 'voice'
+  // Standardmäßig IMMER vorlesen ('voice' = wie ein echter Gesprächspartner).
+  // Wenn der Nutzer unterwegs ist, kann er jederzeit auf 'text' (Nur Text / Stumm) umschalten.
+  let currentDialogMode = (function() {
+    try {
+      return localStorage.getItem('fiae_dialog_mode') || 'voice';
+    } catch (e) {
+      return 'voice';
+    }
+  })();
   let currentScenarioId = 'beginner';
 
   function normalizeLearnerName(rawName) {
@@ -2097,7 +2129,11 @@ function initApp() {
       'really': 'RIH-li', 'actually': 'ÄK-tschu-ö-li', 'currently': 'KÖR-önt-li', 'usually': 'JUH-schu-ö-li',
       'always': 'AWL-weys', 'never': 'NEV-ör', 'often': 'OF-ön', 'sometimes': 'SAM-taims',
       'yesterday': 'JES-tör-dey', 'today': 'tu-DEY', 'tomorrow': 'tu-MOR-oh', 'morning': 'MOR-ning',
-      'evening': 'IHW-ning', 'night': 'nait', 'right': 'rait', 'know': 'noh', 'write': 'rait',
+      'evening': 'IHW-ning', 'afternoon': 'af-tör-NUHN', 'night': 'nait', 'early': 'ÖR-li', 'late': 'leyt',
+      'moment': 'MOH-mönt', 'this': 'this', 'that': 'thät', 'these': 'thihs', 'those': 'thohs',
+      'the': 'the', 'at': 'ät', 'in': 'in', 'on': 'on', 'it': 'it', 'now': 'nau', 'very': 'WER-i',
+      'little': 'LIT-öl', 'yet': 'jet', 'well': 'wel', 'sleep': 'slihp', 'coffee': 'KOF-ih',
+      'right': 'rait', 'know': 'noh', 'write': 'rait',
       'wrong': 'rong', 'listen': 'LIS-ön', 'could': 'kud', 'would': 'wud', 'should': 'schud',
       'can': 'kän', 'you': 'juh', 'your': 'johr', 'my': 'mai', 'mine': 'main', 'me': 'mih',
       'we': 'wih', 'they': 'they', 'their': 'thehr', 'there': 'thehr', 'where': 'wehr',
@@ -2210,7 +2246,7 @@ function initApp() {
     }
   };
 
-  // --- DER GRAMMATIK- & SATZ-DOKTOR (CLIENT-SEITIGE ANALYSE & PRAISE) ---
+  // --- DER GRAMMATIK- & SATZ-DOKTOR (CLIENT-SEITIGE ANALYSE, KORREKTUR-VORSCHLAG & PRAISE) ---
   const SentenceDoctor = {
     germanWords: [
       'ich', 'habe', 'arbeitete', 'gestern', 'mein', 'meine', 'warum', 'dass', 'nicht',
@@ -2226,13 +2262,257 @@ function initApp() {
       'monolith', 'deployment', 'pipeline', 'middleware', 'idempotent', 'resilient'
     ],
 
+    // Bekannte englische Grundwörter für die automatische Rechtschreib- & Tippfehler-Prüfung (Fuzzy-Spellcheck)
+    coreEnglishWords: [
+      'a', 'about', 'above', 'actually', 'add', 'after', 'afternoon', 'again', 'against', 'age', 'ago', 'agree', 'ai', 'all', 'almost', 'alone', 'along', 'already', 'also', 'although', 'always', 'am', 'among', 'an', 'and', 'animal', 'another', 'answer', 'any', 'anything', 'api', 'app', 'application', 'architecture', 'are', 'area', 'argument', 'around', 'arrive', 'art', 'article', 'artificial', 'as', 'ask', 'asked', 'asking', 'at', 'away', 'awesome',
+      'back', 'backend', 'bad', 'balance', 'bank', 'barrier', 'base', 'basic', 'be', 'beat', 'beautiful', 'became', 'because', 'become', 'bed', 'been', 'before', 'begin', 'beginner', 'behind', 'believe', 'best', 'better', 'between', 'big', 'bit', 'blocker', 'blockers', 'board', 'book', 'bored', 'both', 'bottleneck', 'bowl', 'boy', 'break', 'breakfast', 'breakthrough', 'briefly', 'bring', 'brother', 'bug', 'bugs', 'build', 'building', 'built', 'burger', 'business', 'busy', 'but', 'buy', 'by',
+      'call', 'called', 'calling', 'came', 'can', 'canada', 'cannot', 'car', 'carbon', 'card', 'care', 'career', 'case', 'cat', 'catch', 'catching', 'central', 'certain', 'certainly', 'challenge', 'challenges', 'chance', 'change', 'changes', 'chat', 'chatting', 'check', 'checked', 'checkout', 'child', 'children', 'chill', 'choice', 'choose', 'cinema', 'city', 'class', 'clean', 'clear', 'clears', 'climate', 'close', 'cloth', 'cloud', 'cloudy', 'coach', 'code', 'codebase', 'coding', 'coffee', 'cold', 'colleague', 'colleagues', 'color', 'come', 'comes', 'coming', 'common', 'communication', 'companies', 'company', 'comparative', 'complete', 'completely', 'complex', 'complimentary', 'computer', 'concept', 'conduct', 'confidence', 'confident', 'connection', 'consequences', 'continue', 'continuous', 'control', 'conversation', 'conversations', 'cool', 'coordinating', 'correct', 'corrected', 'correction', 'cost', 'could', 'countries', 'country', 'couple', 'course', 'couch', 'coverage', 'create', 'cup', 'currency', 'current', 'currently', 'customer',
+      'daily', 'dark', 'data', 'database', 'databases', 'day', 'days', 'debate', 'debates', 'decade', 'decide', 'decision', 'decisions', 'decoupling', 'deep', 'deeper', 'deficit', 'definitely', 'dependencies', 'depend', 'depends', 'deployment', 'describe', 'design', 'detail', 'details', 'develop', 'developer', 'developers', 'developing', 'development', 'devops', 'did', 'didnt', 'difference', 'different', 'difficult', 'dinner', 'direct', 'directly', 'disagree', 'discover', 'discovered', 'discovering', 'discuss', 'discussed', 'discussing', 'discussion', 'discussions', 'do', 'docker', 'doctor', 'documentation', 'does', 'doesnt', 'dog', 'dogs', 'doing', 'dollar', 'done', 'dont', 'door', 'doors', 'down', 'drink', 'drinks', 'drivers', 'du', 'during',
+      'each', 'early', 'easy', 'eat', 'eating', 'economic', 'economics', 'economy', 'editor', 'editors', 'education', 'effect', 'eight', 'either', 'electronic', 'else', 'email', 'emerging', 'end', 'endpoint', 'energy', 'engineer', 'engineering', 'english', 'enjoy', 'enjoyable', 'enough', 'environment', 'equipment', 'error', 'errors', 'especially', 'essay', 'euro', 'europe', 'even', 'evening', 'event', 'ever', 'every', 'everyday', 'everyone', 'everything', 'evolving', 'exact', 'exactly', 'exam', 'example', 'examples', 'exams', 'exception', 'excites', 'exercise', 'exhausted', 'experience', 'experienced', 'explain', 'explained', 'explaining', 'explanation', 'explanations', 'explore', 'export', 'express', 'expressed', 'expressing',
+      'face', 'fact', 'fail', 'failed', 'fair', 'fall', 'family', 'far', 'fast', 'faster', 'fantastic', 'fascinating', 'father', 'favorite', 'fear', 'feature', 'features', 'fed', 'federal', 'feedback', 'feel', 'feeling', 'few', 'field', 'fifteen', 'fifth', 'fifty', 'fight', 'figure', 'file', 'files', 'fill', 'film', 'films', 'final', 'finally', 'find', 'fine', 'finish', 'finished', 'fire', 'first', 'fish', 'fitness', 'five', 'fix', 'fixed', 'fixing', 'flexible', 'flexibility', 'floor', 'flow', 'flowing', 'fluent', 'fluently', 'focus', 'follow', 'following', 'food', 'football', 'for', 'forecast', 'foreign', 'foresee', 'forget', 'form', 'forties', 'forward', 'found', 'four', 'free', 'freedom', 'freedoms', 'freely', 'fresh', 'friday', 'friend', 'friendly', 'friends', 'from', 'frontend', 'fruit', 'full', 'fun', 'function', 'functions', 'funny', 'future',
+      'game', 'games', 'gaming', 'gave', 'general', 'german', 'germany', 'get', 'getting', 'git', 'give', 'given', 'gives', 'glad', 'gladly', 'global', 'globalization', 'go', 'goal', 'goals', 'goes', 'going', 'good', 'got', 'government', 'grade', 'grammar', 'great', 'green', 'group', 'grow', 'growing', 'guess', 'guest', 'guests', 'guide', 'guitar', 'guy', 'guys', 'gym',
+      'had', 'half', 'hand', 'happen', 'happened', 'happens', 'happiness', 'happy', 'hard', 'hardware', 'has', 'have', 'having', 'he', 'head', 'hear', 'heard', 'hearing', 'heart', 'heat', 'heavy', 'hello', 'help', 'helped', 'helpful', 'helping', 'helps', 'her', 'here', 'hey', 'hi', 'high', 'higher', 'him', 'himself', 'his', 'history', 'hit', 'hobbies', 'hobby', 'hold', 'holiday', 'home', 'homework', 'hope', 'hot', 'hotel', 'hour', 'hours', 'house', 'how', 'however', 'huge', 'human', 'hundred', 'hunger', 'hungry', 'husband',
+      'i', 'idea', 'ideas', 'if', 'ill', 'im', 'image', 'imagine', 'imf', 'immediately', 'impact', 'implement', 'implemented', 'import', 'important', 'improve', 'improved', 'improving', 'in', 'incident', 'include', 'includes', 'including', 'income', 'increase', 'indeed', 'index', 'industry', 'inflation', 'influence', 'info', 'information', 'inside', 'inspect', 'instead', 'intelligence', 'interest', 'interested', 'interesting', 'international', 'internet', 'interview', 'into', 'introduce', 'investigated', 'investment', 'ireland', 'is', 'isnt', 'issue', 'issues', 'it', 'italian', 'item', 'items', 'its', 'itself',
+      'january', 'java', 'job', 'jobs', 'join', 'joining', 'joke', 'jump', 'junior', 'just',
+      'keep', 'key', 'kids', 'kind', 'knew', 'know', 'knowledge', 'known', 'knows',
+      'land', 'language', 'languages', 'large', 'last', 'late', 'later', 'laugh', 'law', 'lead', 'leader', 'leading', 'learn', 'learned', 'learner', 'learners', 'learning', 'least', 'leave', 'left', 'less', 'let', 'lets', 'letter', 'level', 'library', 'life', 'light', 'like', 'liked', 'likely', 'line', 'lines', 'list', 'listen', 'listening', 'little', 'live', 'living', 'local', 'log', 'logistics', 'logs', 'london', 'long', 'longer', 'look', 'looking', 'looks', 'lose', 'lost', 'lot', 'lots', 'loud', 'love', 'loved', 'lovely', 'low', 'lower', 'luck', 'lucky', 'lunch',
+      'machine', 'made', 'main', 'major', 'make', 'makes', 'making', 'man', 'manage', 'manager', 'many', 'market', 'markets', 'master', 'math', 'maths', 'matter', 'matters', 'may', 'maybe', 'me', 'mean', 'meaning', 'means', 'meant', 'media', 'meet', 'meeting', 'meetings', 'member', 'members', 'memory', 'men', 'merge', 'message', 'messages', 'metal', 'method', 'methods', 'microphone', 'middle', 'might', 'mind', 'mine', 'minute', 'minutes', 'miss', 'mistake', 'mistakes', 'mix', 'mode', 'model', 'modern', 'moment', 'monday', 'monetary', 'money', 'monolith', 'monolithic', 'month', 'months', 'more', 'morning', 'most', 'mostly', 'mother', 'motivates', 'mountain', 'mountains', 'move', 'movie', 'movies', 'mr', 'mrs', 'ms', 'much', 'music', 'must', 'my', 'myself',
+      'name', 'names', 'natural', 'naturally', 'nature', 'near', 'nearby', 'nearly', 'necessary', 'need', 'needed', 'needs', 'network', 'never', 'new', 'news', 'next', 'nice', 'night', 'nine', 'no', 'nobody', 'none', 'normal', 'north', 'not', 'note', 'nothing', 'notice', 'noticed', 'now', 'number', 'numbers',
+      'oatmeal', 'object', 'of', 'off', 'offer', 'office', 'often', 'oh', 'ok', 'okay', 'old', 'older', 'on', 'once', 'one', 'online', 'only', 'open', 'opens', 'opinion', 'opportunities', 'opportunity', 'optimize', 'optimizing', 'option', 'or', 'order', 'other', 'others', 'our', 'out', 'outdoors', 'outside', 'over', 'own',
+      'pack', 'page', 'paid', 'paper', 'parent', 'parents', 'park', 'part', 'particular', 'particularly', 'partner', 'partners', 'parts', 'party', 'pass', 'passionate', 'passport', 'past', 'pasta', 'path', 'pay', 'peace', 'peak', 'people', 'per', 'percent', 'perfect', 'performance', 'perhaps', 'period', 'person', 'personal', 'perspective', 'pet', 'pets', 'phone', 'photo', 'phrase', 'phrases', 'pick', 'picture', 'piece', 'pizza', 'place', 'places', 'plan', 'planned', 'planning', 'plans', 'plant', 'play', 'playing', 'please', 'plenty', 'plus', 'podcast', 'podcasts', 'point', 'points', 'policy', 'pool', 'poor', 'popular', 'position', 'positive', 'possible', 'power', 'powerful', 'practical', 'practice', 'practicing', 'prefer', 'prepare', 'preparing', 'present', 'president', 'pressure', 'pretty', 'previous', 'price', 'prices', 'primarily', 'principles', 'priorities', 'priority', 'private', 'probably', 'problem', 'problems', 'proceed', 'process', 'produce', 'producing', 'product', 'production', 'productivity', 'professional', 'professor', 'program', 'programmer', 'programmers', 'programming', 'progress', 'project', 'projects', 'prompt', 'pronounce', 'pronunciation', 'protect', 'protectionism', 'protective', 'provide', 'provides', 'prs', 'public', 'pull', 'put', 'python',
+      'qa', 'quality', 'queries', 'query', 'question', 'questions', 'quick', 'quickly', 'quiet', 'quite', 'quiz', 'quota',
+      'radio', 'rain', 'raining', 'rate', 'rates', 'rather', 'reach', 'read', 'reading', 'ready', 'real', 'really', 'reason', 'reasoning', 'rebase', 'receive', 'recently', 'recommend', 'red', 'reduce', 'refactor', 'refactored', 'refactoring', 'regular', 'related', 'relationship', 'relax', 'relaxing', 'release', 'reliable', 'remember', 'remote', 'remove', 'repeat', 'replace', 'reply', 'report', 'reproduce', 'request', 'requests', 'require', 'requirement', 'requirements', 'research', 'reservation', 'resilience', 'resilient', 'resource', 'resources', 'respond', 'response', 'rest', 'restaurant', 'result', 'results', 'return', 'review', 'right', 'risk', 'risks', 'road', 'robot', 'robots', 'rock', 'role', 'room', 'routine', 'rule', 'rules', 'run', 'running', 'runs',
+      'sad', 'safe', 'said', 'same', 'saturday', 'save', 'saved', 'saves', 'saw', 'say', 'saying', 'says', 'scale', 'scenario', 'school', 'science', 'scrum', 'search', 'season', 'second', 'seconds', 'section', 'security', 'see', 'seeing', 'seem', 'seems', 'seen', 'select', 'send', 'senior', 'sense', 'sent', 'sentence', 'sentences', 'series', 'serious', 'server', 'servers', 'service', 'services', 'set', 'seven', 'several', 'shall', 'share', 'sharing', 'she', 'short', 'should', 'show', 'shows', 'sick', 'side', 'simple', 'simply', 'since', 'single', 'sister', 'sit', 'site', 'situation', 'six', 'size', 'skill', 'skills', 'skipped', 'sleep', 'sleeping', 'sleepy', 'slow', 'slower', 'slowly', 'small', 'smalltalk', 'smartphone', 'smith', 'so', 'soccer', 'social', 'software', 'solid', 'solution', 'solutions', 'solve', 'solving', 'some', 'somebody', 'someone', 'something', 'sometimes', 'song', 'songs', 'soon', 'sorry', 'sort', 'sound', 'sounds', 'south', 'space', 'speak', 'speaking', 'speaks', 'special', 'specialize', 'specific', 'spend', 'spending', 'spent', 'split', 'spoken', 'sport', 'sports', 'sprint', 'sql', 'staff', 'stage', 'stand', 'standard', 'stands', 'standup', 'start', 'started', 'starting', 'starts', 'state', 'statement', 'station', 'status', 'stay', 'staying', 'step', 'steps', 'still', 'stop', 'stories', 'story', 'straight', 'street', 'stressed', 'strong', 'structured', 'stuck', 'student', 'students', 'study', 'studying', 'stuff', 'style', 'subject', 'subtitles', 'success', 'successful', 'such', 'suddenly', 'summer', 'sun', 'sunday', 'sunny', 'super', 'supply', 'support', 'sure', 'surplus', 'sushi', 'sustainability', 'switch', 'sync', 'synth', 'synthesizer', 'synthesizers', 'system', 'systems',
+      'table', 'take', 'taken', 'takes', 'taking', 'talk', 'talking', 'talks', 'tariff', 'tariffs', 'task', 'tasks', 'tea', 'teach', 'teacher', 'teaching', 'team', 'teams', 'teamwork', 'tech', 'technical', 'technology', 'tell', 'telling', 'ten', 'term', 'terms', 'test', 'tested', 'testing', 'tests', 'text', 'than', 'thank', 'thanks', 'that', 'thats', 'the', 'their', 'them', 'themselves', 'then', 'theory', 'there', 'therefore', 'these', 'they', 'thing', 'things', 'think', 'thinking', 'third', 'thirties', 'thirsty', 'thirty', 'this', 'those', 'though', 'thought', 'thoughtful', 'thoughts', 'thousand', 'three', 'through', 'throughout', 'thursday', 'ticket', 'tickets', 'time', 'timeout', 'times', 'tip', 'tips', 'tired', 'title', 'to', 'toast', 'today', 'together', 'told', 'tomorrow', 'tonight', 'too', 'took', 'tool', 'tools', 'top', 'topic', 'topics', 'total', 'totally', 'toward', 'town', 'track', 'trade', 'traffic', 'train', 'training', 'transaction', 'translate', 'translated', 'translating', 'translation', 'translations', 'travel', 'treaty', 'tree', 'trial', 'trick', 'tried', 'true', 'truth', 'try', 'trying', 'tube', 'tuesday', 'turn', 'twenty', 'twenties', 'twice', 'two', 'type',
+      'uk', 'under', 'understand', 'understanding', 'understood', 'unit', 'united', 'unless', 'unread', 'until', 'unwind', 'up', 'update', 'updated', 'upon', 'us', 'usa', 'use', 'used', 'useful', 'user', 'users', 'uses', 'using', 'usual', 'usually',
+      'vacation', 'valuable', 'value', 'values', 'various', 'verb', 'verify', 'version', 'very', 'video', 'view', 'visit', 'vocab', 'vocabulary', 'voice',
+      'wait', 'waiting', 'walk', 'walking', 'wall', 'want', 'wanted', 'wants', 'war', 'warm', 'wars', 'was', 'wasnt', 'watch', 'watching', 'water', 'way', 'ways', 'we', 'weather', 'web', 'website', 'wednesday', 'week', 'weekend', 'weeks', 'welcome', 'well', 'went', 'were', 'west', 'what', 'whatever', 'whats', 'when', 'whenever', 'where', 'whether', 'which', 'while', 'white', 'who', 'whole', 'whom', 'whose', 'why', 'wide', 'wife', 'will', 'win', 'wind', 'window', 'windy', 'wine', 'winter', 'wish', 'with', 'within', 'without', 'woman', 'women', 'wonderful', 'wont', 'word', 'words', 'work', 'worked', 'working', 'workplace', 'works', 'world', 'worldwide', 'worry', 'worse', 'worst', 'worth', 'would', 'wouldnt', 'write', 'writing', 'written', 'wrong', 'wrote',
+      'yeah', 'year', 'years', 'yep', 'yes', 'yesterday', 'yet', 'you', 'young', 'your', 'yours', 'yourself', 'zero'
+    ],
+
+    _validEnglishSet: null,
+    getValidEnglishSet() {
+      if (this._validEnglishSet) return this._validEnglishSet;
+      const set = new Set(this.coreEnglishWords);
+      if (typeof PronunciationCoach !== 'undefined' && PronunciationCoach.knownPhonetics) {
+        Object.keys(PronunciationCoach.knownPhonetics).forEach(w => set.add(w.toLowerCase()));
+      }
+      this.techVocabList.forEach(w => set.add(w.toLowerCase()));
+      if (typeof VOCAB_DATA !== 'undefined' && Array.isArray(VOCAB_DATA)) {
+        VOCAB_DATA.forEach(item => {
+          if (item && item.english) {
+            item.english.toLowerCase().replace(/[^a-z\s]/g, ' ').split(/\s+/).filter(Boolean).forEach(w => set.add(w));
+          }
+        });
+      }
+      this._validEnglishSet = set;
+      return set;
+    },
+
+    // Levenshtein-Distanz für automatische Rechtschreibkorrektur (Tippfehler & Lautschrift-Schreibweisen)
+    editDistance(a, b) {
+      if (a === b) return 0;
+      if (!a.length) return b.length;
+      if (!b.length) return a.length;
+      if (Math.abs(a.length - b.length) > 2) return 99;
+      const dp = Array.from({ length: a.length + 1 }, () => new Array(b.length + 1).fill(0));
+      for (let i = 0; i <= a.length; i++) dp[i][0] = i;
+      for (let j = 0; j <= b.length; j++) dp[0][j] = j;
+      for (let i = 1; i <= a.length; i++) {
+        for (let j = 1; j <= b.length; j++) {
+          const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+          dp[i][j] = Math.min(
+            dp[i - 1][j] + 1,
+            dp[i][j - 1] + 1,
+            dp[i - 1][j - 1] + cost
+          );
+          if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) {
+            dp[i][j] = Math.min(dp[i][j], dp[i - 2][j - 2] + 1);
+          }
+        }
+      }
+      return dp[a.length][b.length];
+    },
+
+    findClosestEnglishWord(rawWord) {
+      const w = (rawWord || '').toLowerCase().replace(/[^a-z]/g, '');
+      if (!w || w.length < 3) return null;
+      const validSet = this.getValidEnglishSet();
+      if (validSet.has(w)) return null;
+
+      // 1. Phonetische Normalisierung für deutschsprachige Lernende (z. B. dhis -> this, earley -> early, sch -> sh)
+      const phoneticCandidates = [
+        w.replace(/^dh/, 'th'),
+        w.replace(/dh/g, 'th'),
+        w.replace(/ey$/, 'y'),
+        w.replace(/ie/g, 'ea'),
+        w.replace(/ie/g, 'ee'),
+        w.replace(/sch/g, 'sh'),
+        w.replace(/tsch/g, 'ch'),
+        w.replace(/^k/, 'c'),
+        w.replace(/k/g, 'c'),
+        w.replace(/w/g, 'v'),
+        w.replace(/(.)\1+/g, '$1'),
+        w.replace(/^dh/, 'th').replace(/ey$/, 'y')
+      ];
+      for (const cand of phoneticCandidates) {
+        if (cand && validSet.has(cand)) return cand;
+      }
+
+      // 2. Fuzzy-Suche (Edit-Distanz 1, oder 2 bei längeren Wörtern >= 6 Buchstaben)
+      let bestMatch = null;
+      let bestScore = 99;
+      for (const target of this.coreEnglishWords) {
+        if (target.length < 3) continue;
+        if (Math.abs(target.length - w.length) > 2) continue;
+        const sameFirst = target[0] === w[0] ||
+          (w.startsWith('dh') && target.startsWith('th')) ||
+          (w.startsWith('k') && target.startsWith('c')) ||
+          (w.startsWith('c') && target.startsWith('k')) ||
+          (w.startsWith('i') && target.startsWith('e')) ||
+          (w.startsWith('e') && target.startsWith('i'));
+        if (!sameFirst) continue;
+        const dist = this.editDistance(w, target);
+        const maxAllowed = (w.length >= 6 && target.length >= 6) ? 2 : 1;
+        if (dist <= maxAllowed && dist < bestScore) {
+          bestScore = dist;
+          bestMatch = target;
+          if (dist === 1 && Math.abs(target.length - w.length) <= 1) break;
+        }
+      }
+      return bestMatch;
+    },
+
     analyze(text) {
       const clean = text.trim();
       if (!clean) return null;
 
       const lower = clean.toLowerCase();
 
-      // 0A. Mikrofon-Verhörer & gebrochene Sätze beim Sprechen erkennen (z.B. "Oak Park can you make better mine the English language my speaking" oder "what's your name Boy Is Mine speaking was")
+      // 0A. Spezifische Anfänger- & Denglisch-Konstruktionen (z. B. "dhis Moment is earley Morning", "this moment is early morning", "now is early morning")
+      if (/\b(dhis|this|dis|at\s+this|in\s+this)?\s*moment\s+is\s+(earley|early|erly|earli|late)?\s*(mornig|morning|morining|evning|evening|afternoon|night|day)\b/i.test(lower) ||
+          /\b(dhis|this|dis)\s+moment\b.*\b(earley|early|mornig|morning)\b/i.test(lower) ||
+          /^(now\s+is|is|it\s+is)\s+(earley|early|erly|earli)\s+(mornig|morning|morining)[.!?\s]*$/i.test(lower)) {
+        let timeOfDay = 'early in the morning';
+        if (/evening|evning/i.test(lower)) timeOfDay = /earley|early/i.test(lower) ? 'early in the evening' : 'in the evening';
+        else if (/afternoon/i.test(lower)) timeOfDay = 'in the afternoon';
+        else if (/night|nigth/i.test(lower)) timeOfDay = 'late at night';
+        else if (!/earley|early|erly|earli/i.test(lower)) timeOfDay = 'in the morning';
+
+        const fixed = `At the moment, it is ${timeOfDay}.`;
+        const altFixed = `Right now, it is ${timeOfDay.replace('in the ', '')}.`;
+        const phon = PronunciationCoach.toPhonetic(fixed);
+        return {
+          hasError: true,
+          isGerman: false,
+          originalText: clean,
+          correctedText: fixed,
+          phoneticText: phon,
+          explanation: `✅ <strong>Korrektur-Vorschlag:</strong> Sag auf Englisch: <strong>"${fixed}"</strong> (oder kurz: <em>"${altFixed}"</em>).<br>
+1️⃣ <strong>Rechtschreibung:</strong> <em>"this"</em> schreibt man mit <strong>th</strong> (nicht <em>dhis</em>) und <em>"early"</em> (früh) nur mit <strong>-y</strong> am Ende (nicht <em>earley</em>).<br>
+2️⃣ <strong>Kleinschreibung:</strong> Nomen wie <strong>moment</strong> und <strong>morning</strong> schreibt man im Englischen mitten im Satz immer <strong>klein</strong>.<br>
+3️⃣ <strong>Natürlicher Satzbau:</strong> Auf Deutsch sagt man <em>„Im Moment ist früher Morgen“</em>. Auf Englisch sagt man <strong>"At the moment, it is early in the morning."</strong> (mit <em>"At the moment"</em> und <em>"it is"</em> = es ist).<br>
+🗣️ <strong>Aussprache:</strong> <code>[${phon}]</code>`
+        };
+      }
+
+      // 0B. Allgemeine "this moment is ..." / "in this moment is ..." Konstruktion -> "At the moment, it is ..."
+      if (/^(in\s+|at\s+)?(dhis|this|dis)\s+moment\s+is\s+(.+)$/i.test(lower)) {
+        const m = clean.match(/^(?:in\s+|at\s+)?(?:dhis|this|dis)\s+moment\s+is\s+(.+?)[.!?\s]*$/i);
+        const restRaw = m ? m[1].trim().toLowerCase() : 'good';
+        const fixed = `At the moment, it is ${restRaw}.`;
+        const phon = PronunciationCoach.toPhonetic(fixed);
+        return {
+          hasError: true,
+          isGerman: false,
+          originalText: clean,
+          correctedText: fixed,
+          phoneticText: phon,
+          explanation: `✅ <strong>Korrektur-Vorschlag:</strong> Statt wörtlich <em>"this moment is ..."</em> sagt man auf Englisch <strong>"At the moment, it is ..."</strong> (Im Moment ist es ...). Vergiss im Englischen nicht das <strong>"it"</strong> vor <em>"is"</em>!<br>🗣️ <strong>Aussprache:</strong> <code>[${phon}]</code>`
+        };
+      }
+
+      // 0C. "I can no/not/little English" / "I cannot English" / "I no speak English" (Typischer Anfänger-Satz!)
+      if (/\b(i\s+can\s+(no|not|little|bad|poor|keine?)\s+(english|englisch)|i\s+cannot\s+(english|englisch)|i\s+no\s+(speak|can)\s+(english|englisch)|i\s+speak\s+no\s+(english|englisch))\b/i.test(lower)) {
+        const fixed = 'I cannot speak English very well yet, so I am learning step by step.';
+        const phon = PronunciationCoach.toPhonetic(fixed);
+        return {
+          hasError: true,
+          isGerman: false,
+          originalText: clean,
+          correctedText: fixed,
+          phoneticText: phon,
+          explanation: `✅ <strong>Korrektur-Vorschlag:</strong> Auf Deutsch sagt man <em>„Ich kann kein Englisch“</em>, aber auf Englisch braucht <strong>can</strong> immer ein Vollverb wie <strong>speak</strong> (sprechen)!<br>
+👉 Sag: <strong>"I cannot speak English very well yet."</strong> (Ich kann noch nicht sehr gut Englisch sprechen) oder <strong>"I only speak a little English."</strong><br>
+🗣️ <strong>Aussprache:</strong> <code>[${phon}]</code>`
+        };
+      }
+
+      // 0D. Typische Denglisch-Sätze ("how goes it", "what make you", "it makes fun", "I have hunger/thirst/cold/right")
+      if (/\b(how\s+goes\s+it|how\s+goes\s+you|how\s+goes)\b/i.test(lower)) {
+        const fixed = 'How are you doing today?';
+        const phon = PronunciationCoach.toPhonetic(fixed);
+        return {
+          hasError: true,
+          isGerman: false,
+          originalText: clean,
+          correctedText: fixed,
+          phoneticText: phon,
+          explanation: `✅ <strong>Korrektur-Vorschlag:</strong> <em>"How goes it"</em> ist wörtlich aus dem Deutschen (<em>„Wie geht es?“</em>) übersetzt. Auf Englisch fragt man: <strong>"How are you doing?"</strong> oder <strong>"How is it going?"</strong>.<br>🗣️ <strong>Aussprache:</strong> <code>[${phon}]</code>`
+        };
+      }
+
+      if (/\b(what\s+make\s+you|what\s+do\s+you\s+make(\s+now|\s+today)?|what\s+you\s+make)\b/i.test(lower)) {
+        const fixed = 'What are you doing right now?';
+        const phon = PronunciationCoach.toPhonetic(fixed);
+        return {
+          hasError: true,
+          isGerman: false,
+          originalText: clean,
+          correctedText: fixed,
+          phoneticText: phon,
+          explanation: `✅ <strong>Korrektur-Vorschlag:</strong> Für <em>„Was machst du gerade?“</em> verwendet man im Englischen <strong>do</strong> (tun/machen) in der Verlaufsform (-ing), nicht <em>make</em> (= herstellen): <strong>"What are you doing right now?"</strong>.<br>🗣️ <strong>Aussprache:</strong> <code>[${phon}]</code>`
+        };
+      }
+
+      if (/\b(it\s+makes\s+(a\s+lot\s+of\s+|much\s+)?fun|that\s+makes\s+fun|makes\s+fun)\b/i.test(lower)) {
+        const fixed = 'It is a lot of fun!';
+        const phon = PronunciationCoach.toPhonetic(fixed);
+        return {
+          hasError: true,
+          isGerman: false,
+          originalText: clean,
+          correctedText: fixed,
+          phoneticText: phon,
+          explanation: `✅ <strong>Korrektur-Vorschlag:</strong> Auf Deutsch sagt man <em>„Es macht Spaß“</em>, aber auf Englisch heißt es immer <strong>"It is fun!"</strong> oder <strong>"I am having fun!"</strong> (niemals <em>"makes fun"</em>).<br>🗣️ <strong>Aussprache:</strong> <code>[${phon}]</code>`
+        };
+      }
+
+      const haveStateMatch = lower.match(/\bi\s+have\s+(very\s+|big\s+)?(hunger|thirst|cold|warm|right|luck|fear)\b/i);
+      if (haveStateMatch) {
+        const stateMap = {
+          hunger: 'hungry',
+          thirst: 'thirsty',
+          cold: 'cold',
+          warm: 'warm',
+          right: 'right',
+          luck: 'lucky',
+          fear: 'afraid'
+        };
+        const adj = stateMap[haveStateMatch[2].toLowerCase()] || 'hungry';
+        const fixed = `I am ${adj}.`;
+        const phon = PronunciationCoach.toPhonetic(fixed);
+        return {
+          hasError: true,
+          isGerman: false,
+          originalText: clean,
+          correctedText: fixed,
+          phoneticText: phon,
+          explanation: `✅ <strong>Korrektur-Vorschlag:</strong> Im Deutschen sagt man <em>„Ich habe Hunger / Durst / Recht / Glück“</em>, aber im Englischen nutzt man <strong>"I am ..."</strong> + Adjektiv: 👉 <strong>"${fixed}"</strong>!<br>🗣️ <strong>Aussprache:</strong> <code>[${phon}]</code>`
+        };
+      }
+
+      // 0E. Mikrofon-Verhörer & gebrochene Sätze beim Sprechen erkennen (z.B. "Oak Park can you make better mine the English language my speaking" oder "what's your name Boy Is Mine speaking was")
       if (/\boak\s+park\b/i.test(lower) || /\bmake\s+better\b.*\b(mine|my|english|speaking|pronunciation|language)\b/i.test(lower) || /\b(mine|my)\s+the\s+english\s+language\b/i.test(lower)) {
         const fixed = 'Okay, can you help me improve my English speaking and pronunciation?';
         const phon = PronunciationCoach.toPhonetic(fixed);
@@ -2304,27 +2584,72 @@ Das Mikrofon hat <em>"Boy Is Mine speaking was"</em> verstanden. Wenn du fragen 
         };
       }
 
-      // 1A. Typo & Spelling Checker for common English learner typos
+      // 1A. Typo & Spelling Checker for common English learner typos & phonetic spellings
       const commonTypos = [
         { regex: /\bhow\s+old\s+you\s+are\b/gi, fix: 'how old are you', tip: 'Fragen-Satzbau: Bei Fragen steht das Verb vor dem Subjekt: <em>"How old are you?"</em>' },
-        { regex: /\bi\s+have\s+\d+\s+years\b/gi, fix: 'I am ... years old', tip: 'Alter auf Englisch: Sage <em>"I am ... years old"</em> (mit <strong>to be</strong>, nicht "have").' },
-        { regex: /\bi\s+am\s+beginner\b/gi, fix: 'I am a beginner', tip: 'Artikelregel: Vor zählbaren Berufen/Rollen im Singular gehört ein <em>"a"</em>: <strong>"I am a beginner"</strong>.' },
-        { regex: /\bi\s+want\s+learn\b/gi, fix: 'I want to learn', tip: 'Infinitiv mit "to": Nach "want" folgt <strong>"to"</strong> + Verb: <em>"I want to learn"</em>.' },
+        { regex: /\bi\s+have\s+(\d+)\s+years(\s+old)?\b/gi, fix: 'I am $1 years old', tip: 'Alter auf Englisch: Sage <em>"I am ... years old"</em> (mit <strong>am</strong>, nicht "have").' },
+        { regex: /\bi\s+am\s+beginner\b/gi, fix: 'I am a beginner', tip: 'Artikelregel: Vor zählbaren Rollen im Singular gehört ein <em>"a"</em>: <strong>"I am a beginner"</strong>.' },
+        { regex: /\bi\s+want\s+(speak|learn|write|read|practice|talk|go|work|study|try|know|understand|see|eat|drink|sleep|play)\b/gi, fix: 'I want to $1', tip: 'Infinitiv mit "to": Nach <em>want</em> folgt immer <strong>"to"</strong> + Verb (z. B. <em>"I want to learn"</em>).' },
+        { regex: /\bi\s+need\s+(speak|learn|write|read|practice|talk|go|work|study|try)\b/gi, fix: 'I need to $1', tip: 'Infinitiv mit "to": Nach <em>need</em> folgt <strong>"to"</strong> + Verb (z. B. <em>"I need to practice"</em>).' },
         { regex: /\bhow\s+to\s+say\b/gi, fix: 'how do you say', tip: 'Vollständige Frage: <em>"How do you say [Wort] in English?"</em>' },
-        { regex: /\bwath\b/gi, fix: 'what', tip: 'W-Fragen beginnen mit <em>"wh"</em> (<strong>what</strong>, <em>where, when, why</em>).' },
-        { regex: /\bwaht\b/gi, fix: 'what', tip: '<em>"what"</em> (nicht "waht").' },
-        { regex: /\bmornig\b/gi, fix: 'morning', tip: '<em>"morning"</em> wird mit <strong>"ng"</strong> am Ende geschrieben.' },
-        { regex: /\byuor\b/gi, fix: 'your', tip: '<em>"your"</em> (dein/deine).' },
-        { regex: /\bnam\b/gi, fix: 'name', tip: '<em>"name"</em> mit stummem <strong>e</strong>.' },
-        { regex: /\bplese\b/gi, fix: 'please', tip: '<em>"please"</em> (bitte).' },
-        { regex: /\bteh\b/gi, fix: 'the', tip: '<em>"the"</em> (der/die/das).' },
-        { regex: /\bwich\b/gi, fix: 'which', tip: '<em>"which"</em> (welche/r/s).' }
+        { regex: /\b(dhis|thiss)\b/gi, fix: 'this', tip: '<strong>"this"</strong> (dieses/diese) wird mit <strong>th</strong> am Anfang geschrieben (nicht <em>dhis</em>).' },
+        { regex: /\b(dhat|thatt)\b/gi, fix: 'that', tip: '<strong>"that"</strong> (das/jenes) wird mit <strong>th</strong> geschrieben (nicht <em>dhat</em>).' },
+        { regex: /\b(dhere|ther)\b/gi, fix: 'there', tip: '<strong>"there"</strong> (dort/da) wird mit <strong>th</strong> geschrieben.' },
+        { regex: /\b(dhey)\b/gi, fix: 'they', tip: '<strong>"they"</strong> (sie, Mehrzahl) wird mit <strong>th</strong> geschrieben.' },
+        { regex: /\b(dhese)\b/gi, fix: 'these', tip: '<strong>"these"</strong> (diese) wird mit <strong>th</strong> geschrieben.' },
+        { regex: /\b(dhe|teh)\b/gi, fix: 'the', tip: '<strong>"the"</strong> (der/die/das) wird mit <strong>th-e</strong> geschrieben.' },
+        { regex: /\b(earley|erly|earli|irly)\b/gi, fix: 'early', tip: '<strong>"early"</strong> (früh) schreibt man am Ende nur mit <strong>-ly</strong> (ohne <em>e</em> vor dem <em>y</em>).' },
+        { regex: /\b(mornig|morining|moring)\b/gi, fix: 'morning', tip: '<strong>"morning"</strong> (Morgen) wird mit <strong>-ing</strong> am Ende geschrieben.' },
+        { regex: /\b(evning|evenig|ewening)\b/gi, fix: 'evening', tip: '<strong>"evening"</strong> (Abend) schreibt man <em>e-v-e-n-i-n-g</em>.' },
+        { regex: /\b(nigth|nigt|naight)\b/gi, fix: 'night', tip: '<strong>"night"</strong> (Nacht) schreibt man mit <strong>-ght</strong> am Ende.' },
+        { regex: /\b(todey|tuday)\b/gi, fix: 'today', tip: '<strong>"today"</strong> (heute) schreibt man <em>t-o-d-a-y</em>.' },
+        { regex: /\b(tomorow|tommorow|tumorrow)\b/gi, fix: 'tomorrow', tip: '<strong>"tomorrow"</strong> (morgen) schreibt man mit einem <em>m</em> und doppeltem <em>r</em>.' },
+        { regex: /\b(yestarday|yesterdey|jesterday)\b/gi, fix: 'yesterday', tip: '<strong>"yesterday"</strong> (gestern) schreibt man mit <em>y-e-s-t-e-r-d-a-y</em>.' },
+        { regex: /\b(wath|waht|wat|wot)\b/gi, fix: 'what', tip: 'W-Fragen beginnen mit <strong>"wh"</strong>: <strong>"what"</strong> (was).' },
+        { regex: /\b(wher)\b/gi, fix: 'where', tip: '<strong>"where"</strong> (wo/wohin) schreibt man mit stummem <em>e</em> am Ende.' },
+        { regex: /\b(wen)\b/gi, fix: 'when', tip: '<strong>"when"</strong> (wann/wenn) beginnt mit <strong>wh</strong>.' },
+        { regex: /\b(wai)\b/gi, fix: 'why', tip: '<strong>"why"</strong> (warum) schreibt man <em>w-h-y</em>.' },
+        { regex: /\b(hau|hou)\b/gi, fix: 'how', tip: '<strong>"how"</strong> (wie) schreibt man <em>h-o-w</em>.' },
+        { regex: /\b(yuor|yor)\b/gi, fix: 'your', tip: '<strong>"your"</strong> (dein/deine).' },
+        { regex: /\b(nam|naem)\b/gi, fix: 'name', tip: '<strong>"name"</strong> mit stummem <strong>e</strong> am Ende.' },
+        { regex: /\b(plese|pleas|plis)\b/gi, fix: 'please', tip: '<strong>"please"</strong> (bitte) schreibt man mit <em>ea</em> und <em>e</em> am Ende.' },
+        { regex: /\b(wich)\b/gi, fix: 'which', tip: '<strong>"which"</strong> (welche/r/s) schreibt man mit <strong>wh</strong>.' },
+        { regex: /\b(speek|spiek)\b/gi, fix: 'speak', tip: '<strong>"speak"</strong> (sprechen) schreibt man mit <strong>ea</strong>.' },
+        { regex: /\b(lern|laern)\b/gi, fix: 'learn', tip: '<strong>"learn"</strong> (lernen) schreibt man mit <strong>ea</strong>.' },
+        { regex: /\b(undestand|understend|anderstand)\b/gi, fix: 'understand', tip: '<strong>"understand"</strong> (verstehen).' },
+        { regex: /\b(inglish|englisch|englich)\b/gi, fix: 'English', tip: '<strong>"English"</strong> schreibt man auf Englisch mit <strong>E</strong> und <strong>sh</strong> am Ende (großgeschrieben!).' },
+        { regex: /\b(tink|zink|thinck)\b/gi, fix: 'think', tip: '<strong>"think"</strong> (denken/glauben) schreibt man mit <strong>th</strong>.' },
+        { regex: /\b(becose|becous|bicos|becaus|bekause)\b/gi, fix: 'because', tip: '<strong>"because"</strong> (weil) schreibt man <em>b-e-c-a-u-s-e</em>.' },
+        { regex: /\b(wery|verry|weri)\b/gi, fix: 'very', tip: '<strong>"very"</strong> (sehr) beginnt mit <strong>v</strong> und hat nur ein <em>r</em>.' },
+        { regex: /\b(gud|goud)\b/gi, fix: 'good', tip: '<strong>"good"</strong> (gut) schreibt man mit doppeltem <strong>oo</strong>.' },
+        { regex: /\b(freind|frend)\b/gi, fix: 'friend', tip: '<strong>"friend"</strong> (Freund) schreibt man mit <strong>ie</strong> (Merksatz: <em>a friend to the end</em>).' },
+        { regex: /\b(importent|importand)\b/gi, fix: 'important', tip: '<strong>"important"</strong> (wichtig) schreibt man mit <strong>-ant</strong> am Ende.' },
+        { regex: /\b(diffrent|diferent)\b/gi, fix: 'different', tip: '<strong>"different"</strong> (unterschiedlich) schreibt man <em>d-i-f-f-e-r-e-n-t</em>.' },
+        { regex: /\b(intresting|intersting)\b/gi, fix: 'interesting', tip: '<strong>"interesting"</strong> (interessant) schreibt man <em>i-n-t-e-r-e-s-t-i-n-g</em>.' },
+        { regex: /\b(beutiful|biutiful|beautifull)\b/gi, fix: 'beautiful', tip: '<strong>"beautiful"</strong> (schön) schreibt man mit <em>eau</em> und nur einem <em>l</em> am Ende.' },
+        { regex: /\b(alredy|allready)\b/gi, fix: 'already', tip: '<strong>"already"</strong> (schon/bereits) hat nur ein <em>l</em>.' },
+        { regex: /\b(allways|alway)\b/gi, fix: 'always', tip: '<strong>"always"</strong> (immer) hat nur ein <em>l</em> und ein <em>s</em> am Ende.' },
+        { regex: /\b(somtimes|somtime)\b/gi, fix: 'sometimes', tip: '<strong>"sometimes"</strong> (manchmal) schreibt man mit <em>some-times</em>.' },
+        { regex: /\b(togeter|togedher)\b/gi, fix: 'together', tip: '<strong>"together"</strong> (zusammen) schreibt man mit <strong>th</strong>.' },
+        { regex: /\b(shure|schure)\b/gi, fix: 'sure', tip: '<strong>"sure"</strong> (sicher) schreibt man ohne <em>h/ch</em>: <em>s-u-r-e</em>.' },
+        { regex: /\b(shool|scool)\b/gi, fix: 'school', tip: '<strong>"school"</strong> (Schule) beginnt mit <strong>sch</strong> und doppeltem <strong>oo</strong>.' },
+        { regex: /\b(wurk|worck)\b/gi, fix: 'work', tip: '<strong>"work"</strong> (Arbeit/arbeiten) schreibt man <em>w-o-r-k</em>.' },
+        { regex: /\b(hause|hous)\b/gi, fix: 'house', tip: '<strong>"house"</strong> (Haus) schreibt man <em>h-o-u-s-e</em>.' },
+        { regex: /\b(koffee|kaffee|cofee|coffe)\b/gi, fix: 'coffee', tip: '<strong>"coffee"</strong> (Kaffee) schreibt man mit <strong>c</strong>, doppeltem <strong>ff</strong> und doppeltem <strong>ee</strong>.' },
+        { regex: /\b(musik|muzik)\b/gi, fix: 'music', tip: '<strong>"music"</strong> (Musik) schreibt man am Ende mit <strong>c</strong>.' },
+        { regex: /\b(sentece|sentens|santence)\b/gi, fix: 'sentence', tip: '<strong>"sentence"</strong> (Satz) schreibt man <em>s-e-n-t-e-n-c-e</em>.' },
+        { regex: /\b(korekt|corect|correkt)\b/gi, fix: 'correct', tip: '<strong>"correct"</strong> (korrekt/korrigieren) schreibt man mit <strong>c</strong> und doppeltem <strong>rr</strong>.' },
+        { regex: /\b(mistak|misteik)\b/gi, fix: 'mistake', tip: '<strong>"mistake"</strong> (Fehler) schreibt man <em>m-i-s-t-a-k-e</em>.' },
+        { regex: /\b(litel|littel|litle)\b/gi, fix: 'little', tip: '<strong>"little"</strong> (wenig/klein) schreibt man <em>l-i-t-t-l-e</em>.' },
+        { regex: /\b(peopel|pipel|peple)\b/gi, fix: 'people', tip: '<strong>"people"</strong> (Leute/Menschen) schreibt man <em>p-e-o-p-l-e</em>.' },
+        { regex: /\b(langwage|langauge|lenguage)\b/gi, fix: 'language', tip: '<strong>"language"</strong> (Sprache) schreibt man <em>l-a-n-g-u-a-g-e</em>.' },
+        { regex: /\b(exampel|exemple)\b/gi, fix: 'example', tip: '<strong>"example"</strong> (Beispiel) schreibt man am Ende mit <strong>-le</strong> (nicht <em>-el</em>).' }
       ];
 
       let foundTypos = [];
       let typoCorrected = clean;
       for (const t of commonTypos) {
-        if (t.regex.test(clean)) {
+        if (t.regex.test(typoCorrected)) {
           foundTypos.push(t);
           typoCorrected = typoCorrected.replace(t.regex, t.fix);
         }
@@ -2344,61 +2669,146 @@ Das Mikrofon hat <em>"Boy Is Mine speaking was"</em> verstanden. Wenn du fragen 
       }
 
       // 2. Prüfen auf bekannte Grammatikfehler & False Friends
-      let corrected = clean;
-      let hasError = false;
-      let explanation = '';
+      let corrected = typoCorrected;
+      let hasError = foundTypos.length > 0;
+      let explanationParts = foundTypos.map(t => t.tip);
+
+      // 2A. Automatischer Fuzzy-Spellcheck für weitere falsch geschriebene Wörter im Satz
+      const rawTokens = corrected.split(/(\s+)/);
+      const fuzzyFixes = [];
+      const uNameLower = (typeof getUserName === 'function' ? (getUserName() || '') : '').toLowerCase();
+      const ignoreNames = new Set(['istvan', 'csovrij', 'nova', 'leo', 'sarah', 'alex', 'miller', 'davis', 'ricardo', 'fiae', uNameLower].filter(Boolean));
+
+      for (let i = 0; i < rawTokens.length; i++) {
+        const tok = rawTokens[i];
+        if (/^\s+$/.test(tok)) continue;
+        const wordMatch = tok.match(/^([^A-Za-z]*)([A-Za-z]+)([^A-Za-z]*)$/);
+        if (!wordMatch) continue;
+        const [, prefix, coreWord, suffix] = wordMatch;
+        const wLower = coreWord.toLowerCase();
+        if (wLower.length < 3 || ignoreNames.has(wLower) || this.germanWords.includes(wLower)) continue;
+        if (this.getValidEnglishSet().has(wLower)) continue;
+
+        const suggestion = this.findClosestEnglishWord(wLower);
+        if (suggestion && suggestion !== wLower) {
+          const replacement = (coreWord[0] === coreWord[0].toUpperCase() && i === 0)
+            ? suggestion.charAt(0).toUpperCase() + suggestion.slice(1)
+            : suggestion;
+          rawTokens[i] = `${prefix}${replacement}${suffix}`;
+          fuzzyFixes.push({ wrong: coreWord, right: suggestion });
+          hasError = true;
+        }
+      }
+      if (fuzzyFixes.length > 0) {
+        corrected = rawTokens.join('');
+        const fixDescriptions = fuzzyFixes.map(f => `statt <em>"${f.wrong}"</em> schreibt man <strong>"${f.right}"</strong>`).join(', ');
+        explanationParts.push(`Rechtschreibung: ${fixDescriptions}.`);
+      }
+
+      // 2B. Prüfung auf deutsche Großschreibung von Nomen mitten im englischen Satz (z. B. "Moment", "Morning", "House", "Time")
+      const allowedCapWords = new Set([
+        'i', 'english', 'german', 'germany', 'london', 'uk', 'usa', 'canada', 'australia', 'ireland', 'europe', 'italian', 'asian',
+        'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday',
+        'january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december',
+        'sql', 'git', 'api', 'rest', 'ai', 'it', 'qa', 'pr', 'prs', 'solid', 'scrum', 'devops', 'java', 'python', 'docker', 'fiae',
+        'istvan', 'csovrij', 'nova', 'leo', 'sarah', 'alex', 'miller', 'davis', 'ricardo', 'smith', 'mr', 'mrs', 'ms', 'prof', uNameLower
+      ]);
+      const checkCapTokens = corrected.split(/(\s+)/);
+      let wordIndex = 0;
+      let prevEndedSentence = true;
+      const loweredNouns = [];
+      for (let i = 0; i < checkCapTokens.length; i++) {
+        const tok = checkCapTokens[i];
+        if (/^\s+$/.test(tok)) continue;
+        const m = tok.match(/^([^A-Za-z]*)([A-Za-z]+)([^A-Za-z]*)$/);
+        if (m) {
+          const [, pre, wCore, suf] = m;
+          const isStartOfSentence = prevEndedSentence || wordIndex === 0;
+          const isCapitalized = /^[A-Z][a-z]+$/.test(wCore);
+          if (!isStartOfSentence && isCapitalized && !allowedCapWords.has(wCore.toLowerCase())) {
+            const lowerW = wCore.toLowerCase();
+            checkCapTokens[i] = `${pre}${lowerW}${suf}`;
+            loweredNouns.push(`<em>"${wCore}"</em> ➔ <strong>"${lowerW}"</strong>`);
+            hasError = true;
+          }
+          prevEndedSentence = /[.!?]+$/.test(suf);
+          wordIndex++;
+        }
+      }
+      if (loweredNouns.length > 0) {
+        corrected = checkCapTokens.join('');
+        explanationParts.push(`Kleinschreibung im Englischen: Anders als im Deutschen schreibt man Nomen mitten im Satz <strong>klein</strong> (${loweredNouns.join(', ')}).`);
+      }
+
+      // 2C. Fehlendes Verb "to be" (am / is / are) in einfachen Anfänger-Sätzen (z. B. "I very tired", "This very good", "Today cold")
+      const lowerAfterSpelling = corrected.toLowerCase();
+      if (/^i\s+(very\s+|so\s+|really\s+|a\s+bit\s+)?(tired|happy|sad|ready|here|home|at\s+home|good|bad|sorry|hungry|thirsty|cold|warm|busy|sick|fine|new)\b/i.test(lowerAfterSpelling)) {
+        hasError = true;
+        corrected = corrected.replace(/^i\s+/i, 'I am ');
+        explanationParts.push('Vollständiger Satz: Im Englischen braucht man das Verb <strong>"am"</strong> nach <em>"I"</em>: <strong>"I am ..."</strong> (Ich bin ...).');
+      } else if (/^(this|that|it|everything)\s+(very\s+|so\s+|really\s+|too\s+)?(good|bad|nice|great|easy|hard|difficult|cold|warm|early|late|important|interesting|clear|fine|funny)\b/i.test(lowerAfterSpelling) && !/\b(is|was|will|can|should|has|does|looks|seems|sounds|feels|makes)\b/i.test(lowerAfterSpelling)) {
+        hasError = true;
+        corrected = corrected.replace(/^(this|that|it|everything)\s+/i, '$1 is ');
+        explanationParts.push('Vollständiger Satz: Hier fehlte das Verb <strong>"is"</strong> (ist): z. B. <strong>"This is ..."</strong> / <strong>"It is ..."</strong>.');
+      } else if (/^(today|now|right\s+now)\s+is\s+(very\s+|so\s+|a\s+bit\s+)?(cold|warm|hot|sunny|cloudy|windy|raining|rainy|early|late|nice|good|great)\b/i.test(lowerAfterSpelling)) {
+        hasError = true;
+        corrected = corrected.replace(/^(today|now|right\s+now)\s+is\s+/i, '$1, it is ');
+        explanationParts.push('Englischer Satzbau: Bei Zeit- und Wetterangaben braucht man auf Englisch zwingend <strong>"it is"</strong> (es ist): z. B. <strong>"Today, it is ..."</strong> oder <strong>"Right now, it is ..."</strong>.');
+      }
+
+      const checkRuleLower = corrected.toLowerCase();
 
       // Regel A: "become" vs "get / receive" (False Friend: become = werden, nicht bekommen)
-      const becomeMatch = lower.match(/\b(i|we|they|he|she|you)\s+(become|became)\s+(a|an|the|some|my)?\s*(coffee|tea|job|ticket|email|message|problem|question|task|bug|update|offer)\b/i);
+      const becomeMatch = checkRuleLower.match(/\b(i|we|they|he|she|you)\s+(become|became)\s+(a|an|the|some|my)?\s*(coffee|tea|job|ticket|email|message|problem|question|task|bug|update|offer)\b/i);
       if (becomeMatch) {
         hasError = true;
         const past = becomeMatch[2].toLowerCase() === 'became';
         const replacementVerb = past ? 'got' : 'get';
         corrected = corrected.replace(new RegExp(becomeMatch[2], 'i'), replacementVerb);
-        explanation = '⚠️ <strong>False Friend:</strong> <em>"become"</em> heißt auf Deutsch <strong>"werden"</strong>, NICHT "bekommen"! Verwende im Englischen <strong>"get"</strong> oder <strong>"receive"</strong> (z. B. <em>"I got a ticket"</em>).';
+        explanationParts.push('<strong>False Friend:</strong> <em>"become"</em> heißt auf Deutsch <strong>"werden"</strong>, NICHT "bekommen"! Verwende im Englischen <strong>"get"</strong> oder <strong>"receive"</strong> (z. B. <em>"I got a ticket"</em>).');
       }
 
       // Regel B: "actually" vs "currently" (False Friend: actually = eigentlich/tatsächlich, nicht aktuell)
-      if (!hasError && /\b(i\s+am\s+actually\s+working|actually\s+i\s+am|i\s+actually\s+work)\b/i.test(lower)) {
+      if (/\b(i\s+am\s+actually\s+working|actually\s+i\s+am|i\s+actually\s+work)\b/i.test(checkRuleLower)) {
         hasError = true;
         corrected = corrected.replace(/\bactually\b/i, 'currently');
-        explanation = '⚠️ <strong>False Friend:</strong> <em>"actually"</em> bedeutet <strong>"eigentlich / in Wirklichkeit"</strong>. Wenn du <em>"aktuell / im Moment"</em> meinst, verwende <strong>"currently"</strong> oder <strong>"at the moment"</strong>.';
+        explanationParts.push('<strong>False Friend:</strong> <em>"actually"</em> bedeutet <strong>"eigentlich / in Wirklichkeit"</strong>. Wenn du <em>"aktuell / im Moment"</em> meinst, verwende <strong>"currently"</strong> oder <strong>"at the moment"</strong>.');
       }
 
       // Regel C: "control" vs "check / test / verify" (False Friend: control = steuern/beherrschen)
-      if (!hasError && /\b(control|controlled)\s+(the\s+)?(code|query|database|logs|server|test|error)\b/i.test(lower)) {
+      if (/\b(control|controlled)\s+(the\s+)?(code|query|database|logs|server|test|error)\b/i.test(checkRuleLower)) {
         hasError = true;
         corrected = corrected.replace(/\bcontrol\b/i, 'check').replace(/\bcontrolled\b/i, 'checked');
-        explanation = '⚠️ <strong>False Friend:</strong> <em>"control"</em> bedeutet <strong>"steuern / kontrollieren im Sinne von beherrschen"</strong>. Wenn du etwas überprüfen oder kontrollieren willst, sagt man <strong>"check"</strong>, <strong>"verify"</strong> oder <strong>"inspect"</strong>.';
+        explanationParts.push('<strong>False Friend:</strong> <em>"control"</em> bedeutet <strong>"steuern / beherrschen"</strong>. Wenn du etwas überprüfen willst, sagt man <strong>"check"</strong>, <strong>"verify"</strong> oder <strong>"inspect"</strong>.');
       }
 
       // Regel D: "make" vs "run / do / conduct"
-      if (!hasError && /\b(make|making|made)\s+(a\s+)?(test|tests|code review|sports|homework|query|interview|decision)\b/i.test(lower)) {
+      if (/\b(make|making|made)\s+(a\s+)?(test|tests|code review|sports|homework|query|interview|decision)\b/i.test(checkRuleLower)) {
         hasError = true;
         corrected = corrected.replace(/\bmake\s+(a\s+)?tests?\b/i, 'run tests')
                              .replace(/\bmade\s+(a\s+)?tests?\b/i, 'ran tests')
                              .replace(/\bmake\s+(a\s+)?code review\b/i, 'conduct a code review')
                              .replace(/\bmake\s+homework\b/i, 'do homework')
                              .replace(/\bmake\s+sports\b/i, 'do sports');
-        explanation = '💡 Im Englischen sagt man <strong>"run a test"</strong>, <strong>"conduct a code review"</strong> oder <strong>"do homework"</strong>, nicht "make".';
+        explanationParts.push('Im Englischen sagt man <strong>"run a test"</strong>, <strong>"conduct a code review"</strong> oder <strong>"do homework"</strong>, nicht "make".');
       }
 
       // Regel E: "since" vs "for" (Dauer vs Zeitpunkt)
-      if (!hasError && /\bsince\s+(\d+|one|two|three|four|five|several|many|a\s+few)\s+(minutes|hours|days|weeks|months|years)\b/i.test(lower)) {
+      if (/\bsince\s+(\d+|one|two|three|four|five|several|many|a\s+few)\s+(minutes|hours|days|weeks|months|years)\b/i.test(checkRuleLower)) {
         hasError = true;
         corrected = corrected.replace(/\bsince\s+/i, 'for ');
-        explanation = '💡 <strong>Since vs. For:</strong> Zeitspannen (Dauer wie <em>"for 3 years"</em>) stehen immer mit <strong>"for"</strong>. <strong>"since"</strong> nutzt man nur für feste Startzeitpunkte (z. B. <em>"since Monday"</em>, <em>"since 2024"</em>).';
+        explanationParts.push('<strong>Since vs. For:</strong> Zeitspannen (Dauer wie <em>"for 3 years"</em>) stehen immer mit <strong>"for"</strong>. <strong>"since"</strong> nutzt man nur für feste Startzeitpunkte (z. B. <em>"since Monday"</em>).');
       }
 
       // Regel F: "for yesterday" / "for last week"
-      if (!hasError && /\bfor\s+(yesterday|last\s+week|last\s+month|last\s+year)\b/i.test(lower)) {
+      if (/\bfor\s+(yesterday|last\s+week|last\s+month|last\s+year)\b/i.test(checkRuleLower)) {
         hasError = true;
         corrected = corrected.replace(/\bfor\s+/i, 'since ');
-        explanation = '💡 Bei festen Zeitpunkten in der Vergangenheit nutzen wir <strong>"since"</strong> (z. B. <em>"since yesterday"</em>), niemals "for".';
+        explanationParts.push('Bei festen Zeitpunkten in der Vergangenheit nutzen wir <strong>"since"</strong> (z. B. <em>"since yesterday"</em>), niemals "for".');
       }
 
       // Regel G: Doppelte Vergangenheit: "didn't knew" -> "didn't know"
-      if (!hasError && /\b(didn\'t|did\s+not)\s+(knew|saw|worked|went|fixed|found)\b/i.test(lower)) {
+      if (/\b(didn\'t|did\s+not)\s+(knew|saw|worked|went|fixed|found)\b/i.test(checkRuleLower)) {
         hasError = true;
         corrected = corrected.replace(/\bdid\s*n\'?t\s+knew\b/i, "didn't know")
                              .replace(/\bdid\s*n\'?t\s+saw\b/i, "didn't see")
@@ -2406,37 +2816,35 @@ Das Mikrofon hat <em>"Boy Is Mine speaking was"</em> verstanden. Wenn du fragen 
                              .replace(/\bdid\s*n\'?t\s+went\b/i, "didn't go")
                              .replace(/\bdid\s*n\'?t\s+fixed\b/i, "didn't fix")
                              .replace(/\bdid\s*n\'?t\s+found\b/i, "didn't find");
-        explanation = '💡 <strong>Doppelte Vergangenheitsform:</strong> Nach <em>"didn\'t"</em> steht immer der einfache Infinitiv (z. B. <em>"I didn\'t know"</em>, nicht "didn\'t knew").';
+        explanationParts.push('<strong>Doppelte Vergangenheitsform:</strong> Nach <em>"didn\'t"</em> steht immer der einfache Infinitiv (z. B. <em>"I didn\'t know"</em>, nicht "didn\'t knew").');
       }
 
       // Regel H: "He / She / It - das 's' muss mit!"
-      if (!hasError) {
-        const sMatch = lower.match(/\b(he|she|it|the\s+server|the\s+system|the\s+app|the\s+query|the\s+service)\s+(work|fail|run|need|want|have|think|test|happen)\b/i);
-        if (sMatch) {
-          hasError = true;
-          const verb = sMatch[2].toLowerCase();
-          const verbWithS = verb === 'have' ? 'has' : (verb.endsWith('ch') || verb.endsWith('sh') || verb.endsWith('ss') ? verb + 'es' : verb + 's');
-          corrected = corrected.replace(new RegExp('\\b' + verb + '\\b', 'i'), verbWithS);
-          explanation = '💡 <strong>He / She / It – das "s" muss mit:</strong> In der 3. Person Einzahl Gegenwart (Present Simple) bekommt das Verb ein <strong>-s</strong> (z. B. <em>"the system runs"</em>, <em>"he works"</em>).';
-        }
+      const sMatch = checkRuleLower.match(/\b(he|she|it|the\s+server|the\s+system|the\s+app|the\s+query|the\s+service)\s+(work|fail|run|need|want|have|think|test|happen)\b/i);
+      if (sMatch) {
+        hasError = true;
+        const verb = sMatch[2].toLowerCase();
+        const verbWithS = verb === 'have' ? 'has' : (verb.endsWith('ch') || verb.endsWith('sh') || verb.endsWith('ss') ? verb + 'es' : verb + 's');
+        corrected = corrected.replace(new RegExp('\\b' + verb + '\\b', 'i'), verbWithS);
+        explanationParts.push('<strong>He / She / It – das "s" muss mit:</strong> In der 3. Person Einzahl Gegenwart bekommt das Verb ein <strong>-s</strong> (z. B. <em>"the system runs"</em>, <em>"he works"</em>).');
       }
 
       // Regel I: "I am agree" -> "I agree"
-      if (!hasError && /\b(i\s+am\s+agree|i\s+was\s+agree)\b/i.test(lower)) {
+      if (/\b(i\s+am\s+agree|i\s+was\s+agree)\b/i.test(checkRuleLower)) {
         hasError = true;
         corrected = corrected.replace(/\bi\s+am\s+agree\b/i, 'I agree').replace(/\bi\s+was\s+agree\b/i, 'I agreed');
-        explanation = '💡 Im Englischen ist <strong>"agree"</strong> bereits ein Vollverb. Man sagt <strong>"I agree"</strong> (Ich stimme zu), niemals "I am agree".';
+        explanationParts.push('Im Englischen ist <strong>"agree"</strong> bereits ein Vollverb. Man sagt <strong>"I agree"</strong> (Ich stimme zu), niemals "I am agree".');
       }
 
       // Regel J: "I am developer" (Fehlender unbestimmter Artikel)
-      if (!hasError && /\bi\s+am\s+(junior\s+|senior\s+|software\s+|web\s+|backend\s+|frontend\s+)?(developer|programmer|engineer|student|architect)\b/i.test(lower)) {
+      if (/\bi\s+am\s+(junior\s+|senior\s+|software\s+|web\s+|backend\s+|frontend\s+)?(developer|programmer|engineer|student|architect)\b/i.test(checkRuleLower)) {
         hasError = true;
         corrected = corrected.replace(/\bi\s+am\s+/i, 'I am a ');
-        explanation = '💡 Bei Berufsbezeichnungen im Englischen muss immer ein unbestimmter Artikel <strong>"a"</strong> oder <strong>"an"</strong> stehen (z. B. <em>"I am a software developer"</em>).';
+        explanationParts.push('Bei Berufsbezeichnungen im Englischen muss immer ein unbestimmter Artikel <strong>"a"</strong> oder <strong>"an"</strong> stehen (z. B. <em>"I am a software developer"</em>).');
       }
 
       // Regel K: Unzählbare Nomen: "informations", "softwares", "feedbacks", "equipments", "advices", "knowledges"
-      if (!hasError && /\b(informations|softwares|hardwares|feedbacks|equipments|advices|knowledges)\b/i.test(lower)) {
+      if (/\b(informations|softwares|hardwares|feedbacks|equipments|advices|knowledges)\b/i.test(checkRuleLower)) {
         hasError = true;
         corrected = corrected.replace(/\binformations\b/i, 'information')
                              .replace(/\bsoftwares\b/i, 'software')
@@ -2445,58 +2853,58 @@ Das Mikrofon hat <em>"Boy Is Mine speaking was"</em> verstanden. Wenn du fragen 
                              .replace(/\bequipments\b/i, 'equipment')
                              .replace(/\badvices\b/i, 'advice')
                              .replace(/\bknowledges\b/i, 'knowledge');
-        explanation = '💡 Wörter wie <strong>"information"</strong>, <strong>"software"</strong>, <strong>"feedback"</strong>, <strong>"equipment"</strong> und <strong>"advice"</strong> sind im Englischen unzählbar und haben keine Pluralform mit -s.';
+        explanationParts.push('Wörter wie <strong>"information"</strong>, <strong>"software"</strong>, <strong>"feedback"</strong>, <strong>"equipment"</strong> und <strong>"advice"</strong> sind im Englischen unzählbar und haben keine Pluralform mit -s.');
       }
 
       // Regel K2: "discuss about" -> "discuss" / "explain me" -> "explain to me" / "listen music" -> "listen to music"
-      if (!hasError && /\bdiscuss\s+about\b/i.test(lower)) {
+      if (/\bdiscuss\s+about\b/i.test(checkRuleLower)) {
         hasError = true;
         corrected = corrected.replace(/\bdiscuss\s+about\b/i, 'discuss');
-        explanation = '💡 Nach <strong>"discuss"</strong> steht im Englischen kein "about" (z. B. <em>"We discussed the architecture"</em>).';
+        explanationParts.push('Nach <strong>"discuss"</strong> steht im Englischen kein "about" (z. B. <em>"We discussed the architecture"</em>).');
       }
-      if (!hasError && /\bexplain\s+me\b/i.test(lower)) {
+      if (/\bexplain\s+me\b/i.test(checkRuleLower)) {
         hasError = true;
         corrected = corrected.replace(/\bexplain\s+me\b/i, 'explain to me');
-        explanation = '💡 Bei <em>explain</em> heißt es immer <strong>"explain to me"</strong> (mit "to"), nicht "explain me".';
+        explanationParts.push('Bei <em>explain</em> heißt es immer <strong>"explain to me"</strong> (mit "to"), nicht "explain me".');
       }
-      if (!hasError && /\blisten\s+(music|podcasts|radio|songs)\b/i.test(lower)) {
+      if (/\blisten\s+(music|podcasts|radio|songs)\b/i.test(checkRuleLower)) {
         hasError = true;
         corrected = corrected.replace(/\blisten\s+(music|podcasts|radio|songs)\b/i, 'listen to $1');
-        explanation = '💡 Nach <em>listen</em> folgt immer <strong>"to"</strong>: <strong>"listen to music"</strong>.';
+        explanationParts.push('Nach <em>listen</em> folgt immer <strong>"to"</strong>: <strong>"listen to music"</strong>.');
       }
-      if (!hasError && /\bin\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday|weekend)\b/i.test(lower)) {
+      if (/\bin\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday|weekend)\b/i.test(checkRuleLower)) {
         hasError = true;
         corrected = corrected.replace(/\bin\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday)/i, 'on $1')
                              .replace(/\bin\s+weekend\b/i, 'on the weekend');
-        explanation = '💡 Vor Wochentagen steht im Englischen immer die Präposition <strong>"on"</strong> (z. B. <em>"on Monday"</em>, <em>"on Friday"</em>).';
+        explanationParts.push('Vor Wochentagen steht im Englischen immer die Präposition <strong>"on"</strong> (z. B. <em>"on Monday"</em>, <em>"on Friday"</em>).');
       }
 
       // Regel L: Modalverb + to: "must to", "can to", "should to"
-      if (!hasError && /\b(must|can|could|should|will|would)\s+to\s+([a-z]+)\b/i.test(lower)) {
+      if (/\b(must|can|could|should|will|would)\s+to\s+([a-z]+)\b/i.test(checkRuleLower)) {
         hasError = true;
         corrected = corrected.replace(/\b(must|can|could|should|will|would)\s+to\s+/i, '$1 ');
-        explanation = '💡 Nach Modalverben wie <em>must, can, should</em> folgt der reine Infinitiv <strong>ohne "to"</strong> (z. B. <em>"I must optimize the database"</em>).';
+        explanationParts.push('Nach Modalverben wie <em>must, can, should</em> folgt der reine Infinitiv <strong>ohne "to"</strong> (z. B. <em>"I must optimize the database"</em>).');
       }
 
       // Regel M: "interested for" -> "interested in"
-      if (!hasError && /\binterested\s+for\b/i.test(lower)) {
+      if (/\binterested\s+for\b/i.test(checkRuleLower)) {
         hasError = true;
         corrected = corrected.replace(/\binterested\s+for\b/i, 'interested in');
-        explanation = '💡 Im Englischen heißt es <strong>"interested in"</strong> (z. B. <em>"I am interested in clean architecture"</em>), nicht "interested for".';
+        explanationParts.push('Im Englischen heißt es <strong>"interested in"</strong> (z. B. <em>"I am interested in clean architecture"</em>), nicht "interested for".');
       }
 
       // Regel N: "depend of" -> "depend on"
-      if (!hasError && /\bdepend\s+of\b/i.test(lower)) {
+      if (/\bdepend\s+of\b/i.test(checkRuleLower)) {
         hasError = true;
         corrected = corrected.replace(/\bdepend\s+of\b/i, 'depend on');
-        explanation = '💡 Das Verb <em>depend</em> verlangt immer die Präposition <strong>"on"</strong>: <strong>"it depends on the requirements"</strong>.';
+        explanationParts.push('Das Verb <em>depend</em> verlangt immer die Präposition <strong>"on"</strong>: <strong>"it depends on the requirements"</strong>.');
       }
 
       // Regel O: Wortstellung S-V-O: "Yesterday worked I" -> "Yesterday I worked"
-      if (!hasError && /\b(yesterday|today|now)\s+(worked|did|went|saw|finished|started|built)\s+i\b/i.test(lower)) {
+      if (/\b(yesterday|today|now)\s+(worked|did|went|saw|finished|started|built)\s+i\b/i.test(checkRuleLower)) {
         hasError = true;
         corrected = corrected.replace(/\b(yesterday|today|now)\s+(worked|did|went|saw|finished|started|built)\s+i\b/i, '$1 I $2');
-        explanation = '💡 <strong>Wortstellung S-V-O:</strong> Im Englischen bleibt das Subjekt vor dem Verb (<em>"Yesterday I worked"</em>, nicht "Yesterday worked I").';
+        explanationParts.push('<strong>Wortstellung S-V-O:</strong> Im Englischen bleibt das Subjekt vor dem Verb (<em>"Yesterday I worked"</em>, nicht "Yesterday worked I").');
       }
 
       // Regel P: Kleingeschriebenes "i" als Pronomen
@@ -2519,19 +2927,18 @@ Das Mikrofon hat <em>"Boy Is Mine speaking was"</em> verstanden. Wenn du fragen 
         techPraise = `<br>🌟 <strong>Starkes Fachvokabular:</strong> Du hast Fachbegriffe wie <em>"${foundTechVocab.join(', ')}"</em> verwendet – das klingt wie professionelles Englisch erfahrener Softwareentwickler!`;
       }
 
-      if (foundTypos.length > 0 && !hasError) {
-        hasError = true;
-        corrected = typoCorrected;
-        const tips = foundTypos.map(t => t.tip).join(' ');
-        explanation = `💡 <strong>Rechtschreib-Tipp:</strong> ${tips}`;
-      }
+      const finalPhonetic = (typeof PronunciationCoach !== 'undefined') ? PronunciationCoach.toPhonetic(corrected) : '';
+      const explanation = hasError
+        ? `✅ <strong>Korrektur-Vorschlag:</strong> Sag auf Englisch: <strong>"${corrected}"</strong><br>• ${explanationParts.join('<br>• ')}`
+        : ('🌟 Großartig formuliert! Dein Satz ist grammatikalisch einwandfrei und klingt nach natürlichem, flüssigem Englisch.' + techPraise);
 
       return {
         hasError,
         isGerman: false,
         originalText: clean,
         correctedText: corrected,
-        explanation: hasError ? explanation : ('🌟 Großartig formuliert! Dein Satz ist grammatikalisch einwandfrei und klingt nach natürlichem, flüssigem Englisch.' + techPraise)
+        phoneticText: finalPhonetic,
+        explanation
       };
     },
 
@@ -4729,33 +5136,74 @@ ${cleanTip}`,
         }
       }
 
-      // 3. "I am a beginner" / "I want to learn English" / "My English is not good" / "Sprache lernen"
-      if (/\b(i\s+am\s+(a\s+)?(complete\s+)?beginner|anf[aä]nger|learn\s+english|english\s+lernen|sprach[en]*\s+lernen|my\s+english\s+is\s+(bad|poor|not\s+good)|help\s+me\s+(to\s+)?learn|teach\s+me|einfach\s+lernen|anf[aä]ngerlevel)\b/i.test(norm)) {
+      // 3. Asking for Words / Vocabulary ("teach me some useful everyday English words", "teach me words", "give me words", "neue wörter", etc.)
+      if (/\b(teach\s+me\b.*\b(words?|phrases?|vocab|vocabulary)|give\s+me\b.*\b(words?|phrases?)|neue\s+w[oö]rter|w[oö]rter\s+lernen|vokabeln\s+lernen|bring\s+mir\b.*\bw[oö]rter\s+bei|learn\s+(some\s+|new\s+|useful\s+|simple\s+|everyday\s+)?words|more\s+words|vokabeln|words\s+please)\b/i.test(norm)) {
+        const wordPacks = [
+          {
+            en: `Here are two great everyday words${this.salutation()}: 1. "Actually" (eigentlich / tatsächlich) and 2. "Opportunity" (Gelegenheit / Chance). Which one would you like to try in a sentence?`,
+            de: `Hier sind zwei super nützliche Alltagswörter${this.salutation()}:\n1️⃣ **Actually** \`[ÄK-tschu-ö-li]\` = *eigentlich / tatsächlich*\n2️⃣ **Opportunity** \`[op-ör-TUH-ni-ti]\` = *Gelegenheit / Chance*\n💬 Welches davon möchtest du in einem Satz ausprobieren?`,
+            suggestions: [
+              'Actually, I prefer practicing English by speaking.',
+              'Learning English gives me a great opportunity.',
+              'Teach me two more useful words!'
+            ]
+          },
+          {
+            en: `Here are two strong words for discussions${this.salutation()}: 1. "Reliable" (zuverlässig) and 2. "Breakthrough" (Durchbruch). Can you use one of them in a sentence?`,
+            de: `Hier sind zwei starke Wörter für Gespräche & IT${this.salutation()}:\n1️⃣ **Reliable** \`[ri-LAI-ö-böl]\` = *zuverlässig*\n2️⃣ **Breakthrough** \`[BREYK-thru]\` = *Durchbruch*\n💬 Kannst du mit einem davon einen Satz bilden?`,
+            suggestions: [
+              'Our server is very reliable.',
+              'This is a real breakthrough for our team.',
+              'Teach me two more useful words!'
+            ]
+          },
+          {
+            en: `Let's learn two very natural conversation words${this.salutation()}: 1. "Definitely" (auf jeden Fall / definitiv) and 2. "Experience" (Erfahrung / Erlebnis). How would you use one of them?`,
+            de: `Lass uns zwei sehr natürliche Gesprächswörter lernen${this.salutation()}:\n1️⃣ **Definitely** \`[DEF-i-nit-li]\` = *auf jeden Fall / definitiv*\n2️⃣ **Experience** \`[ik-SPIH-ri-öns]\` = *Erfahrung / Erlebnis*\n💬 Wie würdest du eines davon verwenden?`,
+            suggestions: [
+              'I definitely want to speak fluent English.',
+              'I have practical experience in software development.',
+              'Let us discuss an interesting topic now!'
+            ]
+          },
+          {
+            en: `Here are two great words to express your opinion${this.salutation()}: 1. "Advantage" (Vorteil) and 2. "Challenge" (Herausforderung). What is the biggest advantage of learning English for you?`,
+            de: `Hier sind zwei tolle Wörter, um deine Meinung auszudrücken${this.salutation()}:\n1️⃣ **Advantage** \`[äd-WAN-tidsch]\` = *Vorteil*\n2️⃣ **Challenge** \`[TSCHÄL-öndsch]\` = *Herausforderung*\n💬 Was ist für dich der größte Vorteil (*advantage*) beim Englischlernen?`,
+            suggestions: [
+              'The biggest advantage is talking to people worldwide.',
+              'Speaking freely is a good challenge for me.',
+              'What do you think is the best way to learn?'
+            ]
+          }
+        ];
+        const chosenPack = wordPacks[(this.state.turnCount || 0) % wordPacks.length];
+        return {
+          id: 'intent_teach_words_' + ((this.state.turnCount || 0) % wordPacks.length),
+          ...chosenPack
+        };
+      }
+
+      // 4. "I am a beginner" / "I want to learn English" / "My English is not good" / "Sprache lernen"
+      if (/\b(i\s+am\s+(a\s+)?(complete\s+)?beginner|anf[aä]nger|learn\s+english|english\s+lernen|sprach[en]*\s+lernen|my\s+english\s+is\s+(bad|poor|not\s+good)|help\s+me\s+(to\s+)?learn|einfach\s+lernen|anf[aä]ngerlevel)\b/i.test(norm)) {
         return {
           id: 'intent_beginner_welcome',
-          en: `You are doing great! Do not worry about mistakes. What topic would you like to try?`,
-          de: `Du machst das super! Mach dir keine Sorgen wegen Fehlern. Welches Thema möchtest du probieren?`,
-          suggestions: ['Let us talk about hobbies.', 'Teach me simple English words.', 'How was your day?']
+          en: `You are doing great${this.salutation()}! Do not worry about mistakes — we are here to talk and discuss freely like real conversation partners. What topic would you like to talk about?`,
+          de: `Du machst das super${this.salutation()}! Mach dir keine Sorgen wegen Fehlern – wir sind hier, um wie echte Gesprächspartner frei miteinander zu reden und zu diskutieren. Worüber möchtest du sprechen?`,
+          suggestions: ['Let us talk about hobbies and free time.', 'What do you think about artificial intelligence?', 'How was your day today?']
         };
       }
 
-      // 4. "Can we just chat / converse?" / "Einfach unterhalten / plaudern"
-      if (/\b(can\s+we\s+(just\s+)?chat|just\s+talk|einfach\s+unterhalten|lass\s+uns\s+plaudern|nur\s+reden|talk\s+with\s+me|speak\s+with\s+me|let('?s)?\s+talk|let('?s)?\s+chat|unterhaltung)\b/i.test(norm)) {
+      // 5. "Can we just chat / converse / discuss?" / "Einfach unterhalten / plaudern / diskutieren"
+      if (/\b(can\s+we\s+(just\s+)?chat|just\s+talk|einfach\s+unterhalten|lass\s+uns\s+(plaudern|reden|diskutieren)|nur\s+reden|talk\s+with\s+me|speak\s+with\s+me|let('?s)?\s+(just\s+)?(talk|chat|discuss)|unterhaltung|diskutieren)\b/i.test(norm) && !/\b(about|[uü]ber|hobbies|hobby|tech|music|work|movies|sport|food|travel|ai|future)\b/i.test(norm)) {
         return {
           id: 'intent_just_chat',
-          en: `I would love to just chat! How was your day today?`,
-          de: `Sehr gerne plaudern wir einfach! Wie war dein Tag heute?`,
-          suggestions: ['Today was good, thank you!', 'I was busy learning English and programming.', 'A bit tired, but good.']
-        };
-      }
-
-      // 5. Asking for Words / Vocabulary ("teach me words", "give me words", "neue wörter", "bring mir wörter bei")
-      if (/\b(teach\s+me\s+words|give\s+me\s+words|neue\s+w[oö]rter|w[oö]rter\s+lernen|vokabeln\s+lernen|bring\s+mir\s+w[oö]rter\s+bei|learn\s+words|more\s+words|vokabeln|words\s+please)\b/i.test(norm)) {
-        return {
-          id: 'intent_teach_words',
-          en: `Here are two great words: 1. Reliable (zuverlässig) and 2. Breakthrough (Durchbruch). Can you use one in a sentence?`,
-          de: `Hier sind zwei tolle Wörter: 1. Reliable (zuverlässig) und 2. Breakthrough (Durchbruch). Kannst du einen Satz damit bilden?`,
-          suggestions: ['Our server is very reliable.', 'This is a real breakthrough for our team.', 'Teach me two more words!']
+          en: `I would love to talk and discuss with you${this.salutation()}! Let's start an interesting conversation: Do you prefer working from home or working in an office with colleagues, and why?`,
+          de: `Sehr gerne reden und diskutieren wir miteinander${this.salutation()}! Lass uns direkt mit einer spannenden Frage starten: Arbeitest du lieber von zu Hause (Homeoffice) oder im Büro mit Kollegen – und warum?`,
+          suggestions: [
+            'I prefer working from home because it saves time and is quiet.',
+            'I like working in an office because I enjoy talking to colleagues.',
+            'I think a mix of home office and office work is the best solution.'
+          ]
         };
       }
 
@@ -5489,78 +5937,188 @@ ${cleanTip}`,
         return chosen;
       }
 
-      // 4. INTELLIGENTE NACHFRAGE & KORREKTUR STATT UNPASSENDER GENERISCHER FRAGEN (v38)
-      // Wenn kein Thema erkannt wurde, prüfen wir zuerst, ob ein Grammatik-/Aussprachefehler vorliegt oder ob das Mikrofon etwas Unverständliches aufgenommen hat:
-      const docAnalysis = (typeof SentenceDoctor !== 'undefined') ? SentenceDoctor.analyze(userInput) : null;
-      if (docAnalysis && docAnalysis.hasError && !docAnalysis.isGerman) {
-        const cleanFixed = (docAnalysis.correctedText || '').replace(/<[^>]+>/g, '').trim();
-        const phon = PronunciationCoach.toPhonetic(cleanFixed);
+      // 4. INTERAKTIVER GESPRÄCHS- & DISKUSSIONS-PARTNER (v40):
+      // Wie ein echter Ansprechpartner auf Tageszeit (Morgen/Abend), Meinungen, Argumente, Alltagsthemen und Aussagen eingehen und weiterdiskutieren!
+      if (/\b(early\s+in\s+the\s+morning|early\s+morning|in\s+the\s+morning|this\s+morning|earley|mornig|morning)\b/i.test(lower)) {
+        const morningReplies = [
+          {
+            en: `Yes, it is early in the morning${this.salutation()}! Starting your day by talking and practicing English with me is a wonderful habit. Did you sleep well, and have you had a cup of coffee or breakfast yet?`,
+            de: `Ja, es ist früh am Morgen${this.salutation()}! Deinen Tag direkt mit unserem Gespräch auf Englisch zu starten, ist eine tolle Gewohnheit. Hast du gut geschlafen, und hattest du schon eine Tasse Kaffee oder Frühstück?`,
+            suggestions: [
+              'Yes, I slept well and I am drinking a cup of coffee now.',
+              'I am still a little tired, but ready to practice English!',
+              'What is a typical English breakfast?'
+            ]
+          },
+          {
+            en: `Good morning${this.salutation()}! Early in the morning, the mind is fresh and ready to learn new things. What are your plans for today?`,
+            de: `Guten Morgen${this.salutation()}! Früh am Morgen ist der Kopf noch ganz frisch für neue Dinge. Was hast du dir für heute vorgenommen?`,
+            suggestions: [
+              'Today I want to practice my English and work on my projects.',
+              'I have a busy day ahead of me.',
+              'Teach me two useful English words for this morning!'
+            ]
+          }
+        ];
         return {
-          id: 'intent_clarify_and_coach_' + this.state.turnCount,
-          isDirectCoaching: true,
-          practiceSentence: cleanFixed,
-          en: `Did you mean: "${cleanFixed}"? 😊 Here is how to pronounce it clearly: [${phon}]. Click "🎙️ Aussprache testen" below to speak this sentence out loud, or tell me if you meant something else!`,
-          de: `🤔 **Kurze Nachfrage & Aussprache-Hilfe:**\nMeintest du auf Englisch:\n👉 **„${cleanFixed}“**\n🗣️ **So sprichst du den Satz aus:** \`[${phon}]\`\n🎙️ *Klicke unten auf **„🎙️ Aussprache testen“**, um den Satz direkt nachzusprechen – oder sag mir kurz auf Deutsch, falls du etwas anderes sagen wolltest!*`,
+          id: 'discuss_morning_time_' + this.state.turnCount,
+          ...morningReplies[(this.state.turnCount - 1) % morningReplies.length]
+        };
+      }
+
+      if (/\b(in\s+the\s+evening|this\s+evening|evening|evning|afternoon|late\s+at\s+night|tonight)\b/i.test(lower)) {
+        return {
+          id: 'discuss_evening_time_' + this.state.turnCount,
+          en: `Yes${this.salutation()}! How was your day so far, and how do you like to relax in the evening?`,
+          de: `Ja${this.salutation()}! Wie war dein Tag bisher, und wie entspannst du dich am liebsten am Abend?`,
           suggestions: [
-            cleanFixed,
-            'Can you give me another example sentence?',
-            'Can you help me improve my English pronunciation?'
+            'I had a good day, and now I am relaxing at home.',
+            'In the evening, I like listening to music or watching a movie.',
+            'Let us chat a bit in English to finish the day!'
           ]
         };
       }
 
-      // Wenn ein Satz >= 3 Wörter hat, aber weder Frage noch bekanntes Thema ist (z.B. Mikrofon-Verhörer), höflich nachfragen statt unpassenden Standardtext zu senden!
-      const wordCount = userInput.trim().split(/\s+/).filter(Boolean).length;
-      const looksGerman = (docAnalysis && docAnalysis.isGerman) || /\b(ich|du|wir|sie|mir|mich|mein|meine|wie|was|warum|wo|wann|kannst|möchte|will|soll|bitte|auf|für|mit|über|nicht|kein|keine|haben|sein|machen|gehen|heißt|bedeutet|übersetzen|erklären)\b/i.test(userInput);
-      if (wordCount >= 3 && !looksGerman) {
-        const cleanSpoken = userInput.trim();
-        const phonSpoken = PronunciationCoach.toPhonetic(cleanSpoken);
+      if (/\b(artificial\s+intelligence|\bai\b|robot|robots|future|technology|tech|automation|chatgpt|machine\s+learning)\b/i.test(lower)) {
+        const aiDiscussions = [
+          {
+            en: `Artificial intelligence and modern technology are fascinating topics${this.salutation()}! In my view, AI is a powerful tool that helps developers and learners work much faster. Do you see AI more as a helpful partner or a risk for jobs?`,
+            de: `Künstliche Intelligenz und moderne Technik sind faszinierende Themen${this.salutation()}! Meiner Meinung nach ist KI ein starkes Werkzeug, das Entwicklern und Lernenden enorm hilft. Siehst du KI eher als hilfreichen Partner oder als Risiko für Jobs?`,
+            suggestions: [
+              'I see AI as a helpful partner that saves a lot of time.',
+              'I think AI will change many jobs, so we must keep learning.',
+              'AI helps me learn English and write better code every day.'
+            ]
+          },
+          {
+            en: `That is a great point about technology${this.salutation()}! Technology is evolving so quickly right now. Which technology or tool do you use most in your daily life?`,
+            de: `Das ist ein super Punkt zum Thema Technik${this.salutation()}! Die Technologie entwickelt sich gerade rasant weiter. Welche Technik oder welches Tool nutzt du in deinem Alltag am meisten?`,
+            suggestions: [
+              'I use my smartphone and computer every single day.',
+              'I use AI tools and coding editors for my projects.',
+              'What technology excites you the most right now?'
+            ]
+          }
+        ];
         return {
-          id: 'intent_polite_clarification_' + this.state.turnCount,
-          practiceSentence: cleanSpoken,
-          en: `I want to make sure I understood you 100% correctly${this.salutation()} — I heard: "${cleanSpoken}" [${phonSpoken}]. Did the microphone catch all words right, or what would you like to say or translate?`,
-          de: `🤔 **Kurze Nachfrage${this.salutation()} (damit ich dir nichts Unpassendes antworte):**\nIch habe verstanden: **„${cleanSpoken}“** \`[${phonSpoken}]\`.\n• Hat das Mikrofon ein Wort falsch aufgenommen?\n• Oder möchtest du diesen Satz üben? *(Klicke unten auf **„🎙️ Aussprache testen“**)*\n💡 *Tipp: Du kannst mir auch jederzeit auf Deutsch schreiben oder das Mikrofon unten auf **🇩🇪 DE** stellen, dann übersetze und erkläre ich dir den Satz sofort!*`,
+          id: 'discuss_ai_tech_' + this.state.turnCount,
+          ...aiDiscussions[(this.state.turnCount - 1) % aiDiscussions.length]
+        };
+      }
+
+      if (/\b(home\s*office|remote\s*work|working\s+from\s+home|office|colleagues|workplace|commute|pendeln|büro)\b/i.test(lower)) {
+        const workDiscussions = [
+          {
+            en: `That is a very good argument${this.salutation()}! Working from home gives you peace, quiet, and zero commute time, while the office is great for direct teamwork. If you could choose freely, how many days per week would you work from home?`,
+            de: `Das ist ein sehr gutes Argument${this.salutation()}! Homeoffice spart den Arbeitsweg und bietet Ruhe, während das Büro toll für direkten Team-Austausch ist. Wenn du frei wählen könntest: Wie viele Tage pro Woche würdest du von zu Hause arbeiten?`,
+            suggestions: [
+              'I would work from home three or four days a week.',
+              'I prefer 100 percent remote work because I can focus better.',
+              'I like going to the office twice a week to meet my team.'
+            ]
+          },
+          {
+            en: `I completely understand your perspective${this.salutation()}! A good work-life balance makes a huge difference for productivity and happiness. What is most important to you in a good job?`,
+            de: `Ich verstehe deine Sichtweise vollkommen${this.salutation()}! Eine gute Work-Life-Balance macht einen riesigen Unterschied für Produktivität und Zufriedenheit. Was ist dir bei einem guten Job am wichtigsten?`,
+            suggestions: [
+              'Friendly colleagues and interesting tasks are most important to me.',
+              'Flexibility and continuous learning are my top priorities.',
+              'Good communication and fair teamwork matter most.'
+            ]
+          }
+        ];
+        return {
+          id: 'discuss_work_life_' + this.state.turnCount,
+          ...workDiscussions[(this.state.turnCount - 1) % workDiscussions.length]
+        };
+      }
+
+      if (/\b(movie|movies|film|films|series|netflix|cinema|watch|watching|game|games|gaming|sport|sports|fitness|gym|football|soccer)\b/i.test(lower)) {
+        return {
+          id: 'discuss_entertainment_' + this.state.turnCount,
+          en: `That sounds like a great way to spend your free time${this.salutation()}! Watching movies or series in English is also a fantastic trick to train your listening skills naturally. Have you ever tried watching a movie or series in English?`,
+          de: `Das klingt nach einer tollen Freizeitbeschäftigung${this.salutation()}! Filme oder Serien auf Englisch zu schauen ist übrigens auch ein genialer Trick, um das Hörverständnis ganz nebenbei zu trainieren. Hast du schon mal einen Film oder eine Serie auf Englisch geschaut?`,
           suggestions: [
-            'Can you help me improve my English pronunciation?',
-            'Wie sagt man das richtig auf Englisch?',
-            'Give me an easy example sentence to practice!'
+            'Yes, I sometimes watch movies in English with subtitles.',
+            'Not yet, but I want to try it with my favorite series!',
+            'What kind of movies or stories do you recommend?'
           ]
         };
       }
 
-      if (scenarioId === 'beginner') {
-        const beginnerFallbacks = [
+      if (/\b(family|friends?|parents|children|kids|wife|husband|partner|brother|sister|weekend|travel|vacation|holiday|country|countries|city)\b/i.test(lower)) {
+        return {
+          id: 'discuss_life_social_' + this.state.turnCount,
+          en: `Spending quality time with family and friends or discovering new places is so valuable${this.salutation()}! If you could travel to any English-speaking country tomorrow, where would you love to go and why?`,
+          de: `Schöne Zeit mit Familie und Freunden zu verbringen oder neue Orte zu entdecken ist unbezahlbar${this.salutation()}! Wenn du morgen in ein beliebiges englischsprachiges Land reisen könntest – wohin würdest du am liebsten reisen und warum?`,
+          suggestions: [
+            'I would love to visit London and explore the city.',
+            'I want to travel to the USA or Canada to see the nature.',
+            'Australia or Ireland would be an amazing adventure!'
+          ]
+        };
+      }
+
+      if (/\b(i\s+think|in\s+my\s+opinion|i\s+believe|i\s+agree|i\s+disagree|i\s+prefer|because|for\s+me|advantage|challenge|definitely|actually|opportunity)\b/i.test(lower)) {
+        const opinionReplies = [
           {
-            en: `That sounds good${this.salutation()}! Would you like to practice a sentence with pronunciation, or translate a word?`,
-            de: `Das klingt gut${this.salutation()}! Möchtest du einen Satz mit Aussprache-Hilfe üben oder ein Wort übersetzen?`,
+            en: `I really like how you expressed your opinion${this.salutation()}! Using words like "because", "I think", or "I prefer" makes your English sound very natural and fluent. Tell me more: Why is that aspect particularly important to you?`,
+            de: `Mir gefällt sehr, wie klar du deine Meinung ausgedrückt hast${this.salutation()}! Wörter wie *„because“*, *„I think“* oder *„I prefer“* lassen dein Englisch total natürlich und flüssig klingen. Erzähl mir noch etwas mehr: Warum ist dir dieser Punkt besonders wichtig?`,
             suggestions: [
-              "Can you help me improve my English pronunciation?",
-              "Can you teach me 2 useful English words?",
-              `What is your favorite hobby, ${meta.name}?`
+              'Because it helps me reach my personal and professional goals.',
+              'It makes everyday life much easier and more enjoyable.',
+              'What is your perspective on this topic?'
             ]
           },
           {
-            en: `You are doing great${this.salutation()}! What would you like to practice next: pronunciation, grammar, or everyday conversation?`,
-            de: `Du machst das super${this.salutation()}! Was möchtest du als Nächstes üben: Aussprache, Grammatik oder Alltagsgespräche?`,
+            en: `That is a very strong and thoughtful point${this.salutation()}! I completely agree with your reasoning. If we look at the future, how do you think this will develop in the next few years?`,
+            de: `Das ist ein sehr starker und durchdachter Punkt${this.salutation()}! Ich stimme deiner Begründung voll zu. Wenn wir in die Zukunft blicken: Wie wird sich das deiner Meinung nach in den nächsten Jahren entwickeln?`,
             suggestions: [
-              "Can you help me improve my English pronunciation?",
-              "I like talking about computers and programming.",
-              "Ask me an easy everyday question!"
+              'I think it will become even more important in the future.',
+              'Many things will change, so staying flexible is key.',
+              'Let us discuss another interesting everyday topic!'
+            ]
+          }
+        ];
+        return {
+          id: 'discuss_opinion_' + this.state.turnCount,
+          ...opinionReplies[(this.state.turnCount - 1) % opinionReplies.length]
+        };
+      }
+
+      if (scenarioId === 'beginner' || scenarioId === 'free') {
+        const discussionFallbacks = [
+          {
+            en: `That is a great point${this.salutation()}! I really enjoy talking and discussing with you like real conversation partners. What is your opinion on this: Is it better to learn a language through grammar rules or by speaking freely every day?`,
+            de: `Das ist ein super Punkt${this.salutation()}! Es macht richtig Spaß, sich mit dir wie echte Gesprächspartner zu unterhalten und zu diskutieren. Was ist deine Meinung dazu: Lernt man eine Sprache besser durch Grammatikregeln oder durch tägliches freies Sprechen?`,
+            suggestions: [
+              'I think speaking freely every day is much better!',
+              'Both are important, but speaking builds real confidence.',
+              'I learn best when we talk and discuss together like now.'
             ]
           },
           {
-            en: `Great practice${this.salutation()}! Tell me any word or sentence you want to learn, or ask me a question!`,
-            de: `Tolles Training${this.salutation()}! Nenne mir einfach ein Wort oder einen Satz, den du lernen möchtest, oder stell mir eine Frage!`,
+            en: `Interesting thought${this.salutation()}! Let's keep our conversation flowing: What is something new you learned or experienced recently that you found really interesting?`,
+            de: `Interessanter Gedanke${this.salutation()}! Lass uns direkt weiterplaudern: Was hast du in letzter Zeit Neues gelernt oder erlebt, das du richtig spannend fandest?`,
             suggestions: [
-              "Can you ask me an everyday question in English?",
-              "How do you say 'Schönen Feierabend' in English?",
-              "Let's practice a short dialogue."
+              'I am learning new programming skills and improving my English.',
+              'I discovered how fun it is to practice English in a real dialogue.',
+              'Ask me another discussion question!'
+            ]
+          },
+          {
+            en: `You are expressing yourself really well${this.salutation()}! Let's discuss another everyday question: What motivates you most when you work on a project or learn something new?`,
+            de: `Du drückst dich richtig gut aus${this.salutation()}! Lass uns über eine weitere Alltagsfrage diskutieren: Was motiviert dich am meisten, wenn du an einem Projekt arbeitest oder etwas Neues lernst?`,
+            suggestions: [
+              'Seeing my own progress step by step motivates me the most.',
+              'I love solving practical problems and building useful things.',
+              'Having a good conversation partner makes learning much easier!'
             ]
           }
         ];
         return {
           id: 'beginner_open_fallback_' + this.state.turnCount,
-          ...beginnerFallbacks[(this.state.turnCount - 1) % beginnerFallbacks.length]
+          ...discussionFallbacks[(this.state.turnCount - 1) % discussionFallbacks.length]
         };
       }
 
@@ -5953,34 +6511,85 @@ ${cleanTip}`,
     }, 350);
   }
 
-    function initDialogView() {
+  function speakLastPartnerMessage() {
+    if (currentDialogMode !== 'voice' || currentView !== 'dialog') return;
+    const history = dialogHistories[currentScenarioId] || [];
+    const lastPartner = [...history].reverse().find(m => m.type === 'partner');
+    if (lastPartner && lastPartner.textEn) {
+      speakEnglish(lastPartner.textEn);
+    }
+  }
+
+  function updateDialogAudioModeUI() {
+    const isVoice = currentDialogMode === 'voice';
+    const btnModeVoice = document.getElementById('btnModeVoice');
+    const btnModeText = document.getElementById('btnModeText');
+    const btnAutoSpeak = document.getElementById('btnToggleAutoSpeak');
+    if (btnModeVoice) btnModeVoice.classList.toggle('active', isVoice);
+    if (btnModeText) btnModeText.classList.toggle('active', !isVoice);
+    if (btnAutoSpeak) {
+      btnAutoSpeak.classList.toggle('active', isVoice);
+      btnAutoSpeak.classList.toggle('muted-mode', !isVoice);
+      btnAutoSpeak.innerHTML = isVoice ? '🔊 Immer vorlesen: AN' : '🔇 Unterwegs: Nur Text';
+      btnAutoSpeak.title = isVoice
+        ? 'Er liest jede Antwort automatisch vor (wie ein echter Gesprächspartner). Tippe hier zum Ausschalten, wenn du unterwegs bist!'
+        : 'Unterwegs-Modus aktiv: Nur Text bleibt vor dir. Tippe hier, damit er wieder automatisch vorliest!';
+    }
+  }
+
+  function setDialogAudioMode(mode, showFeedback = true) {
+    currentDialogMode = (mode === 'text') ? 'text' : 'voice';
+    try {
+      localStorage.setItem('fiae_dialog_mode', currentDialogMode);
+    } catch (e) {}
+    updateDialogAudioModeUI();
+    if (currentDialogMode === 'text') {
+      if (isSpeakingNow()) {
+        stopSpeaking();
+      }
+      if (showFeedback) {
+        showToast('🔇 Unterwegs-Modus: Vorlesen gestoppt – es bleibt nur der Text');
+      }
+    } else {
+      if (showFeedback) {
+        showToast('🔊 Gesprächs-Modus: Liest immer automatisch vor!');
+      }
+      speakLastPartnerMessage();
+    }
+  }
+
+  function initDialogView() {
     if (dialogInitialized) return;
     dialogInitialized = true;
 
     const btnModeText = document.getElementById('btnModeText');
     const btnModeVoice = document.getElementById('btnModeVoice');
+    const btnToggleAutoSpeak = document.getElementById('btnToggleAutoSpeak');
     const scenarioBar = document.getElementById('scenarioBar');
     const btnResetDialog = document.getElementById('btnResetDialog');
     const btnDialogSend = document.getElementById('btnDialogSend');
     const btnDialogMic = document.getElementById('btnDialogMic');
     const dialogTextInput = document.getElementById('dialogTextInput');
 
-    // Modus umschalten (Schreiben/Lesen vs Sprechen/Hören)
+    // Modus umschalten (Immer vorlesen & Reden vs. Unterwegs / Nur Text)
     if (btnModeText && btnModeVoice) {
       btnModeText.addEventListener('click', () => {
-        currentDialogMode = 'text';
-        btnModeText.classList.add('active');
-        btnModeVoice.classList.remove('active');
-        showToast('✍️ Modus: Schreiben & Lesen aktiviert');
+        setDialogAudioMode('text', true);
       });
 
       btnModeVoice.addEventListener('click', () => {
-        currentDialogMode = 'voice';
-        btnModeVoice.classList.add('active');
-        btnModeText.classList.remove('active');
-        showToast('🎙️ Modus: Sprechen & Hören aktiviert');
+        setDialogAudioMode('voice', true);
       });
     }
+
+    if (btnToggleAutoSpeak) {
+      btnToggleAutoSpeak.addEventListener('click', () => {
+        const nextMode = (currentDialogMode === 'voice') ? 'text' : 'voice';
+        setDialogAudioMode(nextMode, true);
+      });
+    }
+
+    updateDialogAudioModeUI();
 
     // Gymnasiale Klassenstufen-Buttons (Internationalwirtschaft)
     const gradePills = document.querySelectorAll('#economicsGradePills .grade-pill');
@@ -6079,7 +6688,7 @@ ${cleanTip}`,
       btnToggleScenarioAudio.addEventListener('click', () => {
         if (isSpeakingNow()) {
           stopSpeaking();
-          showToast('⏹️ Sprache angehalten');
+          showToast('⏹️ Vorlesen gestoppt – nur Text vor dir');
         } else {
           // Letzte Partner-Nachricht oder Willkommenssatz wiederholen
           const history = dialogHistories[currentScenarioId] || [];
@@ -6094,11 +6703,11 @@ ${cleanTip}`,
     const avatarEl = document.getElementById('scenarioAvatar');
     if (avatarEl) {
       avatarEl.style.cursor = 'pointer';
-      avatarEl.title = 'Tippen zum Anhalten oder Wiederholen der Sprache';
+      avatarEl.title = 'Tippen zum sofortigen Stoppen (nur Text) oder Wiederholen der Sprache';
       avatarEl.addEventListener('click', () => {
         if (isSpeakingNow()) {
           stopSpeaking();
-          showToast('⏹️ Sprache angehalten');
+          showToast('⏹️ Vorlesen gestoppt – nur Text vor dir');
         } else {
           const history = dialogHistories[currentScenarioId] || [];
           const lastPartner = [...history].reverse().find(m => m.type === 'partner');
@@ -6219,6 +6828,9 @@ ${cleanTip}`,
       resetDialogScenario(scenarioId);
     } else {
       renderChatLog(scenarioId);
+      if (currentDialogMode === 'voice' && currentView === 'dialog') {
+        speakLastPartnerMessage();
+      }
     }
   }
 
@@ -6242,7 +6854,7 @@ ${cleanTip}`,
       };
       dialogHistories[scenarioId].push(initialPartnerMsg);
       renderChatLog(scenarioId);
-      if (currentDialogMode === 'voice') {
+      if (currentDialogMode === 'voice' && currentView === 'dialog') {
         speakEnglish(firstQ.vocabItem.english);
       }
       return;
@@ -6297,8 +6909,8 @@ ${cleanTip}`,
     dialogHistories[scenarioId].push(initialPartnerMsg);
     renderChatLog(scenarioId);
 
-    // Falls Sprachmodus aktiv ist, Begrüßung vorlesen
-    if (currentDialogMode === 'voice') {
+    // Falls Sprachmodus aktiv ist (Standard: AN) und Dialog geöffnet ist, Begrüßung sofort vorlesen
+    if (currentDialogMode === 'voice' && currentView === 'dialog') {
       speakEnglish(promptEn);
     }
   }
@@ -6474,7 +7086,7 @@ ${cleanTip}`,
           const phonLine = item.analysis.phoneticText || ((typeof PronunciationCoach !== 'undefined') ? PronunciationCoach.toPhonetic(cleanCorrectedForSpeech) : '');
           docCard.innerHTML = `
             <div class="doctor-header">
-              <span class="doctor-badge error">🩺 Satz-Korrektur, Grammatik & Aussprache-Hilfe</span>
+              <span class="doctor-badge error">🩺 Satz-Korrektur & Korrektur-Vorschlag</span>
             </div>
             <div class="doctor-detail-row">
               <span class="doctor-label">🔴 Dein Satz:</span>
@@ -6482,7 +7094,7 @@ ${cleanTip}`,
             </div>
             <div class="doctor-corrected-box">
               <div style="flex: 1;">
-                <span class="doctor-corrected-text">🟢 ${item.analysis.correctedText}</span>
+                <span class="doctor-corrected-text">🟢 <strong>Korrektur-Vorschlag:</strong> ${item.analysis.correctedText}</span>
                 ${phonLine ? `<div class="doctor-phonetic-line">🗣️ So sprichst du es aus: <code>[${escapeHtml(phonLine)}]</code></div>` : ''}
               </div>
               <div class="doctor-action-btns">
@@ -6611,9 +7223,13 @@ ${cleanTip}`,
 
     // 3. Normales Szenario: Vorab Intent prüfen & Satz analysieren
     const scenario = DIALOG_SCENARIOS[scenarioId] || DIALOG_SCENARIOS.standup;
-    const directIntent = DialogEngine.detectDirectIntent(text, scenarioId);
-
     let analysis = SentenceDoctor.analyze(text);
+    const cleanedAnalysisText = (analysis && analysis.hasError && analysis.correctedText && !analysis.isGerman)
+      ? analysis.correctedText.replace(/<[^>]+>/g, '').trim()
+      : text;
+
+    const directIntent = DialogEngine.detectDirectIntent(text, scenarioId) ||
+      ((cleanedAnalysisText !== text) ? DialogEngine.detectDirectIntent(cleanedAnalysisText, scenarioId) : null);
 
     // Wenn der Nutzer seinen Namen nennt, sich vorstellt, einen Gast vorstellt oder eine reine Wortübersetzung anfragt:
     // NIEMALS eine Fehler-Box anzeigen! Aber bei allen anderen Sätzen (auch wenn directIntent greift) soll SentenceDoctor aktiv helfen!
@@ -6632,10 +7248,12 @@ ${cleanTip}`,
       analysis: analysis
     });
 
-    // Antwort des Partners generieren
+    // Antwort des Partners generieren (nutzt den korrigierten Satz als Kontext, damit die Bedeutung auch bei Tippfehlern erkannt wird!)
     let partnerReply;
     try {
-      partnerReply = directIntent ? { ...directIntent, en: formatReplyText(directIntent.en), de: formatReplyText(directIntent.de) } : generatePartnerResponse(text, scenarioId);
+      partnerReply = directIntent
+        ? { ...directIntent, en: formatReplyText(directIntent.en), de: formatReplyText(directIntent.de) }
+        : generatePartnerResponse(cleanedAnalysisText, scenarioId);
     } catch (err) {
       console.error('generatePartnerResponse error:', err);
       partnerReply = {
@@ -6650,7 +7268,7 @@ ${cleanTip}`,
       };
     }
 
-    // WICHTIG: Sofortige sprachliche & textliche Korrektur mit Lautschrift & Beispielsatz
+    // WICHTIG: Sofortiger Korrektur-Vorschlag mit Lautschrift & Erklärung direkt in der Antwort des Gesprächspartners
     const alreadyCoachesError = partnerReply && (partnerReply.isDirectCoaching || /^(intent_improve_speaking_with_correction|intent_clarify_speaking_was|intent_clarify_and_coach)/.test(partnerReply.id || ''));
     if (analysis && analysis.hasError && !alreadyCoachesError) {
       const cleanCorrected = (analysis.correctedText || '').replace(/<[^>]+>/g, '').trim();
@@ -6659,11 +7277,11 @@ ${cleanTip}`,
       let verbalDe = '';
 
       if (analysis.isGerman) {
-        verbalEn = `In English, say: "${cleanCorrected}" [${corrPhon}]! `;
-        verbalDe = `💡 **Sprach- & Aussprache-Tipp:** Auf Englisch sagst du: **„${cleanCorrected}“** \`[${corrPhon}]\`!\n`;
+        verbalEn = `In English, you can say: "${cleanCorrected}" [${corrPhon}]! `;
+        verbalDe = `✅ **Korrektur- & Übersetzungs-Vorschlag:**\nAuf Englisch sagst du dafür: 👉 **„${cleanCorrected}“** \`[${corrPhon}]\`!\n`;
       } else {
-        verbalEn = `Quick tip: say "${cleanCorrected}" [${corrPhon}]! `;
-        verbalDe = `💡 **Grammatik- & Aussprache-Tipp:** Richtig heißt es **„${cleanCorrected}“** \`[${corrPhon}]\`!\n`;
+        verbalEn = `Good try! My correction suggestion for your sentence is: "${cleanCorrected}" [${corrPhon}]. `;
+        verbalDe = `✅ **Korrektur-Vorschlag für deinen Satz:**\n🔴 Du hast geschrieben: *„${text}“*\n🟢 **So heißt es richtig auf Englisch:** 👉 **„${cleanCorrected}“**\n🗣️ **Aussprache:** \`[${corrPhon}]\`\n`;
       }
 
       partnerReply.en = `${verbalEn}${partnerReply.en}`;

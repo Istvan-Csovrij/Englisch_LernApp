@@ -3259,6 +3259,41 @@ button, .nav-icon-btn, .action-btn, .cat-btn, .card-audio-btn, .card-mic-btn {
   transform: translateY(-1px);
 }
 
+/* Auto-Vorlesen / Unterwegs (Nur Text) Schnell-Umschalter im Header */
+.scenario-autospeak-btn {
+  background: rgba(16, 185, 129, 0.16);
+  border: 1px solid rgba(16, 185, 129, 0.48);
+  color: #6ee7b7;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.2s ease;
+}
+
+.scenario-autospeak-btn:hover {
+  background: rgba(16, 185, 129, 0.28);
+  color: #ffffff;
+  border-color: #34d399;
+  transform: translateY(-1px);
+}
+
+.scenario-autospeak-btn.muted-mode {
+  background: rgba(245, 158, 11, 0.16);
+  border-color: rgba(245, 158, 11, 0.5);
+  color: #fde68a;
+}
+
+.scenario-autospeak-btn.muted-mode:hover {
+  background: rgba(245, 158, 11, 0.28);
+  color: #ffffff;
+  border-color: #fbbf24;
+}
+
 /* Aktiver Sprech-Zustand für Buttons (Stop/Anhalten) */
 .is-speaking-btn {
   background: rgba(239, 68, 68, 0.22) !important;

@@ -22,7 +22,7 @@
 
   <meta name="apple-mobile-web-app-title" content="English Master">
 
-  <link rel="stylesheet" href="style.css?v=20261114_v38">
+  <link rel="stylesheet" href="style.css?v=20261115_v40">
 
   <script>
 
@@ -772,23 +772,23 @@
 
 
 
-      <!-- Mode Selector: Schreiben & Lesen vs. Sprechen & Hören -->
+      <!-- Mode Selector: Gesprächs-Partner (Immer vorlesen) vs. Unterwegs (Nur Text / Stumm) -->
 
       <div class="dialog-mode-selector">
 
-        <button class="dialog-mode-btn active" id="btnModeText" data-mode="text">
+        <button class="dialog-mode-btn active" id="btnModeVoice" data-mode="voice" title="Gesprächs-Modus: Dein Partner liest jede Antwort automatisch vor wie in einem echten Gespräch">
 
-          <span class="mode-icon">✍️</span>
+          <span class="mode-icon">🔊</span>
 
-          <span class="mode-label">Schreiben & Lesen</span>
+          <span class="mode-label">Immer vorlesen &amp; Reden</span>
 
         </button>
 
-        <button class="dialog-mode-btn" id="btnModeVoice" data-mode="voice">
+        <button class="dialog-mode-btn" id="btnModeText" data-mode="text" title="Unterwegs-Modus: Kein automatisches Vorlesen, es bleibt nur der Text zum Lesen vor dir">
 
-          <span class="mode-icon">🎙️</span>
+          <span class="mode-icon">🔇</span>
 
-          <span class="mode-label">Sprechen & Hören</span>
+          <span class="mode-label">Unterwegs / Nur Text (Stumm)</span>
 
         </button>
 
@@ -875,8 +875,11 @@
         </div>
 
         <div class="scenario-actions-group">
-          <button class="scenario-audio-toggle-btn" id="btnToggleScenarioAudio" title="Aktuelle Sprache anhalten oder Nachricht nochmals anhören">
-            🔊 Anhören
+          <button class="scenario-audio-toggle-btn" id="btnToggleScenarioAudio" title="Aktuelle Sprachausgabe sofort stoppen (es bleibt nur der Text) oder Nachricht nochmals vorlesen">
+            🔊 Vorlesen
+          </button>
+          <button class="scenario-autospeak-btn active" id="btnToggleAutoSpeak" title="Automatisches Vorlesen AN/AUS umschalten (für unterwegs stummschalten, sodass nur der Text vor dir bleibt)">
+            🔊 Immer vorlesen: AN
           </button>
           <button class="scenario-avatar-btn" id="btnOpenAvatarPicker" title="Wähle deinen Lieblings-Avatar (Istvan 3D, Robot, echtes Foto)">
             🎭 Avatar wählen
@@ -1286,9 +1289,9 @@
 
   <!-- Scripts -->
 
-  <script src="data.js?v=20261114_v38"></script>
+  <script src="data.js?v=20261115_v40"></script>
 
-  <script src="app.js?v=20261114_v38"></script>
+  <script src="app.js?v=20261115_v40"></script>
 
 </body>
 
