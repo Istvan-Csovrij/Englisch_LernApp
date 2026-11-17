@@ -1772,6 +1772,8 @@ button, .nav-icon-btn, .action-btn, .cat-btn, .card-audio-btn, .card-mic-btn {
   color: #fff;
   outline: none;
   transition: border-color 0.2s ease;
+  min-width: 0;
+  text-overflow: ellipsis;
 }
 
 .dialog-text-input:focus {

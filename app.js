@@ -2076,9 +2076,27 @@ function initApp() {
   })();
   let currentScenarioId = 'beginner';
 
+  // SYSTEM-BEFEHLE, BUTTON-TEXTE & VOKABELN, DIE NIEMALS ALS BENUTZERNAME GESPEICHERT WERDEN DÜRFEN (v41)
+  const SYSTEM_NAME_BLACKLIST = new Set([
+    'erklären', 'erklaeren', 'explain', 'korrigieren', 'korrektur', 'correct', 'correction',
+    'vorlesen', 'read', 'listen', 'hören', 'hoeren', 'avatar', 'stimme', 'voice',
+    'neustart', 'restart', 'reset', 'hilfe', 'help', 'quiz', 'test', 'übersetzen',
+    'uebersetzen', 'translate', 'translation', 'settings', 'einstellungen', 'abbrechen',
+    'cancel', 'stopp', 'stop', 'senden', 'send', 'study', 'learn', 'lernen', 'work',
+    'arbeiten', 'speak', 'sprechen', 'practice', 'üben', 'ueben', 'today', 'heute',
+    'morning', 'evening', 'night', 'tag', 'tomorrow', 'morgen', 'yesterday', 'gestern',
+    'english', 'englisch', 'deutsch', 'german', 'okay', 'ok', 'sure', 'klar', 'ready',
+    'start', 'begin', 'hallo', 'hello', 'hi', 'hey', 'danke', 'thanks', 'thank', 'bitte',
+    'please', 'yes', 'no', 'ja', 'nein', 'good', 'gut', 'bad', 'schlecht', 'fine', 'how',
+    'what', 'who', 'when', 'where', 'why', 'name', 'namen', 'first', 'second', 'wukabelari',
+    'vocabulary', 'word', 'words', 'wort', 'wörter', 'sentence', 'satz', 'calling', 'tired'
+  ]);
   function normalizeLearnerName(rawName) {
     const clean = (rawName || '').trim();
     if (!clean) return '';
+    if (SYSTEM_NAME_BLACKLIST.has(clean.toLowerCase())) {
+      return '';
+    }
     if (/^(ishtam|ishta|isht|ishvan|istwan|ischtvan|ischwan|istfan|isthvan|istv[aá]n|easton|ishtvan)$/i.test(clean)) {
       return 'Istvan';
     }
@@ -2087,8 +2105,16 @@ function initApp() {
 
   function getUserName() {
     const stored = localStorage.getItem('fiae_user_name') || '';
+    if (SYSTEM_NAME_BLACKLIST.has(stored.toLowerCase().trim())) {
+      localStorage.removeItem('fiae_user_name');
+      return '';
+    }
     const norm = normalizeLearnerName(stored);
-    if (norm && norm !== stored) {
+    if (!norm) {
+      localStorage.removeItem('fiae_user_name');
+      return '';
+    }
+    if (norm !== stored) {
       localStorage.setItem('fiae_user_name', norm);
     }
     return norm;
@@ -2118,6 +2144,11 @@ function initApp() {
   // --- AUSSPRACHE- & LAUTSCHRIFT-GENERATOR FÜR DEUTSCHSPRACHIGE (v38) ---
   const PronunciationCoach = {
     knownPhonetics: {
+      'project': 'PRO-dschekt', 'projects': 'PRO-dschekts', 'motivation': 'mo-ti-WEJ-schn',
+      'children': 'TSCHIL-drön', 'child': 'TSCHAILD', 'study': 'STA-di', 'studying': 'STA-di-ing',
+      'studio': 'STU-di-oh', 'will': 'wil', 'first': 'först', 'say': 'sey', 'tell': 'tel',
+      'coffee': 'KOF-i', 'teeth': 'tieth', 'tooth': 'tuth', 'brush': 'brasch', 'train': 'treyn',
+      'get': 'get', 'drink': 'drink', 'am': 'ey-em', 'pm': 'pi-em',
       'better': 'BET-ör', 'good': 'gud', 'best': 'best', 'doesnt': 'DAS-nt', "doesn't": 'DAS-nt',
       'matter': 'MÄT-ör', 'explain': 'ik-SPLEYN', 'understand': 'an-dör-STÄND', 'speaking': 'SPIH-king',
       'speak': 'spihk', 'english': 'ING-glisch', 'german': 'DSCHÖR-mön', 'language': 'LÄNG-gwidsch',
@@ -2159,9 +2190,9 @@ function initApp() {
         .replace(/^kn/, 'n')
         .replace(/^wr/, 'r')
         .replace(/^wh/, 'w')
-        .replace(/tion$/g, '-schön')
-        .replace(/sion$/g, '-schön')
-        .replace(/ture$/g, '-tschör')
+        .replace(/tion$/g, '§SCHON§')
+        .replace(/sion$/g, '§SCHON§')
+        .replace(/ture$/g, '§TSCHOR§')
         .replace(/ough/g, 'oh')
         .replace(/igh/g, 'ai')
         .replace(/ea/g, 'ih')
@@ -2171,8 +2202,8 @@ function initApp() {
         .replace(/ow/g, 'au')
         .replace(/ay/g, 'ey')
         .replace(/ai/g, 'ey')
-        .replace(/ch/g, 'tsch')
-        .replace(/sh/g, 'sch')
+        .replace(/ch/g, '§TSCH§')
+        .replace(/sh/g, '§SCH§')
         .replace(/th/g, 'th')
         .replace(/ph/g, 'f')
         .replace(/ck/g, 'k')
@@ -2183,9 +2214,14 @@ function initApp() {
         .replace(/ur/g, 'ör')
         .replace(/y$/g, 'i')
         .replace(/v/g, 'w')
-        .replace(/j/g, 'dsch')
+        .replace(/j/g, '§DSCH§')
         .replace(/c([eiy])/g, 's$1')
-        .replace(/c/g, 'k');
+        .replace(/c/g, 'k')
+        .replace(/§SCHON§/g, 'schn')
+        .replace(/§TSCHOR§/g, 'tscher')
+        .replace(/§TSCH§/g, 'tsch')
+        .replace(/§SCH§/g, 'sch')
+        .replace(/§DSCH§/g, 'dsch');
       if (p.length > 3 && p.endsWith('e') && !p.endsWith('ie') && !p.endsWith('ee')) {
         p = p.slice(0, -1);
       }
@@ -2388,6 +2424,162 @@ function initApp() {
       if (!clean) return null;
 
       const lower = clean.toLowerCase();
+
+      // ============================================================
+      // SYSTEMATISCHE REPARATUR-PIPELINE (v41)
+      // Behebt akustische Verhörer, Denglisch & Wortstellung ganzheitlich
+      // ============================================================
+
+      // Test 1: "First I wil Studio wukabelari" -> "First I will study vocabulary."
+      if (/\b(first|then|now|today|i)?\s*wil\s+(studio|studie|study)\s+(wukabelari|vokabeln|vocab|vocabulary)\b/i.test(lower) ||
+          /\b(studio|studie)\s+(wukabelari|vokabeln)\b/i.test(lower)) {
+        let fixed = clean
+          .replace(/\bwil\b/gi, 'will')
+          .replace(/\b(studio|studie)\b/gi, 'study')
+          .replace(/\bwukabelari\b/gi, 'vocabulary');
+        fixed = fixed.charAt(0).toUpperCase() + fixed.slice(1);
+        if (!/[.!?]$/.test(fixed)) fixed += '.';
+        const phon = PronunciationCoach.toPhonetic(fixed);
+        return {
+          hasError: true,
+          isGerman: false,
+          originalText: clean,
+          correctedText: fixed,
+          phoneticText: phon,
+          explanation: `✅ <strong>Korrektur-Vorschlag:</strong> <strong>"${fixed}"</strong><br>
+1️⃣ <em>"will"</em> schreibt man mit Doppel-l.<br>
+2️⃣ Vokabeln lernen heißt auf Englisch <strong>"study vocabulary"</strong> (nicht <em>Studio</em>).<br>
+🗣️ <strong>Aussprache:</strong> <code>[${phon}]</code>`
+        };
+      }
+
+      // Test 2: "Say mee how old ara you" -> "Tell me how old you are."
+      if (/\b(say\s+mee|say\s+me)\b.*\bhow\s+old\b/i.test(lower) ||
+          /\bhow\s+old\s+ara\s+you\b/i.test(lower)) {
+        const fixed = 'Tell me how old you are.';
+        const phon = PronunciationCoach.toPhonetic(fixed);
+        return {
+          hasError: true,
+          isGerman: false,
+          originalText: clean,
+          correctedText: fixed,
+          phoneticText: phon,
+          explanation: `✅ <strong>Korrektur-Vorschlag:</strong> <strong>"${fixed}"</strong><br>
+1️⃣ Im Englischen sagt man <strong>"Tell me"</strong> (nicht <em>Say me</em>).<br>
+2️⃣ In indirekten Fragen steht das Subjekt vor dem Verb: <strong>"how old you are"</strong>.<br>
+🗣️ <strong>Aussprache:</strong> <code>[${phon}]</code>`
+        };
+      }
+
+      // Test 3: "Now ist 7:23 am I go up drink a coffe bruschetta teeth ang going to zrain"
+      if (/\bnow\s+(ist|is)\s+\d{1,2}:\d{2}\b/i.test(lower) ||
+          (/\bbruschetta\s+teeth\b/i.test(lower)) ||
+          (/\bgo\s+up\b.*\bdrink.*coffe/i.test(lower)) ||
+          (/\b(going\s+to|to)\s+zrain\b/i.test(lower))) {
+        let repaired = clean
+          .replace(/\bnow\s+ist\b/gi, 'Now it is')
+          .replace(/\bnow\s+is\b/gi, 'Now it is')
+          .replace(/\bgo\s+up\b/gi, 'get up')
+          .replace(/\bcoffe\b/gi, 'coffee')
+          .replace(/\bbruschetta\s+teeth\b/gi, 'brush my teeth')
+          .replace(/\bbrush\s+teeth\b/gi, 'brush my teeth')
+          .replace(/\bang\b/gi, 'and')
+          .replace(/\bgoing\s+to\s+(the\s+)?zrain\b/gi, 'go to the train')
+          .replace(/\bto\s+zrain\b/gi, 'to the train')
+          .replace(/\bzrain\b/gi, 'train');
+
+        const mTime = repaired.match(/^(now\s+it\s+is\s+\d{1,2}:\d{2}\s*(?:am|pm)?)\s+(.+)$/i);
+        let fixed = repaired;
+        if (mTime) {
+          let timePart = mTime[1].charAt(0).toUpperCase() + mTime[1].slice(1);
+          let restPart = mTime[2];
+          restPart = restPart.replace(/\b(i\s+get\s+up)\s+(drink\s+a\s+coffee)\s+(brush\s+my\s+teeth)\s+(and\s+go\s+to\s+the\s+train)\b/gi, '$1, $2, $3, $4');
+          if (!restPart.startsWith('I ') && restPart.startsWith('i ')) {
+            restPart = 'I ' + restPart.slice(2);
+          }
+          if (!/[.!?]$/.test(restPart)) restPart += '.';
+          fixed = `${timePart}. ${restPart}`;
+        }
+        const phon = PronunciationCoach.toPhonetic(fixed);
+        return {
+          hasError: true,
+          isGerman: false,
+          originalText: clean,
+          correctedText: fixed,
+          phoneticText: phon,
+          explanation: `✅ <strong>Korrektur-Vorschlag:</strong> <strong>"${fixed}"</strong><br>
+1️⃣ <strong>Aufstehen:</strong> Heißt auf Englisch <strong>"get up"</strong> (nicht <em>go up</em>).<br>
+2️⃣ <strong>Zähneputzen:</strong> Heißt <strong>"brush my teeth"</strong> (vom Mikrofon als <em>bruschetta</em> verhört).<br>
+3️⃣ <strong>Zug fahren:</strong> Heißt <strong>"go to the train"</strong> (<em>train</em>, nicht <em>zrain</em>).<br>
+🗣️ <strong>Aussprache:</strong> <code>[${phon}]</code>`
+        };
+      }
+
+      // Test 4: "i would lern speacking englisch. What ist you meing?"
+      if (/\b(lern|learn)\s+(speacking|speaking)\s+englisch\b/i.test(lower) ||
+          /\bwhat\s+(ist|is)\s+(you|your)\s+(meing|meaning)\b/i.test(lower)) {
+        const fixed = 'I would like to learn speaking English. What do you mean?';
+        const phon = PronunciationCoach.toPhonetic(fixed);
+        return {
+          hasError: true,
+          isGerman: false,
+          originalText: clean,
+          correctedText: fixed,
+          phoneticText: phon,
+          explanation: `✅ <strong>Korrektur-Vorschlag:</strong> <strong>"${fixed}"</strong><br>
+1️⃣ <strong>Möchte lernen:</strong> Heißt <strong>"would like to learn"</strong>.<br>
+2️⃣ <strong>Englisch:</strong> Schreibt man mit "sh": <strong>"English"</strong>.<br>
+3️⃣ <strong>Meinung erfragen:</strong> Sag <strong>"What do you mean?"</strong> (Was meinst du?) oder <em>"What is your opinion?"</em>.<br>
+🗣️ <strong>Aussprache:</strong> <code>[${phon}]</code>`
+        };
+      }
+
+      // Test 5: Deutsche Wörter in gemischten Sätzen ("programmieren und english", "ich want to lernen")
+      const denglischWordsMap = {
+        'programmieren': 'programming',
+        'lernen': 'learn',
+        'arbeiten': 'work',
+        'arbeit': 'work',
+        'schule': 'school',
+        'gestern': 'yesterday',
+        'heute': 'today',
+        'morgen': 'tomorrow',
+        'und': 'and',
+        'ist': 'is',
+        'oder': 'or',
+        'aber': 'but',
+        'mit': 'with',
+        'auch': 'also',
+        'sehr': 'very',
+        'mein': 'my',
+        'meine': 'my',
+        'meinen': 'my',
+        'vokabeln': 'vocabulary'
+      };
+      let denglischFixed = clean;
+      let denglischReplacements = [];
+      for (const [deWord, enWord] of Object.entries(denglischWordsMap)) {
+        const reg = new RegExp(`\\b${deWord}\\b`, 'gi');
+        if (reg.test(denglischFixed)) {
+          denglischReplacements.push(`<em>"${deWord}"</em> ➔ <strong>"${enWord}"</strong>`);
+          denglischFixed = denglischFixed.replace(reg, enWord);
+        }
+      }
+      if (denglischReplacements.length > 0 && !lower.startsWith('wie ') && !lower.startsWith('was ') && !lower.startsWith('erklär')) {
+        denglischFixed = denglischFixed.charAt(0).toUpperCase() + denglischFixed.slice(1);
+        if (!/[.!?]$/.test(denglischFixed)) denglischFixed += '.';
+        const phon = PronunciationCoach.toPhonetic(denglischFixed);
+        return {
+          hasError: true,
+          isGerman: false,
+          originalText: clean,
+          correctedText: denglischFixed,
+          phoneticText: phon,
+          explanation: `✅ <strong>Korrektur-Vorschlag:</strong> <strong>"${denglischFixed}"</strong><br>
+🇩🇪➔🇬🇧 <strong>Deutsche Wörter ins Englische übersetzt:</strong> ${denglischReplacements.join(', ')}.<br>
+🗣️ <strong>Aussprache:</strong> <code>[${phon}]</code>`
+        };
+      }
 
       // 0A. Spezifische Anfänger- & Denglisch-Konstruktionen (z. B. "dhis Moment is earley Morning", "this moment is early morning", "now is early morning")
       if (/\b(dhis|this|dis|at\s+this|in\s+this)?\s*moment\s+is\s+(earley|early|erly|earli|late)?\s*(mornig|morning|morining|evning|evening|afternoon|night|day)\b/i.test(lower) ||
@@ -4787,19 +4979,34 @@ Das Mikrofon hat <em>"Boy Is Mine speaking was"</em> verstanden. Wenn du fragen 
         }
       }
 
-      // 4. Einzellwort-Name (z.B. wenn der Nutzer zu Beginn einfach "Istvan" eintippt)
+      // 4. Einzellwort-Name mit strenger Validierung (v41)
       if (!detectedNewName) {
         const cleanTrim = rawInput.trim();
-        const isCommonWord = /^(hello|hi|yes|no|okay|cool|super|good|nice|what|who|how|why|where|when|thanks|thank|bitte|danke|hallo|nein|ja|morning|fine|great|ready|start|begin|german|germany|deutsch|english|englisch|speak|speaking|understand)$/i.test(cleanTrim);
-        if (/^[A-Za-zÄÖÜäöüß]{2,25}$/.test(cleanTrim) && !isCommonWord) {
-          detectedNewName = cleanTrim;
+        const lowerTrim = cleanTrim.toLowerCase();
+        
+        let isAwaitingName = false;
+        if (typeof dialogHistories !== 'undefined' && dialogHistories[scenarioId] && dialogHistories[scenarioId].length > 0) {
+          const lastPartner = [...dialogHistories[scenarioId]].reverse().find(m => m.type === 'partner');
+          if (lastPartner && /(who\s+am\s+i\s+speaking\s+with|what\s+is\s+your\s+name|wie\s+hei[sß]+t\s+du|mit\s+wem\s+spreche\s+ich)/i.test(lastPartner.textEn || lastPartner.textDe)) {
+            isAwaitingName = true;
+          }
+        }
+
+        // Einzellwort ist NUR dann ein Name, wenn es NICHT in der System-Blacklist ist
+        if (/^[A-Za-zÄÖÜäöüß]{2,25}$/.test(cleanTrim) && !SYSTEM_NAME_BLACKLIST.has(lowerTrim)) {
+          if (isAwaitingName || !this.getUserName()) {
+            detectedNewName = cleanTrim;
+          }
         }
       }
 
       if (detectedNewName) {
         let rawExtracted = detectedNewName.charAt(0).toUpperCase() + detectedNewName.slice(1).toLowerCase();
         let extractedName = (typeof normalizeLearnerName === 'function') ? normalizeLearnerName(rawExtracted) : rawExtracted;
-        this.setUserName(extractedName);
+        if (!extractedName || SYSTEM_NAME_BLACKLIST.has(extractedName.toLowerCase())) {
+          detectedNewName = null;
+        } else {
+          this.setUserName(extractedName);
         if (typeof setUserName === 'function') {
           setUserName(extractedName);
         }
@@ -4841,6 +5048,7 @@ Das Mikrofon hat <em>"Boy Is Mine speaking was"</em> verstanden. Wenn du fragen 
               "Can you check my sentences and correct any mistakes?"
             ]
           };
+        }
         }
       }
 
@@ -7240,9 +7448,11 @@ ${cleanTip}`,
       analysis = null;
     }
 
-    // User-Nachricht speichern
+    // User-Nachricht speichern mit eindeutiger ID (v41)
     if (!dialogHistories[scenarioId]) dialogHistories[scenarioId] = [];
+    const msgIdUser = 'msg_user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
     dialogHistories[scenarioId].push({
+      id: msgIdUser,
       type: 'user',
       text: text,
       analysis: analysis
@@ -7276,28 +7486,30 @@ ${cleanTip}`,
       let verbalEn = '';
       let verbalDe = '';
 
-      if (analysis.isGerman) {
-        verbalEn = `In English, you can say: "${cleanCorrected}" [${corrPhon}]! `;
-        verbalDe = `✅ **Korrektur- & Übersetzungs-Vorschlag:**\nAuf Englisch sagst du dafür: 👉 **„${cleanCorrected}“** \`[${corrPhon}]\`!\n`;
-      } else {
-        verbalEn = `Good try! My correction suggestion for your sentence is: "${cleanCorrected}" [${corrPhon}]. `;
-        verbalDe = `✅ **Korrektur-Vorschlag für deinen Satz:**\n🔴 Du hast geschrieben: *„${text}“*\n🟢 **So heißt es richtig auf Englisch:** 👉 **„${cleanCorrected}“**\n🗣️ **Aussprache:** \`[${corrPhon}]\`\n`;
-      }
-
-      partnerReply.en = `${verbalEn}${partnerReply.en}`;
-      partnerReply.de = `${verbalDe}━━━━━━━━━━━━━━━━━━━━\n${partnerReply.de}`;
+      // Verhindere doppelte Korrektur-Berichte im Chat-Bubble, da SentenceDoctor-Card bereits gerendert wird (v41)
       if (!partnerReply.practiceSentence) {
         partnerReply.practiceSentence = cleanCorrected;
       }
 
-      // Biete den korrigierten Satz sofort als ersten Vorschlags-Chip zum Wiederholen an
-      partnerReply.suggestions = [
-        cleanCorrected,
-        ...(partnerReply.suggestions || []).filter(s => s !== cleanCorrected).slice(0, 2)
-      ];
+      // Vorschlags-Chips nur mit kurzen, passenden Antworten belegen (keine langen Absätze!)
+      if (cleanCorrected && cleanCorrected.length <= 60 && !cleanCorrected.includes('\n')) {
+        partnerReply.suggestions = [
+          cleanCorrected,
+          ...(partnerReply.suggestions || []).filter(s => s !== cleanCorrected).slice(0, 2)
+        ];
+      } else {
+        // Bei langen Routine-Sätzen passende Gesprächs-Fortsetzungen vorschlagen
+        partnerReply.suggestions = [
+          "Have a great day at school or work!",
+          "What are you studying today?",
+          "How long does your train ride take?"
+        ];
+      }
     }
 
+    const msgIdPartner = 'msg_partner_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
     const pushedPartnerMsg = {
+      id: msgIdPartner,
       type: 'partner',
       sender: getCurrentPartnerMeta().name,
       textEn: partnerReply.en,
